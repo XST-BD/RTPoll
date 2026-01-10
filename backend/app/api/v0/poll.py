@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db 
@@ -7,11 +9,13 @@ from app.db.model.poll import PollModel
 from app.db.model.user import UserModel
 from app.schemas.poll import PollCreate, PollView
 
+auth_scheme = HTTPBearer()
 router = APIRouter()
 
 @router.post('/createpoll')
 async def create_poll(
     poll: PollCreate, 
+    credentials: HTTPAuthorizationCredentials = Depends(auth_scheme),
     db: Session = Depends(get_db), 
     current_user: UserModel = Depends(get_current_user) # JWT lock
 ):

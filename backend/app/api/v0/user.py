@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from app.api.deps import get_db, hash_password
 from app.db.model.user import UserModel
@@ -22,9 +23,19 @@ async def create_user(
     )
 
     db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
 
+    try:
+        db.commit()
+    except IntegrityError as e:
+        db.rollback()
+        if "users.email" in str(e.orig):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, 
+                detail="Email already registered"
+            )
+        raise HTTPException(status_code=400, detail="Invalid data")
+
+    db.refresh(new_user)
     return new_user
 
 

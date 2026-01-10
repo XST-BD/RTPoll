@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from dotenv import load_dotenv
 
-from app.api.v0 import poll, user
+from app.api.v0 import poll, user, auth
 from app.db.base import Base, dbengine
 
 
@@ -32,6 +32,7 @@ router = APIRouter(prefix='/api')
 async def response_root():
     return {"status": "ok"}
 
+router.include_router(auth.router, prefix='/v0/auth', tags=['Authnetication endpoint'])
 router.include_router(poll.router, prefix='/v0', tags=['Poll creation and view']) 
 router.include_router(user.router, prefix='/v0/user', tags=['User creation and view'])
 
