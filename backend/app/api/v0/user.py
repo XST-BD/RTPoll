@@ -16,6 +16,7 @@ async def create_user(
     
     new_user = UserModel(
         name=user.name, 
+        email=user.email,
         password=hash_password(user.password),
         fingerprint=user.fingerprint,
     )

@@ -18,7 +18,9 @@ async def create_poll(
 
     new_poll = PollModel(
         question=poll.question, 
-        options=poll.options
+        options=poll.options,
+        creator_id=current_user.id,  # links poll to user
+        creator_name=current_user.name,
     )
 
     db.add(new_poll)
