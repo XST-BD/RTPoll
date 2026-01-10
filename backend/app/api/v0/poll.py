@@ -1,16 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db
-from app.db.model.poll import PollModel
+from app.api.deps import get_db 
+from app.api.v0.auth import get_current_user
+from app.db.model.poll import PollModel 
+from app.db.model.user import UserModel
 from app.schemas.poll import PollCreate, PollView
 
 router = APIRouter()
 
-counter = 1
-
-@router.get('/createpoll')
-async def create_poll(poll: PollCreate, db: Session = Depends(get_db)):
+@router.post('/createpoll')
+async def create_poll(
+    poll: PollCreate, 
+    db: Session = Depends(get_db), 
+    current_user: UserModel = Depends(get_current_user) # JWT lock
+):
 
     new_poll = PollModel(
         question=poll.question, 
@@ -24,7 +28,9 @@ async def create_poll(poll: PollCreate, db: Session = Depends(get_db)):
     return new_poll
 
 @router.get('/getpoll/{poll_id}', response_model= PollView)
-async def view_poll(poll_id: int, db: Session = Depends(get_db)):
+async def view_poll(
+    poll_id: int, db: Session = Depends(get_db)
+):
     poll = db.query(PollModel).filter(PollModel.id == poll_id).first()
 
     if not poll:
