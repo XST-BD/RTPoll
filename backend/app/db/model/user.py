@@ -25,4 +25,4 @@ class UserModel(Base):
     creation_date = Column(Date, nullable=False, default=date.today())
 
     # relationship to PollModel (polls get deleted with user if user is deleted)
-    polls = relationship("PollModel", back_populates="creator", cascade="all, delete-orphan")
+    # polls = relationship("PollModel", back_populates="creator", cascade="all, delete-orphan")
