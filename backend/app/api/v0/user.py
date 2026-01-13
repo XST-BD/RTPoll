@@ -6,9 +6,11 @@ from pydantic import Field
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
+
 from app.api.deps import get_db, hash_password
 from app.db.model.user import UserModel
 from app.schemas.user import UserCreate, UserView
+from app.utils.erorhandle import api_error
 
 router = APIRouter()
 
@@ -25,29 +27,20 @@ async def user_register(
     )
 
     db.add(new_user)
-
+    
     try:
+        db.add(new_user)
         db.commit()
     except IntegrityError as e:
         db.rollback()
+        err_str = str(e.orig)
 
-        if "users.email" in str(e.orig):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, 
-                detail="Email already registered"
-            )
-        if "users.username" in str(e.orig):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, 
-                detail="Username taken"
-            )
-        if "users.fingerprint" in str(e.orig):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, 
-                detail="Duplicate fingerprints not allowed"
-            )
-        
-        raise HTTPException(status_code=400, detail="Invalid data")
+        if "uq_users_email" in err_str:
+            return api_error("Email already registered", field="email", status_code=409)
+        if "uq_users_username" in err_str:
+            return api_error("Username already taken", field="username", status_code=409)
+
+        return api_error("Invalid data", status_code=400)
 
     db.refresh(new_user)
     return new_user
