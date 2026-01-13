@@ -5,7 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
-
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from dotenv import load_dotenv
 
@@ -34,6 +35,17 @@ app.add_middleware(
 Base.metadata.create_all(bind=dbengine)
 
 router = APIRouter(prefix='/api')
+
+@app.exception_handler(RequestValidationError)
+async def validation_handler(request, exc):
+    err = exc.errors()[0]
+    return JSONResponse(
+        status_code=422,
+        content={
+            "field": err["loc"][-1],
+            "message": err["msg"]
+        }
+    )
 
 @router.get('/')
 async def response_root():
