@@ -41,8 +41,8 @@ async def validation_handler(request, exc):
     err = exc.errors()[0]
     msg = str(err["msg"])
      # remove "ValueError: " if it exists
-    if msg.startswith("ValueError: "):
-        msg = msg[len("ValueError: "):]
+    if msg.startswith("Value error, "):
+        msg = msg[len("Value error, "):]
     return JSONResponse(
         status_code=422,
         content={
