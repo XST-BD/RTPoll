@@ -78,10 +78,10 @@ def register_user(
     except sqlite3.IntegrityError as e:
         # Handle unique constraint violations
         if "username" in str(e).lower():
-            raise HTTPException(status_code=400, detail="Username already taken.")
+            raise HTTPException(status_code=400, detail="Username already taken")
         elif "email" in str(e).lower():
-            raise HTTPException(status_code=400, detail="Email already registered.")
+            raise HTTPException(status_code=400, detail="Email already registered")
         else:
-            raise HTTPException(status_code=400, detail="Database error.")
+            raise HTTPException(status_code=400, detail="Database error")
 
     return {"message": "User registered successfully!"}
