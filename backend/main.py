@@ -45,6 +45,9 @@ def validate_user_input(username: str, email: str, password: str):
     # Username: only letters, numbers, underscores
     if not re.fullmatch(r'\w+', username):
         return "Username can only contain letters, numbers, and underscores"
+    
+    if len(username) < 4:
+        return "Username can't have less than 4 characters"
 
     # Email: simple regex check
     if not re.fullmatch(r'[^@]+@[^@]+\.[^@]+', email):
