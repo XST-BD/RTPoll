@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 import re
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Body
 from fastapi.exceptions import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Union
@@ -43,7 +43,11 @@ def validate_user_input(username: str, email: str, password: str):
     return None
 
 @app.post('/api/v0/user/register')
-def register_user(username: str, email: str, password: str):
+def register_user(
+    username: str = Body(...),
+    email: str = Body(...),
+    password: str = Body(...)
+):
 
     error = validate_user_input(username, email, password)
     if error:
