@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Union
 
 from db import cursor, conn
+from service import send_mail_verification
 from utils import validate_user_input, validate_db_entry
 
 FRONTEND_URL1 = os.getenv('FRONTEND_URL1')
@@ -50,4 +51,5 @@ def register_user(
         # Handle unique constraint violations
         validate_db_entry(str(e).lower())
 
+    send_mail_verification(email)
     return {"message": "User registered successfully!"}
