@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 import re
+import sqlite3
 
 from fastapi import FastAPI, Body
 from fastapi.exceptions import HTTPException
@@ -10,6 +11,7 @@ from typing import Union
 load_dotenv()
 FRONTEND_URL1 = os.getenv('FRONTEND_URL1')
 FRONTEND_URL2 = os.getenv('FRONTEND_URL2')
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 app = FastAPI()
 
@@ -25,6 +27,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+conn = sqlite3.connect(str(DATABASE_URL), check_same_thread=False)
+cursor = conn.cursor()
+
+# Create table if it doesn't exist
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE,
+    email TEXT UNIQUE,
+    password TEXT
+)
+""")
+conn.commit()
 
 def validate_user_input(username: str, email: str, password: str):
     # Username: only letters, numbers, underscores
@@ -35,11 +50,10 @@ def validate_user_input(username: str, email: str, password: str):
     if not re.fullmatch(r'[^@]+@[^@]+\.[^@]+', email):
         return "Invalid email format"
 
-    # Password: at least 8 chars
+    # Password: min len 8
     if len(password) < 8:
         return "Password must be at least 8 characters long"
 
-    # All good
     return None
 
 @app.post('/api/v0/user/register')
@@ -49,9 +63,25 @@ def register_user(
     password: str = Body(...)
 ):
 
+    # Step 1: validate input
     error = validate_user_input(username, email, password)
     if error:
         raise HTTPException(status_code=400, detail=error)
 
-    # TODO: add user creation here
+    # Step 2: insert user into SQLite
+    try:
+        cursor.execute(
+            "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+            (username, email, password)
+        )
+        conn.commit()
+    except sqlite3.IntegrityError as e:
+        # Handle unique constraint violations
+        if "username" in str(e).lower():
+            raise HTTPException(status_code=400, detail="Username already taken.")
+        elif "email" in str(e).lower():
+            raise HTTPException(status_code=400, detail="Email already registered.")
+        else:
+            raise HTTPException(status_code=400, detail="Database error.")
+
     return {"message": "User registered successfully!"}
