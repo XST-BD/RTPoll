@@ -29,15 +29,15 @@ app.add_middleware(
 def validate_user_input(username: str, email: str, password: str):
     # Username: only letters, numbers, underscores
     if not re.fullmatch(r'\w+', username):
-        return "Username can only contain letters, numbers, and underscores."
+        return "Username can only contain letters, numbers, and underscores"
 
     # Email: simple regex check
     if not re.fullmatch(r'[^@]+@[^@]+\.[^@]+', email):
-        return "Invalid email format."
+        return "Invalid email format"
 
     # Password: at least 8 chars
     if len(password) < 8:
-        return "Password must be at least 8 characters long."
+        return "Password must be at least 8 characters long"
 
     # All good
     return None
