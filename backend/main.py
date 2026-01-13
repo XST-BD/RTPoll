@@ -1,63 +1,33 @@
-import os
+import re
 
-from fastapi import FastAPI, APIRouter
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi import Request
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-
-from dotenv import load_dotenv
-
-# from app.api.v0 import poll, user, auth
-from app.db.base import Base, dbengine
-
-from app.api.v0 import user
-
-load_dotenv()
-FRONTEND_URL1 = os.getenv('FRONTEND_URL1')
-FRONTEND_URL2 = os.getenv('FRONTEND_URL2')
+from fastapi import FastAPI
+from fastapi.exceptions import HTTPException
+from typing import Union
 
 app = FastAPI()
-origins = [
-    FRONTEND_URL1,
-    FRONTEND_URL2
-]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=str(origins),
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
-Base.metadata.create_all(bind=dbengine)
+def validate_user_input(username: str, email: str, password: str):
+    # Username: only letters, numbers, underscores
+    if not re.fullmatch(r'\w+', username):
+        return "Username can only contain letters, numbers, and underscores."
 
-router = APIRouter(prefix='/api')
+    # Email: simple regex check
+    if not re.fullmatch(r'[^@]+@[^@]+\.[^@]+', email):
+        return "Invalid email format."
 
-@app.exception_handler(RequestValidationError)
-async def validation_handler(request, exc):
-    err = exc.errors()[0]
-    msg = str(err["msg"])
-     # remove "ValueError: " if it exists
-    if msg.startswith("Value error, "):
-        msg = msg[len("Value error, "):]
-    return JSONResponse(
-        status_code=422,
-        content={
-            "field": err["loc"][-1],
-            "message": err["msg"]
-        }
-    )
+    # Password: at least 8 chars
+    if len(password) < 8:
+        return "Password must be at least 8 characters long."
 
+    # All good
+    return None
 
-@router.get('/')
-async def response_root():
-    return {"status": "ok"}
+@app.post('/api/v0/user/register')
+def register_user(username: str, email: str, password: str):
 
-# router.include_router(auth.router, prefix='/v0/auth', tags=['Authnetication endpoint'])
-# router.include_router(poll.router, prefix='/v0', tags=['Poll creation and view']) 
-router.include_router(user.router, prefix='/v0/user', tags=['User creation and view'])
+    error = validate_user_input(username, email, password)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
 
-app.include_router(router) 
+    # TODO: add user creation here
+    return {"message": "User registered successfully!"}
