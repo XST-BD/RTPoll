@@ -52,4 +52,10 @@ def register_user(
         validate_db_entry(str(e).lower())
 
     send_mail_verification(email)
-    return {"message": "User registered successfully!"}
+    return {"message": "Check your mail box to verify your account"}
+
+
+# @app.post('/api/v0/user/login')
+# def login_user(
+    
+# )

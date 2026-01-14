@@ -29,7 +29,7 @@ def send_mail_verification(reciever_mail_addr: str):
     receiver_email = reciever_mail_addr
 
     # Email content
-    subject = "An Email from RTPoll"
+    subject = "Account verification email from RTPoll"
     # HTML body with clickable link
     body = f"""
     Hi there,
@@ -38,7 +38,7 @@ def send_mail_verification(reciever_mail_addr: str):
 
     <a href="{link}">{link}</a>
 
-    This link is one-time use.
+    <br>This link is one-time use.
 
     Thanks!
     """
