@@ -141,6 +141,6 @@ def verify_mail(
     db.commit()
 
     return RedirectResponse(
-        url=f"{site_url}/login?verified=1",
+        url=f"{site_url}/login",
         status_code=302
     )
