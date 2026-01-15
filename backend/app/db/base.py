@@ -1,5 +1,4 @@
 import os 
-from dotenv import load_dotenv
 
 from sqlalchemy import (
     create_engine,
@@ -7,8 +6,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.declarative import declarative_base
 
-load_dotenv()
-DATABASE_URL = os.getenv('DATABASE_URL')
+from app.setup import DATABASE_URL
 
 dbengine =  create_engine(
     url=str(DATABASE_URL), 

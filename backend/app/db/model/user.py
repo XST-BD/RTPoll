@@ -13,7 +13,7 @@ class UserModel(Base):
 
     __tablename__ = "users"
 
-    id = Column(
+    user_id: Mapped[str] = mapped_column(
         String(36),                                 # UUID as string
         primary_key=True, index=True, unique=True,
         default=lambda: str(uuid.uuid4())           # auto-generate

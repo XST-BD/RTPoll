@@ -4,8 +4,6 @@ import ssl
 import secrets
 import hashlib
 
-from dotenv import load_dotenv
-
 from email.message import EmailMessage 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -20,8 +18,13 @@ from sqlalchemy.exc import IntegrityError
 from app.db.base import dbengine
 from app.db.model.user import EmailVerification, UserModel
 from app.deps import get_db
-from app.setup import app
+
+from app.setup import (
+    app, SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, FRONTEND_URL1, BACKEND_URL1
+)
+
 from app.utils import validate_db_entry
+
 
 def generate_login_url_token() -> tuple[str, str]:
     token = secrets.token_urlsafe(32)
@@ -33,10 +36,7 @@ def generate_login_url_token() -> tuple[str, str]:
 def prepare_verification_link(
     user: str, db: Session
 ):
-    load_dotenv()
-
     # token setup
-    site_url = os.getenv('BACKEND_URL1')
     token, token_hash = generate_login_url_token()
 
     verification = EmailVerification(
@@ -55,22 +55,17 @@ def prepare_verification_link(
 
     db.refresh(verification)
 
-    link = f"{site_url}/api/v0/auth/verify_mail?token={token}"
+    link = f"{BACKEND_URL1}/api/v0/auth/verify_mail?token={token}"
     return link
 
 
 def send_mail_verification(
     reciever_mail_addr: str, link: str,
 ):
-
-    load_dotenv()
     # mail setup
-    sender_email = os.getenv('MAIL_USERNAME', 'MAIL_USERNAME')
+    
     receiver_email = reciever_mail_addr
-    app_password = os.getenv('MAIL_PASSWORD')
-    smtp_server = os.getenv('MAIL_SERVER')
-    smtp_port_tls = os.getenv('MAIL_PORT_TLS', 587)
-
+    
     # Email content
     subject = "Account verification email from RTPoll"
     # HTML body with clickable link
@@ -87,23 +82,19 @@ def send_mail_verification(
 
     # --- Create the email message ---
     msg = MIMEMultipart()
-    msg['From'] = sender_email
+    msg['From'] = SENDER_MAIL
     msg['To'] = receiver_email 
     msg['Subject'] = subject
     msg.attach(MIMEText(body, 'html'))
-
-    # --- Send the email ---
-    smtp_server = smtp_server
-    smtp_port_tls = smtp_port_tls 
 
     # Create a secure SSL context
     context = ssl.create_default_context()
 
     try:
         # Connect to the server and send the email
-        with smtplib.SMTP(str(smtp_server), int(smtp_port_tls)) as server:
+        with smtplib.SMTP(str(SMTP_SERVER), int(SMTP_PORT_TLS)) as server:
             server.starttls(context=context) # Secure the connection with TLS
-            server.login(str(sender_email), str(app_password))
+            server.login(str(SENDER_MAIL), str(APP_PASSWORD))
             server.send_message(msg)
             print("Email sent successfully!")
 
@@ -117,11 +108,7 @@ def send_mail_verification(
 def verify_mail(
     token: str, db: Session = Depends(get_db)
 ):
-
-    load_dotenv()
     # token setup
-    site_url = os.getenv('FRONTEND_URL1')
-
     token_hash = hashlib.sha256(token.encode()).hexdigest()
     record = db.query(EmailVerification).filter(EmailVerification.token_hash==token_hash).first()
 
@@ -141,6 +128,6 @@ def verify_mail(
     db.commit()
 
     return RedirectResponse(
-        url=f"{site_url}/login",
+        url=f"{FRONTEND_URL1}/login",
         status_code=302
     )
