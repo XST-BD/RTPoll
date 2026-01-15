@@ -1,5 +1,7 @@
 import os
 
+from datetime import timedelta, datetime
+
 from dotenv import load_dotenv
 
 from fastapi import FastAPI
@@ -18,6 +20,7 @@ APP_PASSWORD = os.getenv('MAIL_PASSWORD')
 SMTP_SERVER = os.getenv('MAIL_SERVER')
 SMTP_PORT_TLS = os.getenv('MAIL_PORT_TLS', 587)
 
+SESSION_TTL = timedelta(days=7)
 
 def cors_permit():
 

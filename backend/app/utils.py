@@ -42,5 +42,7 @@ def validate_db_entry(err_msg: str):
             raise HTTPException(status_code=400, detail="Username already taken")
     elif "email" in err_msg:
         raise HTTPException(status_code=400, detail="Email already registered")
+    elif "token" in err_msg:
+            raise HTTPException(status_code=400, detail="Token already in use")
     else:
         raise HTTPException(status_code=400, detail="Database error")

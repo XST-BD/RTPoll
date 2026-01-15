@@ -1,18 +1,21 @@
+import secrets
 import sqlite3
 
-from fastapi import FastAPI, Body, Depends
+from fastapi import FastAPI, Body, Depends, Cookie
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from typing import Union
 
 from app.db.base import Base, dbengine
 from app.db.model.user import UserModel
+from app.db.model.session import SessionModel
 from app.deps import get_db, hash_password, verify_password
-from app.service import send_mail_verification, prepare_verification_link
-from app.setup import app, cors_permit, FRONTEND_URL1
+from app.service import send_mail_verification, prepare_verification_link, get_current_user
+from app.setup import app, cors_permit, FRONTEND_URL1 
 from app.utils import validate_user_input, validate_db_entry
 
 
@@ -44,7 +47,7 @@ def register_user(
         db.commit()
     except sqlite3.IntegrityError as e:
         db.rollback()
-        # Handle unique constraint violations
+        # Handle db constraint violations
         validate_db_entry(str(e).lower())
 
     db.refresh(new_user)
@@ -72,18 +75,34 @@ def login_user(
     if not verify_password(password, user.password): 
         raise HTTPException(status_code=400, detail="Wrong password")
     
+
+    session_token = secrets.token_urlsafe(32)
+    session = SessionModel(
+        token=session_token, 
+        user_id=user.user_id
+    )
+    db.add(session)
+
+    try:
+        db.commit()
+    except IntegrityError as e:
+        db.rollback()
+        # Handle db constraint violations
+        validate_db_entry(str(e).lower())
+
+    db.refresh(session)
+    
     response = RedirectResponse(
         url=f"{FRONTEND_URL1}/dashboard",
         status_code=302
     )
 
     response.set_cookie(
-        key='user_id', 
-        value=user.user_id,
+        key='session', 
+        value=session_token,
         httponly=True,
         secure=False,  # only in local dev
         samesite='lax',
-        domain="localhost",
     )
 
     return response
@@ -91,6 +110,21 @@ def login_user(
 
 @app.post('/api/v0/user/logout')
 def logout_user(
-
+    user_id: str = Depends(get_current_user),
+    session_token: str | None = Cookie(None),
+    db: Session = Depends(get_db)
 ):
-    pass
+    response = RedirectResponse(
+        url=f"{FRONTEND_URL1}/login",
+        status_code=302
+    ) 
+
+    if session_token: 
+        db.query(SessionModel).filter(
+            SessionModel.token==session_token
+        ).delete()
+
+        db.commit() 
+
+    response.delete_cookie(key='session')
+    return response

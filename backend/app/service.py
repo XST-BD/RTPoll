@@ -4,26 +4,34 @@ import ssl
 import secrets
 import hashlib
 
+from datetime import datetime
+
 from email.message import EmailMessage 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-from fastapi import Depends
+from fastapi import Depends, Cookie
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse
 
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
 
 from app.db.base import dbengine
 from app.db.model.user import EmailVerification, UserModel
+from app.db.model.session import SessionModel
 from app.deps import get_db
 
 from app.setup import (
-    app, SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, FRONTEND_URL1, BACKEND_URL1
+    app, 
+    SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, 
+    FRONTEND_URL1, BACKEND_URL1, 
+    SESSION_TTL,
 )
 
 from app.utils import validate_db_entry
+
 
 
 def generate_login_url_token() -> tuple[str, str]:
@@ -131,3 +139,22 @@ def verify_mail(
         url=f"{FRONTEND_URL1}/login",
         status_code=302
     )
+
+
+def get_current_user(
+    session_token: str | None = Cookie(None), 
+    db: Session = Depends(get_db)
+):
+    
+    if session_token is None: 
+        raise HTTPException(status_code=401, detail="Invalid session token")
+    
+    session_row = db.query(SessionModel).filter(
+        SessionModel.token==session_token,
+        SessionModel.created_at + SESSION_TTL > func.now()
+    ).first()
+
+    if not session_row: 
+        raise HTTPException(status_code=401, detail="Session expired")
+    
+    return session_row.user_id
