@@ -126,3 +126,12 @@ def logout_user(
 
     response.delete_cookie(key='session')
     return response
+
+
+@app.get('/api/v0/auth/check')
+def check_auth(user_id: str = Depends(get_current_user)):
+
+    return {
+        "authenticated": bool(user_id),
+        "user_id": user_id,
+    }
