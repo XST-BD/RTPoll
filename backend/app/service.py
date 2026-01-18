@@ -142,7 +142,7 @@ def verify_mail(
 
 
 def get_current_user(
-    session_token: str | None = Cookie(None), 
+    session_token: str | None = Cookie(None, alias="session"), 
     db: Session = Depends(get_db)
 ):
     
@@ -161,7 +161,7 @@ def get_current_user(
 
 
 def get_current_user_state(
-    session_token: str | None = Cookie(None), 
+    session_token: str | None = Cookie(None, alias="session"), 
     db: Session = Depends(get_db)
 ):
     if session_token is None: 

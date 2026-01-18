@@ -110,7 +110,7 @@ def login_user(
 
 @app.post('/api/v0/user/logout')
 def logout_user(
-    session_token: str | None = Cookie(None),
+    session_token: str | None = Cookie(None, alias="session"),
     db: Session = Depends(get_db)
 ):
     
