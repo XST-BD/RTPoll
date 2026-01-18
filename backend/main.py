@@ -131,10 +131,10 @@ def logout_user(
 
 @app.get('/api/v0/auth/check')
 def check_auth(
-    user_id: str | None = Depends(get_current_user_state)
+    user_id = Depends(get_current_user_state)
 ):
 
-    return {
-        "authenticated": user_id is not None,
-        "user_id": user_id,
-    }
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    return {"ok": True}
