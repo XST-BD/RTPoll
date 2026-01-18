@@ -93,7 +93,7 @@ def login_user(
     db.refresh(session)
     
     response = JSONResponse(
-        content={"redirect_url": f"{FRONTEND_URL1}/dashboard"}
+        content={"message": "Logged in successfully"}
     )
 
     response.set_cookie(
@@ -115,7 +115,7 @@ def logout_user(
 ):
     
     response = JSONResponse(
-        content={"redirect_url": f"{FRONTEND_URL1}/login"}
+        content={"message": "Logged out successfully"}
     )
 
     if session_token: 
