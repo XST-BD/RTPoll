@@ -158,3 +158,21 @@ def get_current_user(
         raise HTTPException(status_code=401, detail="Session expired")
     
     return session_row.user_id
+
+
+def get_current_user_state(
+    session_token: str | None = Cookie(None), 
+    db: Session = Depends(get_db)
+):
+    if session_token is None: 
+        return None
+    
+    session_row = db.query(SessionModel).filter(
+        SessionModel.token==session_token,
+        SessionModel.created_at + SESSION_TTL > func.now()
+    ).first()
+
+    if not session_row: 
+        return None
+    
+    return session_row.user_id

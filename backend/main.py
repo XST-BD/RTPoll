@@ -14,7 +14,7 @@ from app.db.base import Base, dbengine
 from app.db.model.user import UserModel
 from app.db.model.session import SessionModel
 from app.deps import get_db, hash_password, verify_password
-from app.service import send_mail_verification, prepare_verification_link, get_current_user
+from app.service import send_mail_verification, prepare_verification_link, get_current_user, get_current_user_state
 from app.setup import app, cors_permit, FRONTEND_URL1 
 from app.utils import validate_user_input, validate_db_entry
 
@@ -129,9 +129,11 @@ def logout_user(
 
 
 @app.get('/api/v0/auth/check')
-def check_auth(user_id: str = Depends(get_current_user)):
+def check_auth(
+    user_id: str | None = Depends(get_current_user_state)
+):
 
     return {
-        "authenticated": bool(user_id),
+        "authenticated": user_id is not None,
         "user_id": user_id,
     }
