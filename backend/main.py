@@ -109,7 +109,6 @@ def login_user(
 
 @app.post('/api/v0/user/logout')
 def logout_user(
-    user_id: str = Depends(get_current_user),
     session_token: str | None = Cookie(None),
     db: Session = Depends(get_db)
 ):
