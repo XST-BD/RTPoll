@@ -1,7 +1,7 @@
 import secrets
 import sqlite3
 
-from fastapi import FastAPI, Body, Depends, Cookie
+from fastapi import FastAPI, APIRouter, Body, Depends, Cookie
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse
 
@@ -20,6 +20,7 @@ from app.utils import validate_user_input, validate_db_entry
 
 
 cors_permit()
+
 Base.metadata.create_all(bind=dbengine)
 
 @app.post('/api/v0/user/register')
@@ -124,7 +125,7 @@ def logout_user(
 
         db.commit() 
 
-    response.delete_cookie(key='session')
+    response.delete_cookie(key='session', path='/')
     return response
 
 
