@@ -3,7 +3,7 @@ import sqlite3
 
 from fastapi import FastAPI, Body, Depends, Cookie
 from fastapi.exceptions import HTTPException
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -92,9 +92,8 @@ def login_user(
 
     db.refresh(session)
     
-    response = RedirectResponse(
-        url=f"{FRONTEND_URL1}/dashboard",
-        status_code=302
+    response = JSONResponse(
+        content={"redirect_url": f"{FRONTEND_URL1}/dashboard"}
     )
 
     response.set_cookie(
@@ -114,10 +113,10 @@ def logout_user(
     session_token: str | None = Cookie(None),
     db: Session = Depends(get_db)
 ):
-    response = RedirectResponse(
-        url=f"{FRONTEND_URL1}/login",
-        status_code=302
-    ) 
+    
+    response = JSONResponse(
+        content={"redirect_url": f"{FRONTEND_URL1}/login"}
+    )
 
     if session_token: 
         db.query(SessionModel).filter(
