@@ -102,7 +102,7 @@ def login_user(
         value=session_token,
         httponly=True,
         secure=False,  # only in local dev
-        samesite='lax',
+        samesite='none',
     )
 
     return response
