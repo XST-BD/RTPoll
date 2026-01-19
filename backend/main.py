@@ -86,8 +86,6 @@ def login_user(
 @app.post('/api/v0/user/logout')
 def logout_user(
     request: Request,
-    session_token: str | None = Cookie(None, alias="session"),
-    db: Session = Depends(get_db)
 ):
     # clear sessions
     request.session.clear()
