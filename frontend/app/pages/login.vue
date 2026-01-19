@@ -1,20 +1,16 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 
 useHead({
     title: 'Login',
 })
 
-const router = useRouter()
-
-const username = ref('')
 const email = ref('')
 const password = ref('')
 const error = ref(null)
 const loading = ref(false)
 
-async function register() {
+async function login() {
     error.value = null
     loading.value = true
 
@@ -22,25 +18,30 @@ async function register() {
         const res = await $fetch('http://127.0.0.1:8000/api/v0/user/login', {
             method: 'POST',
             headers: { "Content-Type": "application/json" },
+            credentials: 'include',
             body: {
                 email: email.value,
                 password: password.value,
             }
         })
 
-        router.push('/login')
-    } catch (err) {
-        const data = err?.data || err?.response?._data
+        navigateTo('/dashboard')
 
-        if (data?.message) {
-            error.value =
-                data.message + (data.field ? ` (${data.field})` : '')
-        } else {
+        email.value = ''
+        password.value = ''
+    } catch (err) {
+        const data = err?.data
+
+        if (Array.isArray(data?.detail)) {
+            error.value = data.detail[0]?.msg ?? 'Validation error'
+        }
+        else if (typeof data?.detail === 'string') {
+            error.value = data.detail
+        }
+        else {
             error.value = 'Something went wrong'
         }
     } finally {
-        email.value = ''
-        password.value = ''
         loading.value = false
     }
 }

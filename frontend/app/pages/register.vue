@@ -22,6 +22,7 @@ async function register() {
         const res = await $fetch('http://127.0.0.1:8000/api/v0/user/register', {
             method: 'POST',
             headers: { "Content-Type": "application/json" },
+            credentials: 'include',
             body: {
                 username: username.value,
                 email: email.value,
@@ -29,22 +30,26 @@ async function register() {
             }
         })
 
-        alert(`Account created: ${res.username} (${res.creation_date})`)
+        alert(res.message)
 
         router.push('/login')
-    } catch (err) {
-        const data = err?.data || err?.response?._data
 
-        if (data?.message) {
-            error.value =
-                data.message + (data.field ? ` (${data.field})` : '')
-        } else {
-            error.value = 'Something went wrong'
-        }
-    } finally {
         username.value = ''
         email.value = ''
         password.value = ''
+    } catch (err) {
+        const data = err?.data
+
+        if (Array.isArray(data?.detail)) {
+            error.value = data.detail[0]?.msg ?? 'Validation error'
+        }
+        else if (typeof data?.detail === 'string') {
+            error.value = data.detail
+        }
+        else {
+            error.value = 'Something went wrong'
+        }
+    } finally {
         loading.value = false
     }
 }
