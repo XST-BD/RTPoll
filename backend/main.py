@@ -103,6 +103,7 @@ def login_user(
         httponly=True,
         secure=False,  # only in local dev
         samesite='none',
+        path='/',
     )
 
     return response
