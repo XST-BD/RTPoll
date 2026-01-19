@@ -45,5 +45,5 @@ def cors_permit():
         secret_key=str(SECRET_KEY),
         max_age=60*60*24*7,            # 1 week
         https_only=False,  # must be False on localhost HTTP
-        same_site="none",  # allows cross-site JS requests to send cookie
+        same_site="lax",  # allows cross-site JS requests to send cookie
     )
