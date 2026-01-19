@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from starlette.middleware.sessions import SessionMiddleware
+
 app = FastAPI()
 
 load_dotenv()
@@ -17,6 +19,7 @@ FRONTEND_URL2 = os.getenv('FRONTEND_URL2')
 DATABASE_URL = os.getenv('DATABASE_URL')
 SENDER_MAIL = os.getenv('MAIL_USERNAME', 'MAIL_USERNAME')
 APP_PASSWORD = os.getenv('MAIL_PASSWORD')
+SECRET_KEY = os.getenv('SECRET_KEY')
 SMTP_SERVER = os.getenv('MAIL_SERVER')
 SMTP_PORT_TLS = os.getenv('MAIL_PORT_TLS', 587)
 
@@ -34,4 +37,12 @@ def cors_permit():
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+    )
+
+    app.add_middleware(
+        SessionMiddleware, 
+        secret_key=str(SECRET_KEY),
+        max_age=60*60*24*7,            # 1 week
+        https_only=False,              # True in production
+        same_site="lax",
     )

@@ -1,21 +1,22 @@
 import secrets
 import sqlite3
 
-from fastapi import FastAPI, APIRouter, Body, Depends, Cookie
+from fastapi import FastAPI, APIRouter, Body, Depends, Cookie, Request
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from starlette.middleware.sessions import SessionMiddleware
+
 from typing import Union
 
 from app.db.base import Base, dbengine
 from app.db.model.user import UserModel
-from app.db.model.session import SessionModel
 from app.deps import get_db, hash_password, verify_password
-from app.service import send_mail_verification, prepare_verification_link, get_current_user, get_current_user_state
-from app.setup import app, cors_permit, FRONTEND_URL1 
+from app.service import send_mail_verification, prepare_verification_link, get_current_user_state
+from app.setup import app, cors_permit, FRONTEND_URL1, SECRET_KEY
 from app.utils import validate_user_input, validate_db_entry
 
 
@@ -46,12 +47,12 @@ def register_user(
     db.add(new_user)
     try:
         db.commit()
-    except sqlite3.IntegrityError as e:
+        db.refresh(new_user)
+    except IntegrityError as e:
         db.rollback()
         # Handle db constraint violations
-        validate_db_entry(str(e).lower())
+        validate_db_entry(str(e.orig).lower())
 
-    db.refresh(new_user)
 
     link = prepare_verification_link(username, db)
     send_mail_verification(email, link)
@@ -60,6 +61,7 @@ def register_user(
 
 @app.post('/api/v0/user/login')
 def login_user(
+    request: Request,
     email: str = Body(...), 
     password: str = Body(...),
     db: Session = Depends(get_db)
@@ -76,63 +78,26 @@ def login_user(
     if not verify_password(password, user.password): 
         raise HTTPException(status_code=400, detail="Wrong password")
     
+    request.session['user_id'] = user.user_id
 
-    session_token = secrets.token_urlsafe(32)
-    session = SessionModel(
-        token=session_token, 
-        user_id=user.user_id
-    )
-    db.add(session)
-
-    try:
-        db.commit()
-    except IntegrityError as e:
-        db.rollback()
-        # Handle db constraint violations
-        validate_db_entry(str(e).lower())
-
-    db.refresh(session)
-    
-    response = JSONResponse(
-        content={"message": "Logged in successfully"}
-    )
-
-    response.set_cookie(
-        key='session', 
-        value=session_token,
-        httponly=True,
-        secure=False,  # only in local dev
-        samesite='none',
-        path='/',
-    )
-
-    return response
+    return {"message": "Logged in successfully"}
 
 
 @app.post('/api/v0/user/logout')
 def logout_user(
+    request: Request,
     session_token: str | None = Cookie(None, alias="session"),
     db: Session = Depends(get_db)
 ):
-    
-    response = JSONResponse(
-        content={"message": "Logged out successfully"}
-    )
+    # clear sessions
+    request.session.clear()
 
-    if session_token: 
-        db.query(SessionModel).filter(
-            SessionModel.token==session_token
-        ).delete()
-
-        db.commit() 
-
-    response.delete_cookie(key='session', path='/')
-    return response
+    return {"message": "Logged out successfully"}
 
 
 @app.get('/api/v0/auth/check')
 def check_auth(
-    user_id: str | None = Depends(get_current_user_state)
+    user_id: str = Depends(get_current_user_state)
 ):
 
     return {
