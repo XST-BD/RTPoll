@@ -98,10 +98,7 @@ def check_auth(
     user_id: str = Depends(get_current_user_state)
 ):
 
-    if user_id is None: 
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
     return {
-        "authenticated": True,
+        "authenticated": user_id is not None,
         "user_id": user_id,
     }
