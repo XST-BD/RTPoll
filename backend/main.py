@@ -16,7 +16,7 @@ from app.db.base import Base, dbengine
 from app.db.model.user import UserModel
 from app.deps import get_db, hash_password, verify_password
 from app.service import send_mail_verification, prepare_verification_link, get_current_user_state
-from app.setup import app, cors_permit, FRONTEND_URL1, SECRET_KEY
+from app.setup import app, cors_permit
 from app.utils import validate_user_input, validate_db_entry
 
 

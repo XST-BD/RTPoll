@@ -14,9 +14,7 @@ app = FastAPI()
 load_dotenv()
 
 BACKEND_URL1 = os.getenv('BACKEND_URL1')
-FRONTEND_URL1 = os.getenv('FRONTEND_URL1')
-FRONTEND_URL2 = os.getenv('FRONTEND_URL2')
-FRONTEND_URL3 = os.getenv('FRONTEND_URL3')
+FRONTEND_URL = os.getenv('FRONTEND_ORIGINS')
 DATABASE_URL = os.getenv('DATABASE_URL')
 SENDER_MAIL = os.getenv('MAIL_USERNAME', 'MAIL_USERNAME')
 APP_PASSWORD = os.getenv('MAIL_PASSWORD')
@@ -26,17 +24,23 @@ SMTP_PORT_TLS = os.getenv('MAIL_PORT_TLS', 587)
 
 SESSION_TTL = timedelta(days=7)
 
+FRONTEND_ORIGINS = [
+    o.rstrip("/")
+    for o in os.getenv("FRONTEND_ORIGINS", "").split(",")
+    if o
+]
+
 def cors_permit():
 
-    origins = [
-        o.strip()
-        for o in os.getenv("FRONTEND_ORIGINS", "").split(",")
-        if o
-    ]
+    # origins = [
+    #     o.strip()
+    #     for o in os.getenv("FRONTEND_ORIGINS", "").split(",")
+    #     if o
+    # ]
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,
+        allow_origins=FRONTEND_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

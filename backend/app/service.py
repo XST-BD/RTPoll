@@ -25,7 +25,7 @@ from app.deps import get_db
 from app.setup import (
     app, 
     SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, 
-    FRONTEND_URL1, BACKEND_URL1, 
+    FRONTEND_ORIGINS, BACKEND_URL1, FRONTEND_URL,
     SESSION_TTL,
 )
 
@@ -78,11 +78,15 @@ def send_mail_verification(
     # HTML body with clickable link
     body = f"""
     Thank you for registering an account in RTPoll Website.
+    <br>
+    <br>
     Please click the following URL to confirm your e-mail address:
     <br>
     <a href="{link}">{link}</a>
     <br>
-    If you did not register an account in RTPoll website, please ignore  this mail.
+    <br>
+    If you did not register an account in RTPoll Website, please ignore  this mail.
+    <br>
     <br>
     <a href="https://github.com/XST-BD">XST-BD Org.</a>
     """
@@ -135,7 +139,7 @@ def verify_mail(
     db.commit()
 
     return RedirectResponse(
-        url=f"{FRONTEND_URL1}/login",
+        url=f"{FRONTEND_URL}/login",
         status_code=302
     )
 
