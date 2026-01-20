@@ -6,8 +6,8 @@ export async function isLoggedIn() {
             cache: 'no-store'
         })
 
-        return true
-        // return res.authenticated === true
+        // return true
+        return res.authenticated === true
     } catch {
         return false
     }

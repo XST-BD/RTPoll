@@ -16,6 +16,7 @@ load_dotenv()
 BACKEND_URL1 = os.getenv('BACKEND_URL1')
 FRONTEND_URL1 = os.getenv('FRONTEND_URL1')
 FRONTEND_URL2 = os.getenv('FRONTEND_URL2')
+FRONTEND_URL3 = os.getenv('FRONTEND_URL3')
 DATABASE_URL = os.getenv('DATABASE_URL')
 SENDER_MAIL = os.getenv('MAIL_USERNAME', 'MAIL_USERNAME')
 APP_PASSWORD = os.getenv('MAIL_PASSWORD')
@@ -28,12 +29,14 @@ SESSION_TTL = timedelta(days=7)
 def cors_permit():
 
     origins = [
-        FRONTEND_URL1,
-        FRONTEND_URL2
+        o.strip()
+        for o in os.getenv("FRONTEND_ORIGINS", "").split(",")
+        if o
     ]
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=str(origins),
+        allow_origins=origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
