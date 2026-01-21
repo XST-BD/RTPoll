@@ -4,7 +4,7 @@ from datetime import timedelta, datetime
 
 from dotenv import load_dotenv
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse 
 
@@ -16,6 +16,7 @@ from slowapi.util import get_remote_address
 
 
 app = FastAPI()
+router = APIRouter()
 
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter

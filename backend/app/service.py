@@ -4,29 +4,20 @@ import ssl
 import secrets
 import hashlib
 
-from datetime import datetime
-
-from email.message import EmailMessage 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-from fastapi import Depends, Cookie, Request
-from fastapi.exceptions import HTTPException
-from fastapi.responses import RedirectResponse
+from fastapi import Request
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
 from app.db.base import dbengine
-from app.db.model.user import EmailVerification, UserModel
-from app.deps import get_db
+from app.db.model.user import EmailVerification
 
 from app.setup import (
-    app, 
-    SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, 
-    FRONTEND_ORIGINS, BACKEND_URL1, FRONTEND_URL,
-    SESSION_TTL, limiter
+    SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, BACKEND_URL1
 )
 
 from app.utils import validate_db_entry
@@ -113,43 +104,6 @@ def send_mail_verification(
         print(f"Error: Unable to send email. {e}")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
-
-
-@app.get('/api/v0/auth/verify_mail')
-def verify_mail(
-    token: str, db: Session = Depends(get_db)
-):
-    # token setup
-    token_hash = hashlib.sha256(token.encode()).hexdigest()
-    record = db.query(EmailVerification).filter(EmailVerification.token_hash==token_hash).first()
-
-    if not record:
-        raise HTTPException(status_code=400, detail="Invalid link")
-    
-    if record.used: 
-        raise HTTPException(status_code=400, detail="Link is already used and expired")
-    
-    user = (db.query(UserModel).filter(UserModel.username==record.username).first())
-    if user is None:
-        raise HTTPException(status_code=400, detail="User not found during mail validation")
-
-    user.is_verified = True
-    record.used = True
-
-    db.commit()
-
-    return RedirectResponse(
-        url=f"{FRONTEND_URL}/login",
-        status_code=302
-    )
-
-@app.get('/api/v0/auth/resend_mail')
-@limiter.limit('5/minute')   # <--- allow max 5 requests per minute per IP
-def resend_mail(
-    token: str, db: Session = Depends(get_db)
-):
-    verify_mail(token, db)
-    return {"detail": "Mail verification sent"}
 
 
 def get_current_user_state(request: Request):
