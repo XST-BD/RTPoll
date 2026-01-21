@@ -4,12 +4,32 @@ from datetime import timedelta, datetime
 
 from dotenv import load_dotenv
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse 
 
 from starlette.middleware.sessions import SessionMiddleware
 
+from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+
+
 app = FastAPI()
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+
+# Custom handler
+async def rate_limit_handler(request: Request, exc: Exception):
+    if isinstance(exc, RateLimitExceeded):
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Rate limit exceeded"}
+        )
+    raise exc
+
+app.add_exception_handler(RateLimitExceeded, rate_limit_handler)
 
 load_dotenv()
 
@@ -31,12 +51,6 @@ FRONTEND_ORIGINS = [
 ]
 
 def cors_permit():
-
-    # origins = [
-    #     o.strip()
-    #     for o in os.getenv("FRONTEND_ORIGINS", "").split(",")
-    #     if o
-    # ]
 
     app.add_middleware(
         CORSMiddleware,

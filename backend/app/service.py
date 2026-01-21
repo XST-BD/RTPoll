@@ -26,7 +26,7 @@ from app.setup import (
     app, 
     SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, 
     FRONTEND_ORIGINS, BACKEND_URL1, FRONTEND_URL,
-    SESSION_TTL,
+    SESSION_TTL, limiter
 )
 
 from app.utils import validate_db_entry
@@ -142,6 +142,14 @@ def verify_mail(
         url=f"{FRONTEND_URL}/login",
         status_code=302
     )
+
+@app.get('/api/v0/auth/resend_mail')
+@limiter.limit('5/minute')   # <--- allow max 5 requests per minute per IP
+def resend_mail(
+    token: str, db: Session = Depends(get_db)
+):
+    verify_mail(token, db)
+    return {"detail": "Mail verification sent"}
 
 
 def get_current_user_state(request: Request):
