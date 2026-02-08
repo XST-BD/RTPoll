@@ -83,5 +83,10 @@ async function register() {
                 {{ loading ? 'Registering...' : 'Register' }}
             </button>
         </form>
+
+        <p class="text-md">
+            Already have an account?
+            <NuxtLink to="/login" class="text-green-400 font-medium hover:underline">Login here</NuxtLink>
+        </p>
     </section>
 </template>

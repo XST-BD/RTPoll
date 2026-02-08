@@ -9,10 +9,12 @@ const email = ref('')
 const password = ref('')
 const error = ref(null)
 const loading = ref(false)
+const resend_mail = ref(false)
 
 async function login() {
     error.value = null
     loading.value = true
+    resend_mail.value = false
 
     try {
         const res = await $fetch('http://127.0.0.1:8000/api/v0/user/login', {
@@ -36,13 +38,50 @@ async function login() {
             error.value = data.detail[0]?.msg ?? 'Validation error'
         }
         else if (typeof data?.detail === 'string') {
-            error.value = data.detail
+            err = data.detail
+
+            error.value = err
+
+            if (err.includes('User is not verified')) {
+                resend_mail.value = true
+            }
         }
         else {
             error.value = 'Something went wrong'
         }
     } finally {
         loading.value = false
+    }
+}
+
+async function resendVerificationEmail() {
+    error.value = null
+
+    try {
+        const res = await $fetch('http://127.0.0.1:8000/api/v0/auth/resend_mail', {
+            method: 'POST',
+            headers: { "Content-Type": "application/json" },
+            credentials: 'include',
+            body: {
+                email: email.value
+            }
+        })
+
+        alert(res.message)
+
+        email.value = ''
+    } catch (err) {
+        const data = err?.data
+
+        if (Array.isArray(data?.detail)) {
+            error.value = data.detail[0]?.msg ?? 'Validation error'
+        }
+        else if (typeof data?.detail === 'string') {
+            error.value = data.detail
+        }
+        else {
+            error.value = 'Something went wrong'
+        }
     }
 }
 </script>
@@ -69,6 +108,20 @@ async function login() {
             <button type="submit" :disabled="loading" class="w-full p-2 bg-green-400 text-white font-medium rounded-md transition duration-200 hover:bg-green-500 hover:ring-4 hover:ring-green-400 hover:ring-opacity-20 focus:outline-none focus:bg-green-500 active:scale-95">
                 {{ loading ? 'Logging in...' : 'Login' }}
             </button>
+
+            <p v-if="resend_mail" class="text-md text-center">
+                Verify your email address to login.
+
+                <br>
+
+                Verification email not received?
+                <a @click="resendVerificationEmail" :disabled="loading" class="text-green-400 font-medium hover:underline">Resend verification email</a>
+            </p>
         </form>
+
+        <p class="text-md">
+            Don't have an account?
+            <NuxtLink to="/register" class="text-green-400 font-medium hover:underline">Register here</NuxtLink>
+        </p>
     </section>
 </template>
