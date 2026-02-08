@@ -4,6 +4,8 @@ from fastapi import APIRouter, Request, Depends, Body
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse
 
+from pydantic import BaseModel
+
 from sqlalchemy.orm import Session
 
 from app.db.model.user import UserModel, EmailVerification
@@ -37,7 +39,7 @@ def verify_mail(
     if record.used: 
         raise HTTPException(status_code=400, detail="Link is already used and expired")
     
-    user = (db.query(UserModel).filter(UserModel.username==record.username).first())
+    user = (db.query(UserModel).filter(UserModel.user_id==record.id).first())
     if user is None:
         raise HTTPException(status_code=400, detail="User not found during mail validation")
 
@@ -51,15 +53,19 @@ def verify_mail(
         status_code=302
     )
 
+
+class ResendMailRequest(BaseModel):
+    email: str
+
 @router.post('/resend_mail')
 @limiter.limit('5/minute')   # allow max 5 requests per minute per IP
 def resend_mail(
     request: Request,
-    email: str = Body(...),
+    payload: ResendMailRequest,
     db: Session = Depends(get_db),
 ):
     link = prepare_verification_link(db)
-    send_mail_verification(email, link)
-    return {"detail": "Mail verification sent"}
+    send_mail_verification(payload.email, link)
+    return {"message": "Mail verification sent"}
 
 
