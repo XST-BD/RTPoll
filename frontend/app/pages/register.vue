@@ -8,7 +8,6 @@ useHead({
 
 const router = useRouter()
 
-const username = ref('')
 const email = ref('')
 const password = ref('')
 const error = ref(null)
@@ -24,7 +23,6 @@ async function register() {
             headers: { "Content-Type": "application/json" },
             credentials: 'include',
             body: {
-                username: username.value,
                 email: email.value,
                 password: password.value,
             }
@@ -34,7 +32,6 @@ async function register() {
 
         router.push('/login')
 
-        username.value = ''
         email.value = ''
         password.value = ''
     } catch (err) {
@@ -63,11 +60,6 @@ async function register() {
 
         <form class="w-full max-w-xl flex flex-col gap-10" @submit.prevent="register">
             <div class="flex flex-col gap-4">
-                <div class="flex flex-col gap-1">
-                    <label for="username" class="font-medium">Username</label>
-                    <input id="username" v-model="username" class="w-full h-10 p-2 border rounded-md border-green-300 transition duration-200 focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400 focus:ring-opacity-20" required>
-                </div>
-
                 <div class="flex flex-col gap-1">
                     <label for="email" class="font-medium">Email</label>
                     <input id="email" v-model="email" class="w-full h-10 p-2 border rounded-md border-green-300 transition duration-200 focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400 focus:ring-opacity-20" required>
