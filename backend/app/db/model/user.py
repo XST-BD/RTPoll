@@ -1,11 +1,10 @@
 from datetime import date
-from typing import List
 import uuid
 
 from sqlalchemy import (
-    Column, Row, Integer, Float, String, Boolean, JSON, Date, func
+    Column, Integer, String, Date
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
@@ -25,7 +24,7 @@ class UserModel(Base):
     creation_date = Column(Date, nullable=False, default=date.today())
 
     # relationship to PollModel (polls get deleted with user if user is deleted)
-    # polls = relationship("PollModel", back_populates="creator", cascade="all, delete-orphan")
+    polls = relationship("PollModel", back_populates="creator", cascade="all, delete-orphan")
 
 
 class EmailVerification(Base):
