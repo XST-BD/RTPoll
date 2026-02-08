@@ -13,8 +13,8 @@ Base.metadata.create_all(bind=dbengine)
 async def response_root():
     return {"status": "ok"}
 
-router.include_router(auth.router, prefix='/v0/auth', tags=['Authentication endpoint'])
-router.include_router(user.router, prefix='/v0/user', tags=['User management endpoint'])
+router.include_router(auth.router, prefix='/api/v0/auth', tags=['Authentication endpoint'])
+router.include_router(user.router, prefix='/api/v0/user', tags=['User management endpoint'])
 
 app.include_router(router)
 

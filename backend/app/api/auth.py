@@ -52,7 +52,7 @@ def verify_mail(
     )
 
 @router.get('/resend_mail')
-@limiter.limit('5/minute')   # <--- allow max 5 requests per minute per IP
+@limiter.limit('5/minute')   # allow max 5 requests per minute per IP
 def resend_mail(
     request: Request, token: str, db: Session = Depends(get_db)
 ):
