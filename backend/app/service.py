@@ -7,14 +7,16 @@ import hashlib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-from fastapi import Request
+from fastapi import Request, Depends, status
+from fastapi.exceptions import HTTPException
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
 from app.db.base import dbengine
-from app.db.model.user import EmailVerification
+from app.db.model.user import EmailVerification, UserModel
+from app.deps import get_db
 
 from app.setup import (
     SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, BACKEND_URL1
@@ -97,6 +99,24 @@ def send_mail_verification(
         print(f"Error: Unable to send email. {e}")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
+
+def get_current_user(
+    request: Request, db: Session = Depends(get_db)
+) -> UserModel:
+    
+    user_id = request.session.get("user_id")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
+    user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found"
+        )
+    return user
 
 
 def get_current_user_state(request: Request):
