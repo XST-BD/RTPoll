@@ -16,23 +16,18 @@ router = APIRouter()
 
 @router.post('/register')
 def register_user(
-    username: str = Body(...),
     email: str = Body(...),
     password: str = Body(...),
     db: Session = Depends(get_db)
 ):
 
     # Step 1: validate input
-    error = validate_user_input(username, email, password)
+    error = validate_user_input(email, password)
     if error:
         raise HTTPException(status_code=400, detail=error)
 
     # Step 2: insert user into SQLite
-    new_user = UserModel(
-        username=username, 
-        email=email,
-        password=hash_password(password),
-    )
+    new_user = UserModel(email=email, password=hash_password(password))
 
     db.add(new_user)
     try:
@@ -44,7 +39,7 @@ def register_user(
         validate_db_entry(str(e.orig).lower())
 
 
-    link = prepare_verification_link(username, db)
+    link = prepare_verification_link(db)
     send_mail_verification(email, link)
     return {"message": "Check your mail box to verify your account"}
 

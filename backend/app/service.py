@@ -31,16 +31,11 @@ def generate_login_url_token() -> tuple[str, str]:
     return token, token_hash()
 
 
-def prepare_verification_link(
-    user: str, db: Session
-):
+def prepare_verification_link(db: Session):
     # token setup
     token, token_hash = generate_login_url_token()
 
-    verification = EmailVerification(
-        username=user,
-        token_hash=token_hash,
-    )
+    verification = EmailVerification(token_hash=token_hash)
 
     db.add(verification)
 

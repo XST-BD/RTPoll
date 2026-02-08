@@ -17,14 +17,8 @@ def validate_email(email_addr: str):
         return False
 
 
-def validate_user_input(username: str, email: str, password: str):
-    # Username: only letters, numbers, underscores
-    if not re.fullmatch(r'\w+', username):
-        return "Username can only contain letters, numbers, and underscores"
+def validate_user_input(email: str, password: str):
     
-    if len(username) < 4:
-        return "Username can't have less than 4 characters"
-
     # Email: simple regex check
     if not validate_email(email):
         return "Invalid email format"

@@ -5,7 +5,7 @@ import uuid
 from sqlalchemy import (
     Column, Row, Integer, Float, String, Boolean, JSON, Date, func
 )
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 
@@ -19,7 +19,6 @@ class UserModel(Base):
         default=lambda: str(uuid.uuid4())           # auto-generate
     )
 
-    username = Column(String, nullable=False, unique=True)
     email = Column(String, nullable=False, unique=True)
     password: Mapped[str] = mapped_column(nullable=False)
     is_verified: Mapped[bool] = mapped_column(default=False)
@@ -34,7 +33,6 @@ class EmailVerification(Base):
     __tablename__ = "email_verifications"
 
     id = Column(Integer, primary_key=True)
-    username = Column(String, nullable=False, unique=True)
     token_hash = Column(String, index=True)
     used: Mapped[bool] = mapped_column(default=False)
 

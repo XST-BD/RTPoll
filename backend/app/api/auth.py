@@ -54,11 +54,11 @@ def verify_mail(
 @router.post('/resend_mail')
 @limiter.limit('5/minute')   # allow max 5 requests per minute per IP
 def resend_mail(
-    username: str = Body(...),
+    request: Request,
     email: str = Body(...),
     db: Session = Depends(get_db),
 ):
-    link = prepare_verification_link(username, db)
+    link = prepare_verification_link(db)
     send_mail_verification(email, link)
     return {"detail": "Mail verification sent"}
 
