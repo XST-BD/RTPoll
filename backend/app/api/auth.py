@@ -1,6 +1,6 @@
 import hashlib
 
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, Body
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse
 
@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.db.model.user import UserModel, EmailVerification
 from app.deps import get_db
-from app.service import get_current_user_state
+from app.service import get_current_user_state, send_mail_verification, prepare_verification_link
 from app.setup import router, limiter, FRONTEND_URL
 
 router = APIRouter()
@@ -51,12 +51,15 @@ def verify_mail(
         status_code=302
     )
 
-@router.get('/resend_mail')
+@router.post('/resend_mail')
 @limiter.limit('5/minute')   # allow max 5 requests per minute per IP
 def resend_mail(
-    request: Request, token: str, db: Session = Depends(get_db)
+    username: str = Body(...),
+    email: str = Body(...),
+    db: Session = Depends(get_db),
 ):
-    verify_mail(token, db)
+    link = prepare_verification_link(username, db)
+    send_mail_verification(email, link)
     return {"detail": "Mail verification sent"}
 
 
