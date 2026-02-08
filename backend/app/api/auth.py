@@ -39,7 +39,7 @@ def verify_mail(
     if record.used: 
         raise HTTPException(status_code=400, detail="Link is already used and expired")
     
-    user = (db.query(UserModel).filter(UserModel.user_id==record.id).first())
+    user = (db.query(UserModel).filter(UserModel.email==record.email).first())
     if user is None:
         raise HTTPException(status_code=400, detail="User not found during mail validation")
 
@@ -64,7 +64,7 @@ def resend_mail(
     payload: ResendMailRequest,
     db: Session = Depends(get_db),
 ):
-    link = prepare_verification_link(db)
+    link = prepare_verification_link(db=db, email=payload.email)
     send_mail_verification(payload.email, link)
     return {"message": "Mail verification sent"}
 

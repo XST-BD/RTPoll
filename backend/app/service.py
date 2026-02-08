@@ -23,7 +23,6 @@ from app.setup import (
 from app.utils import validate_db_entry
 
 
-
 def generate_login_url_token() -> tuple[str, str]:
     token = secrets.token_urlsafe(32)
     token_hash = hashlib.sha256(token.encode()).hexdigest
@@ -31,14 +30,13 @@ def generate_login_url_token() -> tuple[str, str]:
     return token, token_hash()
 
 
-def prepare_verification_link(db: Session):
+def prepare_verification_link(db: Session, email: str):
     # token setup
     token, token_hash = generate_login_url_token()
 
-    verification = EmailVerification(token_hash=token_hash)
+    verification = EmailVerification(email=email, token_hash=token_hash)
 
     db.add(verification)
-
     try:
         db.commit()
     except IntegrityError as e:

@@ -33,6 +33,7 @@ class EmailVerification(Base):
     __tablename__ = "email_verifications"
 
     id = Column(Integer, primary_key=True)
+    email = Column(String, nullable=False, unique=True)
     token_hash = Column(String, index=True)
     used: Mapped[bool] = mapped_column(default=False)
 
