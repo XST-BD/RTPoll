@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlalchemy import paginate
 
 from pydantic import BaseModel, Field
-
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from typing import List, Optional
@@ -13,6 +14,7 @@ from app.db.model.user import UserModel
 from app.db.model.poll import PollModel
 from app.deps import get_db
 from app.service import get_current_user
+from app.setup import CustomParams
 
 router = APIRouter()
 
@@ -52,29 +54,51 @@ def poll_create(
     }
 
 
-@router.get('/poll/view')
+class PollResponseModel(BaseModel):
+    id: int
+    question: str
+    expires_at: Optional[datetime]
+    is_indefinite: bool
+    votes: int = 0
+    top_pick: str = "Not implemented"
+
+    class Config:
+        from_attributes = True
+
+
+@router.get('/poll/view', response_model=Page[PollResponseModel])
 def poll_view(
-    poll_id: int,
-    db: Session = Depends(get_db)
+    expired: bool = False,
+    params: CustomParams = Depends(),
+    db: Session = Depends(get_db),
+    user: UserModel = Depends(get_current_user),
 ):
     
-    poll = db.query(PollModel).filter(PollModel.id==poll_id).first()
-    
-    if poll is None: 
-        raise HTTPException(404, "Poll not found")
-    
-    if poll.expires_at is None:
-        now = datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc)
+    polls_query = db.query(PollModel).filter(PollModel.creator_id==user.user_id)
 
-        if poll.expires_at is not None and poll.expires_at <= now:
-            return {"message": "Requested poll already expired"}
+    if expired: 
+        polls_query = polls_query.filter(
+            PollModel.expires_at.isnot(None),
+            PollModel.expires_at <= now
+        )
+                
+    else: 
+        polls_query = polls_query.filter(
+            or_(
+                PollModel.expires_at.is_(None),
+                PollModel.expires_at > now
+            )
+        )
 
-    return poll
+    polls_query = polls_query.order_by()
+    return paginate(polls_query, params)
+
 
 @router.get('/poll/result')
 def poll_result(
-    poll_id: str, 
-    db: Session = Depends(get_db), 
+    poll_id: str,
+    db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
 ):
     poll = db.query(PollModel).filter(PollModel.id==poll_id)

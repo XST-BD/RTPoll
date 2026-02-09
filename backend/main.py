@@ -1,5 +1,3 @@
-from fastapi import Depends
-
 from app.api import auth, dashboard, user
 from app.db.base import Base, dbengine
 from app.setup import app, cors_permit, router

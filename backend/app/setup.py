@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse 
+from fastapi_pagination import Params, add_pagination
 
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -31,6 +32,14 @@ async def rate_limit_handler(request: Request, exc: Exception):
     raise exc
 
 app.add_exception_handler(RateLimitExceeded, rate_limit_handler)
+
+# Paginator
+class CustomParams(Params):
+    size: int = 20
+    max_size: int = 100
+
+add_pagination(app)
+
 
 load_dotenv()
 
