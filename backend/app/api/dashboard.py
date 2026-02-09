@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends
 
 from pydantic import BaseModel, Field
@@ -18,6 +20,7 @@ router = APIRouter()
 class CreatePollRequest(BaseModel):
     question: str = Field(min_length=1, max_length=255)
     options: List[str] = Field()
+    expires_at: datetime
 
 
 @router.post('/poll/create')
@@ -31,18 +34,32 @@ def poll_create(
         question=payload.question, 
         creator_id=user.user_id, 
         options=payload.options,
+        expires_at=payload.expires_at,
     )
+
     db.add(poll)
     db.commit()
     db.refresh(poll)
-    return {"message": "Poll created", "Poll": poll}
+    return {"message": "Poll created", "Poll": poll.id}
 
 
 
 @router.get('/poll/view')
-def poll_view():
-    return {"message": "poll view endpoint"}
+def poll_view(
+    poll_id: str,
+    db: Session = Depends(get_db)
+):
+    
+    poll = db.query(PollModel).filter(PollModel.id==poll_id)
+    return {"message": "Poll view", "Poll": poll}
+
 
 @router.get('/poll/result')
-def poll_result():
+def poll_result(
+    poll_id: str, 
+    db: Session = Depends(get_db), 
+    user: UserModel = Depends(get_current_user),
+):
+    poll = db.query(PollModel).filter(PollModel.id==poll_id)
+    # TODO: Implement results
     return {"message": "poll result endpoint"}

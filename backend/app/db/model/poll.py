@@ -18,4 +18,4 @@ class PollModel(Base):
     creator = relationship('UserModel', back_populates='polls')
     creator_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
 
-    expires_at = Column(DateTime, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
