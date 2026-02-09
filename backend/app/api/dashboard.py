@@ -46,6 +46,14 @@ def poll_create(
     db.commit()
     db.refresh(poll)
 
+    if is_indefinite: 
+        return {
+            "message": "Poll created",
+            "id": poll.id,
+            "is_indefinite": poll.is_indefinite,
+            "expires_at": "infinite",
+        }
+
     return {
         "message": "Poll created",
         "id": poll.id,
