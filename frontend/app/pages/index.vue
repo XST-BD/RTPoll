@@ -1,43 +1,14 @@
 <script setup>
-import { ref } from 'vue'
-
-const menu = ref(false)
-
-function toggleMenu() {
-    menu.value = !menu.value
-}
+import Navbar from '@/components/Navbar.vue'
 </script>
 
 <template>
-    <div class="min-h-screen font-[Poppins] flex flex-col select-none">
-        <header class="self-center w-full py-2 px-5 flex sm:flex-row justify-between flex-col gap-4">
-            <section class="flex justify-between items-center">
-                <svg width="105" height="50">
-                    <text x="50%" y="45" text-anchor="middle" font-size="45" font-family="Anton" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400">RTPoll</text>
-                </svg>
-
-                <div class="cursor-pointer flex flex-col gap-[5px] sm:hidden" @click="toggleMenu">
-                    <span class="block bg-green-400 w-6 h-[2px] rounded"></span>
-                    <span class="block bg-green-400 w-6 h-[2px] rounded"></span>
-                    <span class="block bg-green-400 w-6 h-[2px] rounded"></span>
-                </div>
-            </section>
-
-            <nav :class="['self-center bg-green-100 sm:bg-white flex-col sm:flex sm:flex-row sm:gap-3 text-center', menu ? 'flex' : 'hidden sm:flex']">
-                <NuxtLink to="/login" class="sm:w-fit w-[97vw] py-2 px-6 sm:ring-2 ring-green-400 text-green-400 font-medium sm:rounded-lg hover:bg-green-200 sm:hover:bg-green-500 sm:hover:ring-green-500 sm:hover:text-white duration-300 ease-in-out  hover:scale-98 sm:text-shadow-2xs sm:shadow-md">
-                    Login
-                </NuxtLink>
-
-                <NuxtLink to="/register"
-                    class="sm:w-fit w-[97vw] py-2 px-6 sm:ring-2 ring-green-400 sm:bg-green-400 sm:text-white text-green-400 font-medium sm:rounded-lg sm:hover:text-white hover:bg-green-200 sm:hover:bg-green-500 sm:hover:ring-green-500 duration-300 ease-in-out hover:scale-98 sm:text-shadow-2xs sm:shadow-md">
-                    Sign Up
-                </NuxtLink>
-            </nav>
-        </header>
+    <div class="min-h-screen flex flex-col select-none">
+        <Navbar />
 
         <main class="flex-1">
             <section class="min-h-[40vh] pt-20 pb-5 px-4 flex flex-col justify-center items-center gap-10 text-center">
-                <h2 class="max-w-xl font-[Anton] text-5xl text-green-400 text-shadow-xs">
+                <h2 class="max-w-xl text-5xl">
                     Make Your Own Polling and Share Easily with RTPoll
                 </h2>
 
@@ -68,7 +39,7 @@ function toggleMenu() {
             </section>
 
             <section id="features" class="bg-green-400 pb-16 px-6 flex flex-col justify-center items-center gap-16 text-center">
-                <h2 class="font-[Anton] text-5xl font-medium text-white underline underline-offset-8 decoration-wavy text-shadow-md">
+                <h2 class="text-white underline underline-offset-8 decoration-wavy text-5xl">
                     Features
                 </h2>
 
@@ -80,7 +51,7 @@ function toggleMenu() {
                             </svg>
                         </div>
 
-                        <h3 class="text-2xl font-[Anton] text-green-400 text-shadow-2xs">
+                        <h3>
                             Create Polls
                         </h3>
 
@@ -101,7 +72,7 @@ function toggleMenu() {
                             </svg>
                         </div>
 
-                        <h3 class="text-2xl font-[Anton] text-green-400 text-shadow-2xs">
+                        <h3>
                             Share Polls
                         </h3>
 
@@ -119,7 +90,7 @@ function toggleMenu() {
                             </svg>
                         </div>
 
-                        <h3 class="text-2xl font-[Anton] text-green-400 text-shadow-2xs">
+                        <h3>
                             Analyze Results
                         </h3>
 
@@ -134,7 +105,7 @@ function toggleMenu() {
                 <div class="bg-gradient-to-b from-green-400 to-transparent h-[150px] w-full"></div>
 
                 <article class="min-h-[80vh] px-4 py-20 flex flex-col justify-center items-center gap-16 text-center">
-                    <h2 class="text-5xl font-[Anton] text-green-400 text-shadow-md">
+                    <h2 class="text-5xl">
                         Create Polls in a Minute
                     </h2>
 
@@ -147,10 +118,10 @@ function toggleMenu() {
             <NuxtLink to="/" class="text-8xl font-[Anton]">RTPoll</NuxtLink>
 
             <nav class="flex flex-col justify-center items-center gap-3">
-                <NuxtLink to="/#features" class="duration-300 ease-in-out hover:underline underline-offset-8 decoration-wavy">Features</NuxtLink>
-                <NuxtLink to="/about" class="duration-300 ease-in-out hover:underline underline-offset-8 decoration-wavy">About Us</NuxtLink>
-                <NuxtLink to="/login" class="duration-300 ease-in-out hover:underline underline-offset-8 decoration-wavy">Login</NuxtLink>
-                <NuxtLink to="/register" class="duration-300 ease-in-out hover:underline underline-offset-8 decoration-wavy">Sign Up</NuxtLink>
+                <NuxtLink to="/login" class="link">Login</NuxtLink>
+                <NuxtLink to="/register" class="link">Sign Up</NuxtLink>
+                <NuxtLink to="/#features" class="link">Features</NuxtLink>
+                <NuxtLink to="/about" class="link">About Us</NuxtLink>
             </nav>
         </footer>
     </div>

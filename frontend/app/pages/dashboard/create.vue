@@ -45,15 +45,17 @@ async function createPoll() {
     try {
         loading.value = true
 
-        const res = await $fetch('http://127.0.0.1:8000/api/v0/createpoll/', {
+        const res = await $fetch('http://127.0.0.1:8000/api/v0/dashboard/poll/create', {
             method: 'POST',
+            headers: { "Content-Type": "application/json" },
+            credentials: 'include',
             body: {
                 question: question.value,
                 options: cleanedOptions
             }
         })
 
-        alert('Poll created:', res)
+        navigateTo(`/dashboard/poll/${res.poll_id}`)
 
         question.value = ''
         options.value = ['', '']
@@ -67,8 +69,8 @@ async function createPoll() {
 </script>
 
 <template>
-    <section class="w-full p-5 flex flex-col items-center gap-5">
-        <h2 class="text-green-400 font-bold text-3xl">Create A Poll</h2>
+    <div class="w-full p-5 flex flex-col items-center gap-10">
+        <h2>Create A Poll</h2>
 
         <p v-if="error" class="text-red-400 text-sm">{{ error }}</p>
 
@@ -82,15 +84,15 @@ async function createPoll() {
                 <div class="flex flex-col gap-2">
                     <div class="flex items-center justify-between">
                         <label class="font-medium">Enter options</label>
-                        <button type="button" class="text-sm text-green-400 hover:text-green-500 font-medium" @click="addOption">
+                        <button type="button" class="text-sm text-green-400 hover:text-green-500 font-bold" @click="addOption">
                             + Add option
                         </button>
                     </div>
 
                     <div class="flex flex-col gap-2">
-                        <div v-for="(opt, idx) in options" :key="idx" class="flex items-center gap-2">
-                            <input v-model="options[idx]" :placeholder="`Option ${idx + 1}`" class="flex-1 p-2 border rounded-md border-green-300 transition duration-200 focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400 focus:ring-opacity-20" required>
-                            <button type="button" class="p-2 text-sm text-red-400 hover:text-red-500" :disabled="options.length === 2" title="Remove option" @click="removeOption(idx)">
+                        <div v-for="(, idx) in options" :key="idx" class="flex items-center gap-2">
+                            <input v-model="options[idx]" :placeholder="`Option ${idx + 1}`" class="flex-1" required>
+                            <button type="button" class="p-2 text-sm text-red-400 hover:text-red-500 font-bold transition duration-300 ease-in-out" :disabled="options.length === 2" title="Remove option" @click="removeOption(idx)">
                                 ✕
                             </button>
                         </div>
@@ -98,9 +100,9 @@ async function createPoll() {
                 </div>
             </div>
 
-            <button type="submit" :disabled="loading" class="w-full p-2 bg-green-400 text-white font-medium rounded-md transition duration-200 hover:bg-green-500 hover:ring-4 hover:ring-green-400 hover:ring-opacity-20 focus:outline-none focus:bg-green-500 active:scale-95">
+            <button type="submit" :disabled="loading" class="btn">
                 {{ loading ? 'Creating...' : 'Create' }}
             </button>
         </form>
-    </section>
+    </div>
 </template>

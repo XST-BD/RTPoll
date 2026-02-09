@@ -88,7 +88,7 @@ async function resendVerificationEmail() {
 
 <template>
     <section class="w-full min-h-screen p-5 flex flex-col justify-center items-center gap-12">
-        <h2 class="text-green-400 font-bold text-3xl">Login to Your Account</h2>
+        <h2 class="text-3xl">Login to Your Account</h2>
 
         <p v-if="error" class="text-red-400 text-sm">{{ error }}</p>
 
@@ -96,32 +96,30 @@ async function resendVerificationEmail() {
             <div class="flex flex-col gap-4">
                 <div class="flex flex-col gap-1">
                     <label for="email" class="font-medium">Email</label>
-                    <input id="email" v-model="email" class="w-full h-10 p-2 border rounded-md border-green-300 transition duration-200 focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400 focus:ring-opacity-20" required>
+                    <input id="email" v-model="email" required>
                 </div>
 
                 <div class="flex flex-col gap-1">
                     <label for="password" class="font-medium">Password</label>
-                    <input id="password" v-model="password" type="password" class="w-full h-10 p-2 border rounded-md border-green-300 transition duration-200 focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400 focus:ring-opacity-20" required>
+                    <input id="password" v-model="password" type="password" required>
                 </div>
             </div>
 
-            <button type="submit" :disabled="loading" class="w-full p-2 bg-green-400 text-white font-medium rounded-md transition duration-200 hover:bg-green-500 hover:ring-4 hover:ring-green-400 hover:ring-opacity-20 focus:outline-none focus:bg-green-500 active:scale-95">
+            <button type="submit" :disabled="loading" class="btn">
                 {{ loading ? 'Logging in...' : 'Login' }}
             </button>
 
             <p v-if="resend_mail" class="text-md text-center">
-                Verify your email address to login.
-
-                <br>
-
                 Verification email not received?
-                <a @click="resendVerificationEmail" :disabled="loading" class="text-green-400 font-medium hover:underline">Resend verification email</a>
+                <a @click="resendVerificationEmail" :disabled="loading" class="link text-green-400 font-medium hover:text-green-500">
+                    Resend verification email
+                </a>
             </p>
         </form>
 
         <p class="text-md">
             Don't have an account?
-            <NuxtLink to="/register" class="text-green-400 font-medium hover:underline">Register here</NuxtLink>
+            <NuxtLink to="/register" class="link text-green-400 font-medium hover:text-green-500">Register here</NuxtLink>
         </p>
     </section>
 </template>
