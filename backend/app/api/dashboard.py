@@ -51,7 +51,7 @@ def poll_create(
             "message": "Poll created",
             "id": poll.id,
             "is_indefinite": poll.is_indefinite,
-            "expires_at": "infinite",
+            "expires_at": "never",
         }
 
     return {
