@@ -3,7 +3,7 @@ import { Icon } from "@iconify/vue";
 </script>
 
 <template>
-    <aside class="flex flex-col gap-3 p-2 border-r">
+    <aside class="flex flex-col gap-3 p-2 border-r border-green-300">
         <nav class="flex flex-col gap-3">
             <router-link to="/dashboard" title="Home" class="link-icon">
                 <Icon icon="carbon:home" :ssr="true" class="text-3xl" />

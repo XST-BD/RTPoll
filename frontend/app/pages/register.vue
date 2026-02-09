@@ -56,7 +56,7 @@ async function register() {
     <section class="w-full min-h-screen p-5 flex flex-col justify-center items-center gap-12">
         <h2 class="">Register an Account</h2>
 
-        <p v-if="error" class="text-red-400 text-sm">{{ error }}</p>
+        <p v-if="error" class="error-msg">{{ error }}</p>
 
         <form class="w-full max-w-xl flex flex-col gap-10" @submit.prevent="register">
             <div class="flex flex-col gap-4">

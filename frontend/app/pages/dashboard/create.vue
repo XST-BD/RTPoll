@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 definePageMeta({
     middleware: 'auth',
@@ -10,10 +10,14 @@ useHead({
     title: 'Create Poll',
 })
 
+const duration = ref('infinite')
+const customDuration = ref('')
 const question = ref('')
 const options = ref(['', ''])
 const loading = ref(false)
 const error = ref(null)
+
+const now = computed(() => new Date().toISOString().slice(0,16))
 
 function addOption() {
     if (options.value.length < 10) {
@@ -51,11 +55,12 @@ async function createPoll() {
             credentials: 'include',
             body: {
                 question: question.value,
-                options: cleanedOptions
+                options: cleanedOptions,
+                expires_at: duration.value === 'custom' && customDuration.value ? new Date(customDuration.value).toISOString() : ''
             }
         })
 
-        navigateTo(`/dashboard/poll/${res.poll_id}`)
+        navigateTo(`/dashboard/poll/${res.id}`)
 
         question.value = ''
         options.value = ['', '']
@@ -69,16 +74,29 @@ async function createPoll() {
 </script>
 
 <template>
-    <div class="w-full p-5 flex flex-col items-center gap-10">
+    <div class="w-full max-w-xl p-5 flex flex-col items-center gap-10">
         <h2>Create A Poll</h2>
 
-        <p v-if="error" class="text-red-400 text-sm">{{ error }}</p>
+        <p v-if="error" class="error-msg">{{ error }}</p>
 
-        <form class="w-full max-w-xl flex flex-col gap-10" @submit.prevent="createPoll">
+        <form class="w-full flex flex-col gap-10" @submit.prevent="createPoll">
             <div class="flex flex-col gap-4">
                 <div class="flex flex-col gap-1">
+                    <label for="duration" class="font-medium">Enter Poll Duration</label>
+                    <select id="duration" v-model="duration">
+                        <option value="infinite">Infinite</option>
+                        <option value="custom">Custom Duration</option>
+                    </select>
+                </div>
+
+                <div v-if="duration === 'custom'" class="flex flex-col gap-1">
+                    <label for="custom_duration" class="font-medium">Enter Poll Duration</label>
+                    <input type="datetime-local" v-model="customDuration" :min="now" required />
+                </div>
+
+                <div class="flex flex-col gap-1">
                     <label for="question" class="font-medium">Enter your question or opinion</label>
-                    <textarea id="question" v-model="question" class="w-full h-20 p-2 border rounded-md border-green-300 transition duration-200 resize-none focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400 focus:ring-opacity-20" required />
+                    <textarea id="question" v-model="question" class="h-20 resize-none" required />
                 </div>
 
                 <div class="flex flex-col gap-2">
@@ -90,7 +108,7 @@ async function createPoll() {
                     </div>
 
                     <div class="flex flex-col gap-2">
-                        <div v-for="(, idx) in options" :key="idx" class="flex items-center gap-2">
+                        <div v-for="(option, idx) in options" :key="idx" class="flex items-center gap-2">
                             <input v-model="options[idx]" :placeholder="`Option ${idx + 1}`" class="flex-1" required>
                             <button type="button" class="p-2 text-sm text-red-400 hover:text-red-500 font-bold transition duration-300 ease-in-out" :disabled="options.length === 2" title="Remove option" @click="removeOption(idx)">
                                 ✕
