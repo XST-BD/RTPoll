@@ -1,6 +1,7 @@
+from datetime import datetime
 import uuid
 
-from sqlalchemy import String, JSON, Column, Integer, ForeignKey, DateTime
+from sqlalchemy import Boolean, String, JSON, Column, Integer, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from typing import List
@@ -18,4 +19,5 @@ class PollModel(Base):
     creator = relationship('UserModel', back_populates='polls')
     creator_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
 
-    expires_at = Column(DateTime(timezone=True), nullable=False)
+    is_indefinite: Mapped[bool] = mapped_column(default=False)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
