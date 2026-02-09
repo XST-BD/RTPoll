@@ -56,7 +56,7 @@ async function createPoll() {
             body: {
                 question: question.value,
                 options: cleanedOptions,
-                expires_at: duration.value === 'custom' && customDuration.value ? new Date(customDuration.value).toISOString() : ''
+                expires_at: duration.value === 'custom' && customDuration.value ? new Date(customDuration.value).toISOString() : null
             }
         })
 

@@ -78,7 +78,7 @@ function sharePoll(id) {
         <p v-else-if="!poll" class="error-msg">Poll not found</p>
 
         <div v-else class="w-full flex flex-col items-center gap-4">
-            <div>
+            <div class="w-full">
                 <div class="bg-green-400 p-4 rounded-t-xl flex justify-between gap-4">
                     <h2 class="text-white">{{ poll.question }}</h2>
 
@@ -93,8 +93,8 @@ function sharePoll(id) {
                 </ul>
             </div>
 
-            <p class="text-sm font-bold text-gray-400">
-                {{ expires_at ? `Expires at: ${expires_at}` : 'Expires at: Never' }}
+            <p class="w-full text-center text-sm text-gray-400">
+                Poll Ends: {{ expires_at || 'Never' }}
             </p>
         </div>
     </div>
