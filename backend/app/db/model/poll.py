@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
-from sqlalchemy import Boolean, String, JSON, Column, Integer, ForeignKey, DateTime
+from sqlalchemy import Boolean, String, JSON, Column, Integer, ForeignKey, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from typing import List
@@ -22,3 +22,4 @@ class PollModel(Base):
 
     is_indefinite: Mapped[bool] = mapped_column(default=False)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

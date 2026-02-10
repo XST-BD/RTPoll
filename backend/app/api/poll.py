@@ -65,8 +65,6 @@ def poll_create(
 class PollResponseModel(BaseModel):
     id: int
     question: str
-    expires_at: Optional[datetime]
-    is_indefinite: bool
     votes: int = 0
     top_pick: str = "Not implemented"
 
@@ -99,7 +97,7 @@ def poll_view(
             )
         )
 
-    polls_query = polls_query.order_by()
+    polls_query = polls_query.order_by(PollModel.created_at.desc())
     return paginate(polls_query, params)
 
 
