@@ -74,7 +74,7 @@ class PollResponseModel(BaseModel):
         from_attributes = True
 
 
-@router.get('/poll/view', response_model=Page[PollResponseModel])
+@router.get('/poll/view/all', response_model=Page[PollResponseModel])
 def poll_view(
     expired: bool = False,
     params: CustomParams = Depends(),
@@ -101,6 +101,21 @@ def poll_view(
 
     polls_query = polls_query.order_by()
     return paginate(polls_query, params)
+
+
+@router.get('/poll/view')
+def poll_view_specific(
+    poll_id: int,
+    db: Session = Depends(get_db),
+    user: UserModel = Depends(get_current_user),
+):
+    polls_query = db.query(PollModel).filter(PollModel.creator_id==user.user_id)
+    poll = polls_query.filter(PollModel.id==poll_id).first()
+
+    if poll is None: 
+        return {"message": "Poll not found"}
+    
+    return {"Poll": poll}
 
 
 @router.get('/poll/result')
