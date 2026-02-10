@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi_pagination import Page
-from fastapi_pagination.ext.sqlalchemy import paginate
+from fastapi_pagination import paginate
 
 from pydantic import BaseModel, Field
 from sqlalchemy import or_
@@ -65,8 +65,9 @@ def poll_create(
 class PollResponseModel(BaseModel):
     id: int
     question: str
-    votes: int = 0
-    top_pick: str = "Not implemented"
+    options: list[str]
+    votes: list[int]
+    top_pick: str
 
     class Config:
         from_attributes = True
@@ -83,6 +84,9 @@ def poll_view(
     now = datetime.now(timezone.utc)
     polls_query = db.query(PollModel).filter(PollModel.creator_id==user.user_id)
 
+    if polls_query is None:
+        raise HTTPException(404, "Poll not found")
+
     if expired: 
         polls_query = polls_query.filter(
             PollModel.expires_at.isnot(None),
@@ -98,10 +102,35 @@ def poll_view(
         )
 
     polls_query = polls_query.order_by(PollModel.created_at.desc())
-    return paginate(polls_query, params)
+
+    items = []
+
+    for poll in polls_query: 
+
+        poll_top_pick: str
+
+        if poll.votes:
+            max_index = max(range(len(poll.votes)), key=lambda i: poll.votes[i])
+            poll_top_pick = poll.options[max_index]
+        else:
+            poll_top_pick = "None"
+        
+        items.append(
+            PollResponseModel(
+                id=poll.id,
+                question=poll.question,
+                options=poll.options,
+                votes=poll.votes,
+                top_pick=poll_top_pick,
+            )
+        )
 
 
-@router.get('/poll/view')
+    return paginate(items, params)
+
+
+
+@router.get('/poll/view', response_model=PollResponseModel)
 def poll_view_specific(
     poll_id: int,
     db: Session = Depends(get_db),
@@ -111,9 +140,23 @@ def poll_view_specific(
     poll = polls_query.filter(PollModel.id==poll_id).first()
 
     if poll is None: 
-        return {"message": "Poll not found"}
+        raise HTTPException(404, "Poll not found")
     
-    return {"Poll": poll}
+    poll_top_pick: str
+
+    if poll.votes:
+        max_index = max(range(len(poll.votes)), key=lambda i: poll.votes[i])
+        poll_top_pick = poll.options[max_index]
+    else:
+        poll_top_pick = "None"
+
+    return PollResponseModel(
+        id=poll.id, 
+        question=poll.question,
+        options=poll.options,
+        votes=poll.votes,
+        top_pick=poll_top_pick,
+    )
 
 
 @router.get('/poll/result')

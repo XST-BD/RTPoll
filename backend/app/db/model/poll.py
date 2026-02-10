@@ -12,10 +12,10 @@ class PollModel(Base):
 
     __tablename__ = "polls"
 
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     question: Mapped[str] = mapped_column(nullable=False)
-    options: Mapped[Dict[str, str]] = mapped_column(JSON)
-    votes: Mapped[Dict[str, int]] = mapped_column(JSON, default=dict)
+    options: Mapped[list[str]] = mapped_column(JSON, default=list)
+    votes: Mapped[list[int]] = mapped_column(JSON, default=list)
 
     creator = relationship('UserModel', back_populates='polls')
     creator_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
