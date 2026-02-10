@@ -1,9 +1,9 @@
 <script setup>
-import { ref } from 'vue'
-
 useHead({
     title: 'Login',
 })
+
+const { public: { apiBase } } = useRuntimeConfig()
 
 const email = ref('')
 const password = ref('')
@@ -17,7 +17,7 @@ async function login() {
     resend_mail.value = false
 
     try {
-        const res = await $fetch('http://127.0.0.1:8000/api/v0/user/login', {
+        const res = await $fetch(`${apiBase}/user/login`, {
             method: 'POST',
             headers: { "Content-Type": "application/json" },
             credentials: 'include',
@@ -95,12 +95,12 @@ async function resendVerificationEmail() {
         <form class="w-full max-w-xl flex flex-col gap-10" @submit.prevent="login">
             <div class="flex flex-col gap-4">
                 <div class="flex flex-col gap-1">
-                    <label for="email" class="font-medium">Email</label>
+                    <label for="email">Email</label>
                     <input id="email" v-model="email" required>
                 </div>
 
                 <div class="flex flex-col gap-1">
-                    <label for="password" class="font-medium">Password</label>
+                    <label for="password">Password</label>
                     <input id="password" v-model="password" type="password" required>
                 </div>
             </div>

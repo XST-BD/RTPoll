@@ -5,5 +5,10 @@ export default defineNuxtConfig({
 	css: ['@/assets/css/global.css'],
 	devServer: {
 		host: '0.0.0.0'
+	},
+	runtimeConfig: {
+		public: {
+			apiBase: import.meta.env.BACKEND_URL
+		}
 	}
 })

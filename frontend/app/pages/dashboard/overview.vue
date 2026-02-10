@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from "vue";
 import VueApexCharts from "vue3-apexcharts";
 
 definePageMeta({
@@ -45,7 +44,7 @@ const options = ref({
 </script>
 
 <template>
-    <div class="w-full flex flex-col gap-10">
+    <div class="dashboard-body flex-col gap-10">
         <ClientOnly>
             <VueApexCharts type="area" :options="options" :series="series" height="350" />
         </ClientOnly>

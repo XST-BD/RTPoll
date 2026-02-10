@@ -6,7 +6,7 @@ import { Icon } from "@iconify/vue";
     <aside class="flex flex-col gap-3 p-2 border-r border-green-300">
         <nav class="flex flex-col gap-3">
             <router-link to="/dashboard" title="Home" class="link-icon">
-                <Icon icon="carbon:home" :ssr="true" class="text-3xl" />
+                <Icon icon="ion:file-tray-outline" :ssr="true" class="text-3xl" />
             </router-link>
 
             <router-link to="/dashboard/create" title="Create Poll" class="link-icon">

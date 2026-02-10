@@ -25,7 +25,8 @@ h4 {
     @apply text-lg text-green-400;
 }
 
-button, a {
+button,
+a {
     @apply cursor-pointer;
 }
 
@@ -43,10 +44,20 @@ button, a {
     @apply p-2 flex items-center gap-2 rounded-md text-sm text-green-400 transition duration-200 hover:bg-green-100 hover:text-green-500 active:scale-90 active:text-green-500 cursor-pointer;
 }
 
-input, textarea, select {
+label {
+    @apply font-medium;
+}
+
+input,
+textarea,
+select {
     @apply p-2 border rounded-md border-green-300 transition duration-300 focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400 focus:ring-opacity-30;
 }
 
 .error-msg {
     @apply text-red-400 text-sm;
+}
+
+.dashboard-body {
+    @apply w-full p-5 flex;
 }

@@ -1,12 +1,9 @@
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-
 useHead({
     title: 'Register',
 })
 
-const router = useRouter()
+const { public: { apiBase } } = useRuntimeConfig()
 
 const email = ref('')
 const password = ref('')
@@ -18,7 +15,7 @@ async function register() {
     loading.value = true
 
     try {
-        const res = await $fetch('http://127.0.0.1:8000/api/v0/user/register', {
+        const res = await $fetch(`${apiBase}/user/register`, {
             method: 'POST',
             headers: { "Content-Type": "application/json" },
             credentials: 'include',
@@ -30,10 +27,7 @@ async function register() {
 
         alert(res.message)
 
-        router.push('/login')
-
-        email.value = ''
-        password.value = ''
+        navigateTo('/login')
     } catch (err) {
         const data = err?.data
 
@@ -61,12 +55,12 @@ async function register() {
         <form class="w-full max-w-xl flex flex-col gap-10" @submit.prevent="register">
             <div class="flex flex-col gap-4">
                 <div class="flex flex-col gap-1">
-                    <label for="email" class="font-medium">Email</label>
+                    <label for="email">Email</label>
                     <input id="email" v-model="email" required>
                 </div>
 
                 <div class="flex flex-col gap-1">
-                    <label for="password" class="font-medium">Password</label>
+                    <label for="password">Password</label>
                     <input id="password" v-model="password" type="password" required>
                 </div>
             </div>

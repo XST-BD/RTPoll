@@ -1,6 +1,6 @@
 <script setup>
-import { ref } from 'vue'
 import { Icon } from "@iconify/vue";
+import Loading from "@/components/Loading.vue";
 
 definePageMeta({
     middleware: 'auth',
@@ -10,6 +10,8 @@ definePageMeta({
 useHead({
     title: 'Poll Details',
 })
+
+const { public: { apiBase } } = useRuntimeConfig()
 
 const route = useRoute()
 const id = route.params.id
@@ -24,15 +26,15 @@ async function fetchPoll() {
     error.value = null
 
     try {
-        const res = await $fetch(`http://127.0.0.1:8000/api/v0/dashboard/poll/view`, {
+        const res = await $fetch(`${apiBase}/dashboard/poll/view`, {
             method: 'GET',
             headers: { "Content-Type": "application/json" },
             credentials: 'include',
             query: { poll_id: id }
         })
 
-        poll.value = res
-        expires_at.value = new Date(res.expires_at).toLocaleString('en-US', {
+        poll.value = res.Poll
+        expires_at.value = new Date(res.Poll.expires_at).toLocaleString('en-US', {
             year: 'numeric',
             month: 'long',
             day: '2-digit',
@@ -40,6 +42,8 @@ async function fetchPoll() {
             minute: '2-digit',
             hour12: true
         })
+
+        console.log(res)
     } catch (err) {
         error.value = 'Failed to load poll'
     } finally {
@@ -68,10 +72,8 @@ function sharePoll(id) {
 </script>
 
 <template>
-    <div class="w-full max-w-xl p-5 flex flex-col items-center gap-10">
-        <div v-if="loading" class="text-green-400">
-            <Icon icon="eos-icons:bubble-loading" :ssr="true" class="text-6xl" />
-        </div>
+    <div class="dashboard-body max-w-xl flex-col items-center gap-10">
+        <Loading v-if="loading" />
 
         <p v-else-if="error" class="error-msg">{{ error }}</p>
 
@@ -94,7 +96,7 @@ function sharePoll(id) {
             </div>
 
             <p class="w-full text-center text-sm text-gray-400">
-                Poll Ends: {{ expires_at || 'Never' }}
+                Poll Ends: {{ poll.is_indefinite ? 'Never' : expires_at }}
             </p>
         </div>
     </div>

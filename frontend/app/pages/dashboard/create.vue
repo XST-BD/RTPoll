@@ -1,6 +1,4 @@
 <script setup>
-import { ref, computed } from 'vue'
-
 definePageMeta({
     middleware: 'auth',
     layout: 'dashboard'
@@ -9,6 +7,8 @@ definePageMeta({
 useHead({
     title: 'Create Poll',
 })
+
+const { public: { apiBase } } = useRuntimeConfig()
 
 const duration = ref('infinite')
 const customDuration = ref('')
@@ -49,7 +49,7 @@ async function createPoll() {
     try {
         loading.value = true
 
-        const res = await $fetch('http://127.0.0.1:8000/api/v0/dashboard/poll/create', {
+        const res = await $fetch(`${apiBase}/dashboard/poll/create`, {
             method: 'POST',
             headers: { "Content-Type": "application/json" },
             credentials: 'include',
@@ -74,7 +74,7 @@ async function createPoll() {
 </script>
 
 <template>
-    <div class="w-full max-w-xl p-5 flex flex-col items-center gap-10">
+    <div class="dashboard-body max-w-xl flex-col items-center gap-10">
         <h2>Create A Poll</h2>
 
         <p v-if="error" class="error-msg">{{ error }}</p>
@@ -82,7 +82,7 @@ async function createPoll() {
         <form class="w-full flex flex-col gap-10" @submit.prevent="createPoll">
             <div class="flex flex-col gap-4">
                 <div class="flex flex-col gap-1">
-                    <label for="duration" class="font-medium">Enter Poll Duration</label>
+                    <label for="duration">Enter Poll Duration</label>
                     <select id="duration" v-model="duration">
                         <option value="infinite">Infinite</option>
                         <option value="custom">Custom Duration</option>
@@ -90,19 +90,19 @@ async function createPoll() {
                 </div>
 
                 <div v-if="duration === 'custom'" class="flex flex-col gap-1">
-                    <label for="custom_duration" class="font-medium">Enter Poll Duration</label>
+                    <label for="custom_duration">Enter Poll Duration</label>
                     <input type="datetime-local" v-model="customDuration" :min="now" required />
                 </div>
 
                 <div class="flex flex-col gap-1">
-                    <label for="question" class="font-medium">Enter your question or opinion</label>
+                    <label for="question">Enter your question or opinion</label>
                     <textarea id="question" v-model="question" class="h-20 resize-none" required />
                 </div>
 
                 <div class="flex flex-col gap-2">
                     <div class="flex items-center justify-between">
-                        <label class="font-medium">Enter options</label>
-                        <button type="button" class="text-sm text-green-400 hover:text-green-500 font-bold" @click="addOption">
+                        <label>Enter options</label>
+                        <button type="button" class="text-sm text-green-400 hover:text-green-500 font-semibold transition duration-300 ease-in-out" @click="addOption">
                             + Add option
                         </button>
                     </div>
