@@ -9,6 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse 
 from fastapi_pagination import Params, add_pagination
 
+import redis.asyncio as redis
+
 from starlette.middleware.sessions import SessionMiddleware
 
 from slowapi import Limiter
@@ -22,7 +24,7 @@ router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 
-# Custom handler
+# Custom handler for rate limiter
 async def rate_limit_handler(request: Request, exc: Exception):
     if isinstance(exc, RateLimitExceeded):
         return JSONResponse(
@@ -39,6 +41,12 @@ class CustomParams(Params):
     max_size: int = 100
 
 add_pagination(app)
+
+# Caching
+redis_client = redis.from_url(
+    'redis://localhost:6379',
+    decode_response=True,
+)
 
 
 load_dotenv()
