@@ -14,7 +14,7 @@ from app.db.model.user import UserModel
 from app.db.model.poll import PollModel
 from app.deps import get_db
 from app.service import get_current_user
-from app.setup import CustomParams
+from app.setup.paginator import CustomParams
 
 router = APIRouter()
 

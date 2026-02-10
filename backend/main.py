@@ -1,6 +1,7 @@
 from app.api import auth, poll, user, vote, ws
 from app.db.base import Base, dbengine
-from app.setup import app, cors_permit, router
+from app.setup.vars import app, router
+from app.setup.cors import cors_permit
 
 # must pre-load db models else model relationship will crash
 from app.db.model.user import UserModel

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.model.poll import PollModel
-from app.setup import redis_client
+from app.setup.cache import redis_client
 from app.service import wsmanager, get_db
 
 router = APIRouter()

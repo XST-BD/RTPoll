@@ -18,7 +18,7 @@ from app.db.base import dbengine
 from app.db.model.user import EmailVerification, UserModel
 from app.deps import get_db
 
-from app.setup import (
+from app.setup.vars import (
     SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, BACKEND_URL1
 )
 

@@ -6,7 +6,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.declarative import declarative_base
 
-from app.setup import DATABASE_URL
+from app.setup.vars import DATABASE_URL
 
 dbengine =  create_engine(
     url=str(DATABASE_URL), 
