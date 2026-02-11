@@ -5,12 +5,12 @@ from dotenv import load_dotenv
 
 from fastapi import FastAPI, APIRouter
 
+from app.setup.cache import lifespan
 
 load_dotenv()
 
 BACKEND_URL1 = os.getenv('BACKEND_URL1')
 FRONTEND_URL = os.getenv('FRONTEND_ORIGINS')
-DATABASE_URL = os.getenv('DATABASE_URL')
 SENDER_MAIL = os.getenv('MAIL_USERNAME', 'MAIL_USERNAME')
 APP_PASSWORD = os.getenv('MAIL_PASSWORD')
 SECRET_KEY = os.getenv('SECRET_KEY')
@@ -19,6 +19,6 @@ SMTP_PORT_TLS = os.getenv('MAIL_PORT_TLS', 587)
 
 SESSION_TTL = timedelta(days=7)
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 router = APIRouter()
 

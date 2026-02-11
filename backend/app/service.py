@@ -1,4 +1,3 @@
-import os
 import smtplib
 import ssl 
 import secrets
@@ -14,9 +13,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
-from app.db.base import dbengine
+from app.db.session import session_local
 from app.db.model.user import EmailVerification, UserModel
+from app.db.model.poll import PollModel
 from app.deps import get_db
+from app.setup.cache import redis_client
 
 from app.setup.vars import (
     SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, BACKEND_URL1
@@ -123,26 +124,3 @@ def get_current_user_state(request: Request):
     return request.session.get('user_id')
 
 
-# Websocket
-
-class WSConnectionManager: 
-    def __init__(self):
-        self.active_connections: dict[int, list] = {}
-    
-    async def connect(self, poll_id: int, websocket):
-        await websocket.accept()
-
-        if poll_id not in self.active_connections: 
-            self.active_connections[poll_id] = []
-
-        self.active_connections[poll_id].append(websocket)
-
-    def disconnect(self, poll_id: int, websocket):
-        self.active_connections[poll_id].remove(websocket)
-
-    async def broadcast(self, poll_id: int, data: dict):
-        for ws in self.active_connections.get(poll_id, []):
-            await ws.send_json(data)
-
-
-wsmanager = WSConnectionManager()
