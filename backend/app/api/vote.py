@@ -1,5 +1,8 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException
 
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db.model.poll import PollModel
@@ -8,7 +11,7 @@ from app.service import wsmanager, get_db
 
 router = APIRouter()
 
-@router.post('/poll')
+@router.post('/poll/send')
 async def recieve_vote(
     poll_id: int, 
     option_id: str,
@@ -35,3 +38,31 @@ async def recieve_vote(
     )
 
     return {"status": "ok"}
+
+class VoterPollResponseModel(BaseModel):
+    question: str
+    options: list[str]
+    votes: list[int]
+
+    class Config:
+        from_attributes = True
+
+
+@router.post('/poll/view', response_model=VoterPollResponseModel)
+def voter_poll_view(
+    poll_id: int,
+    db: Session = Depends(get_db),
+):
+    now = datetime.now(timezone.utc)
+    poll = db.query(PollModel).filter(PollModel.id==poll_id).first()
+
+    if poll is None: 
+        raise HTTPException(404, "Poll not found")
+    
+    return VoterPollResponseModel(
+        question=poll.question,
+        options=poll.options,
+        votes=poll.votes,
+    )
+    
+
