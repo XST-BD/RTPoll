@@ -62,18 +62,30 @@ def poll_create(
     }
 
 
+class PollResponseAllModel(BaseModel):
+    id: int
+    question: str
+    total_votes: int
+    top_pick: str
+    expires_at: datetime | str
+
+    class Config:
+        from_attributes = True
+
 class PollResponseModel(BaseModel):
     id: int
     question: str
     options: list[str]
+    total_votes: int
     votes: list[int]
-    top_pick: str
+    expires_at: datetime | str
 
     class Config:
         from_attributes = True
 
 
-@router.get('/poll/view/all', response_model=Page[PollResponseModel])
+
+@router.get('/poll/view/all', response_model=Page[PollResponseAllModel])
 def poll_view(
     expired: bool = False,
     params: CustomParams = Depends(),
@@ -108,6 +120,11 @@ def poll_view(
     for poll in polls_query: 
 
         poll_top_pick: str
+        poll_expires_at: datetime | str
+        poll_total_votes: int = 0
+
+        for vote in poll.votes:
+            poll_total_votes += 1
 
         if poll.votes:
             max_index = max(range(len(poll.votes)), key=lambda i: poll.votes[i])
@@ -115,16 +132,20 @@ def poll_view(
         else:
             poll_top_pick = "None"
         
+        if poll.expires_at is None: 
+            poll_expires_at = "Never"
+        else:
+            poll_expires_at = poll.expires_at
+
         items.append(
-            PollResponseModel(
+            PollResponseAllModel(
                 id=poll.id,
                 question=poll.question,
-                options=poll.options,
-                votes=poll.votes,
+                total_votes=poll_total_votes,
                 top_pick=poll_top_pick,
+                expires_at=poll_expires_at,
             )
         )
-
 
     return paginate(items, params)
 
@@ -142,20 +163,24 @@ def poll_view_specific(
     if poll is None: 
         raise HTTPException(404, "Poll not found")
     
-    poll_top_pick: str
+    poll_expires_at: datetime | str
+    poll_total_votes: int = 0
 
-    if poll.votes:
-        max_index = max(range(len(poll.votes)), key=lambda i: poll.votes[i])
-        poll_top_pick = poll.options[max_index]
+    if poll.expires_at is None: 
+        poll_expires_at = "Never"
     else:
-        poll_top_pick = "None"
+        poll_expires_at = poll.expires_at
+
+    for vote in poll.votes:
+        poll_total_votes += 1
 
     return PollResponseModel(
         id=poll.id, 
         question=poll.question,
         options=poll.options,
         votes=poll.votes,
-        top_pick=poll_top_pick,
+        total_votes=poll_total_votes,
+        expires_at=poll_expires_at,
     )
 
 
