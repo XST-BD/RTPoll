@@ -23,6 +23,7 @@ class CreatePollRequest(BaseModel):
     question: str = Field(min_length=1, max_length=255)
     options: List[str] = Field()
     expires_at: Optional[datetime] = None
+    poll_private: bool
 
 
 @router.post('/poll/create')
