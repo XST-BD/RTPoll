@@ -18,7 +18,7 @@ class UserModel(Base):
         default=lambda: str(uuid.uuid4())           # auto-generate
     )
 
-    email = Column(String, nullable=False, unique=True)
+    email: Mapped[str] = mapped_column(nullable=False, unique=True)
     password: Mapped[str] = mapped_column(nullable=False)
     is_verified: Mapped[bool] = mapped_column(default=False)
     creation_date = Column(Date, nullable=False, default=date.today())

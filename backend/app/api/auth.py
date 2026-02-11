@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db.model.user import UserModel, EmailVerification
-from app.deps import get_db
+from app.deps import get_db, verify_password, hash_password
 from app.service import get_current_user_state, send_mail_verification, prepare_verification_link
 from app.setup.vars import router, FRONTEND_URL
 from app.setup.limiter import limiter
@@ -25,6 +25,32 @@ def check_auth(
         "authenticated": user_id is not None,
         "user_id": user_id,
     }
+
+@router.get('/recovery')
+def recover_password(
+    email: str = Body(...),
+    password1: str = Body(...),
+    password2: str = Body(...),
+    db: Session = Depends(get_db),
+):
+    user = db.query(UserModel).filter(UserModel.email==email).first()
+
+    if user is None: 
+        raise HTTPException(400, "Unregistered user")
+    
+    if not user.is_verified:
+        raise HTTPException(400, "Unverified user")
+    
+    if not verify_password(password1, password2): 
+        raise HTTPException(400, "Passwords don't match")
+    
+    hashed_password = hash_password(password1)
+    user.password = hashed_password
+    db.commit()
+    db.refresh(user)
+
+    return {"message": "Password changed successfully"}
+    
 
 @router.get('/verify_mail')
 def verify_mail(
