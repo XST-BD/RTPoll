@@ -1,9 +1,8 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi_pagination import Page
-from fastapi_pagination import paginate
 
+from fastapi_pagination import paginate, Page
 from pydantic import BaseModel, Field
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
@@ -73,18 +72,6 @@ class PollResponseAllModel(BaseModel):
     class Config:
         from_attributes = True
 
-class PollResponseModel(BaseModel):
-    id: int
-    question: str
-    options: list[str]
-    total_votes: int
-    votes: list[int]
-    expires_at: datetime | str
-
-    class Config:
-        from_attributes = True
-
-
 
 @router.get('/poll/view/all', response_model=Page[PollResponseAllModel])
 def poll_view(
@@ -149,48 +136,3 @@ def poll_view(
         )
 
     return paginate(items, params)
-
-
-
-@router.get('/poll/view', response_model=PollResponseModel)
-def poll_view_specific(
-    poll_id: int,
-    db: Session = Depends(get_db),
-    user: UserModel = Depends(get_current_user),
-):
-    polls_query = db.query(PollModel).filter(PollModel.creator_id==user.user_id)
-    poll = polls_query.filter(PollModel.id==poll_id).first()
-
-    if poll is None: 
-        raise HTTPException(404, "Poll not found")
-    
-    poll_expires_at: datetime | str
-    poll_total_votes: int = 0
-
-    if poll.expires_at is None: 
-        poll_expires_at = "Never"
-    else:
-        poll_expires_at = poll.expires_at
-
-    for vote in poll.votes:
-        poll_total_votes += 1
-
-    return PollResponseModel(
-        id=poll.id, 
-        question=poll.question,
-        options=poll.options,
-        votes=poll.votes,
-        total_votes=poll_total_votes,
-        expires_at=poll_expires_at,
-    )
-
-
-@router.get('/poll/result')
-def poll_result(
-    poll_id: str,
-    db: Session = Depends(get_db),
-    user: UserModel = Depends(get_current_user),
-):
-    poll = db.query(PollModel).filter(PollModel.id==poll_id)
-    # TODO: Implement results
-    return {"message": "poll result endpoint"}
