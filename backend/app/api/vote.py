@@ -22,7 +22,7 @@ class VoterPollResponseModel(BaseModel):
 
 # Fallback endpoint
 
-@router.post('/poll/view', response_model=VoterPollResponseModel)
+@router.get('/poll/view', response_model=VoterPollResponseModel)
 async def voter_poll_view(
     poll_id: int,
     db: Session = Depends(get_db),

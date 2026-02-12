@@ -26,7 +26,7 @@ def check_auth(
         "user_id": user_id,
     }
 
-@router.get('/recovery')
+@router.patch('/recovery')
 def recover_password(
     email: str = Body(...),
     password1: str = Body(...),
