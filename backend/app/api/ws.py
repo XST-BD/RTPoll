@@ -43,7 +43,7 @@ async def get_current_user_ws(ws: WebSocket):
 
 
 @router.websocket('/vote/{poll_id}')
-async def poll_ws(
+async def vote_ws(
     ws: WebSocket, 
     poll_id: int,
     db: Session = Depends(get_db),
@@ -53,7 +53,7 @@ async def poll_ws(
 
     try: 
         # Send initial poll data (like /poll/view)
-        votes = redis_client.hgetall(f"poll:{poll_id}:votes")
+        # votes = redis_client.hgetall(f"poll:{poll_id}:votes")
         poll = db.query(PollModel).filter(PollModel.id==poll_id).first()
 
         if poll is None: 
@@ -92,7 +92,7 @@ async def poll_ws(
 
                     await ws.send_json({
                         "type": "error",
-                        "message": "Invalid option"
+                        "message": "Invalid option",
                     })
                     continue
 
@@ -120,9 +120,50 @@ async def poll_ws(
                     "votes": poll.votes,
                 })
 
+    except WebSocketDisconnect:
+        wsmanager.disconnect(poll_id, ws)
+
+
+@router.websocket('poll/{poll_id}')
+async def poll_ws(
+    ws: WebSocket, 
+    poll_id: int, 
+    db: Session = Depends(get_db),
+):
+    await wsmanager.connect(poll_id, ws)
+
+    try: 
+        # send initial poll data 
+        poll = db.query(PollModel).filter(PollModel.id==poll_id).first()
+
+        if poll is None: 
+            await ws.send_json({
+                "type": "error",
+                "message": "Poll not found",
+            })
+            return
+
+        await ws.send_json({
+            "type": "Poll data", 
+            "question": poll.question,
+            "options": poll.options,
+            "votes": poll.votes,
+        }) 
+
+        # Listen loop
+        while True: 
+            lock = await redis_client.set("poll_sync_lock", "1", nx=True, ex=25)
+
+            if not lock: 
+                await asyncio.sleep(5) 
+                continue
+
+            data = await ws.receive_json()
+            msg_type = data.get("type")
+
             # ================================= POLL ================================= #
 
-            elif msg_type == "poll_view":
+            if msg_type == "poll_view":
 
                 user = await get_current_user_ws(ws)
 
@@ -143,9 +184,8 @@ async def poll_ws(
                     "message": "Unknown message type",
                 })
 
-    except WebSocketDisconnect:
+    except WebSocketDisconnect: 
         wsmanager.disconnect(poll_id, ws)
-
 
 # WS vote structure (client) | Frontend sends like this
 #
