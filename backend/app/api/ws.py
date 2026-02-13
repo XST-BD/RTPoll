@@ -20,7 +20,6 @@ class PollResponseModel(BaseModel):
     question: str
     options: list[str]
     total_votes: int
-    votes: list[int]
     expires_at: datetime | str
 
     class Config:

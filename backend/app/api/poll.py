@@ -65,8 +65,6 @@ def poll_create(
 class PollResponseAllModel(BaseModel):
     id: int
     question: str
-    total_votes: int
-    top_pick: str
     expires_at: datetime | str
 
     class Config:
@@ -109,10 +107,10 @@ def poll_view(
 
         poll_top_pick: str
         poll_expires_at: datetime | str
-        poll_total_votes: int = 0
+        # poll_total_votes: int = 0
 
-        for vote in poll.votes:
-            poll_total_votes += 1
+        # for vote in poll.votes:
+        #     poll_total_votes += 1
 
         if poll.votes:
             max_index = max(range(len(poll.votes)), key=lambda i: poll.votes[i])
@@ -129,8 +127,6 @@ def poll_view(
             PollResponseAllModel(
                 id=poll.id,
                 question=poll.question,
-                total_votes=poll_total_votes,
-                top_pick=poll_top_pick,
                 expires_at=poll_expires_at,
             )
         )
