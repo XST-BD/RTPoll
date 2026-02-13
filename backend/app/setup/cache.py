@@ -11,7 +11,7 @@ from app.db.model.poll import PollModel
 
 # Caching
 redis_client = redis.from_url(
-    'redis://localhost:6379',
+    'redis://rtpoll-redis:6379',
     decode_responses=True,
 )
 
