@@ -9,7 +9,6 @@ from typing import Dict
 from app.db.base import Base 
 
 class PollModel(Base):
-
     __tablename__ = "polls"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -22,4 +21,15 @@ class PollModel(Base):
 
     is_indefinite: Mapped[bool] = mapped_column(default=False)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now()) 
+
+
+class PollHistoryModel(Base): 
+    __tablename__ = "polls_histoty"
+    
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    related_poll = relationship('PollModel', back_populates='polls_histoty')
+    related_poll_id: Mapped[Column] = mapped_column(ForeignKey('polls.id'), nullable=False)
+
+    history: Mapped[dict[datetime, int]] = mapped_column(JSON, default=dict)

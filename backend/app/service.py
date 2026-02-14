@@ -3,6 +3,8 @@ import ssl
 import secrets
 import hashlib
 
+from datetime import datetime
+
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -13,9 +15,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
-from app.db.session import session_local
 from app.db.model.user import EmailVerification, UserModel
-from app.db.model.poll import PollModel
+from app.db.model.poll import PollHistoryModel, PollModel
 from app.deps import get_db
 from app.setup.cache import redis_client
 
@@ -25,6 +26,7 @@ from app.setup.vars import (
 
 from app.utils import validate_db_entry
 
+# ====================== MAIL SERVICE CODES ====================== #
 
 def generate_login_url_token() -> tuple[str, str]:
     token = secrets.token_urlsafe(32)
@@ -101,6 +103,9 @@ def send_mail_verification(
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
 
+
+# ====================== AUTH SERVICE CODES ====================== #
+
 def get_current_user(
     request: Request, db: Session = Depends(get_db)
 ) -> UserModel:
@@ -124,3 +129,27 @@ def get_current_user_state(request: Request):
     return request.session.get('user_id')
 
 
+# ====================== POLL HISTORY RECORDER CODES ====================== #
+
+def record_poll_history(
+    poll_id: int,
+    total_votes: int, 
+    time: datetime,
+    db: Session = Depends(get_db)     
+): 
+    # TODO: This function needs logging system for poll history
+
+    poll = db.query(PollModel).filter(PollModel.id==poll_id).first()
+    new_poll_history = PollHistoryModel(
+        related_poll=poll,
+        related_poll_id=poll_id,
+        history= {total_votes, time}
+    )
+
+    db.add(new_poll_history)
+
+    try: 
+        db.commit()
+        db.refresh(new_poll_history)
+    except IntegrityError as e: 
+        db.rollback()

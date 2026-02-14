@@ -132,3 +132,10 @@ def poll_view(
         )
 
     return paginate(items, params)
+
+
+@router.get('/poll/view/result/{poll_id}')
+def poll_result(
+    poll_id: int,
+):
+    pass
