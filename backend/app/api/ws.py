@@ -10,7 +10,8 @@ from sqlalchemy.orm import Session
 from app.db.model.poll import PollModel
 from app.deps import get_db
 from app.setup.ws import wsmanager
-from app.setup.cache import redis_client
+from app.setup.cache import redis_client 
+from app.setup.vars import FRONTEND_URL
 
 router = APIRouter()
 
@@ -48,7 +49,7 @@ async def vote_ws(
     poll_id: int,
     db: Session = Depends(get_db),
 ):
-    
+    await ws.accept()
     await wsmanager.connect(poll_id, ws)
 
     try: 
@@ -124,12 +125,13 @@ async def vote_ws(
         wsmanager.disconnect(poll_id, ws)
 
 
-@router.websocket('poll/{poll_id}')
+@router.websocket('/poll/{poll_id}')
 async def poll_ws(
     ws: WebSocket, 
     poll_id: int, 
     db: Session = Depends(get_db),
 ):
+    await ws.accept()
     await wsmanager.connect(poll_id, ws)
 
     try: 
