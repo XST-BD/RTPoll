@@ -20,7 +20,7 @@ router = APIRouter()
 
 class CreatePollRequest(BaseModel):
     question: str = Field(min_length=1, max_length=1024)
-    options: List[str] = Field()
+    options: List[str] = Field(min_length=1, max_length=256)
     expires_at: Optional[datetime] = None
     result_public: bool = False
 
