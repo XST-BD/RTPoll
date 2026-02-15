@@ -15,7 +15,6 @@ router = APIRouter()
 class VoterPollResponseModel(BaseModel):
     question: str
     options: list[str]
-    votes: list[int]
 
     class Config:
         from_attributes = True
@@ -36,7 +35,6 @@ async def voter_poll_view(
     return VoterPollResponseModel(
         question=poll.question,
         options=poll.options,
-        votes=poll.votes,
     )
     
 
