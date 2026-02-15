@@ -22,4 +22,3 @@ tmp/
 
 # db file
 database.db
-docker/backend/db.sqlite
