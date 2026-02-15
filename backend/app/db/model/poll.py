@@ -23,13 +23,16 @@ class PollModel(Base):
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now()) 
 
+    # Add relationship back to PollHistoryModel
+    polls_history = relationship('PollHistoryModel', back_populates='related_poll')
+
 
 class PollHistoryModel(Base): 
-    __tablename__ = "polls_histoty"
+    __tablename__ = "polls_history"
     
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    related_poll = relationship('PollModel', back_populates='polls_histoty')
+    related_poll = relationship('PollModel', back_populates='polls_history')
     related_poll_id: Mapped[Column] = mapped_column(ForeignKey('polls.id'), nullable=False)
 
     history: Mapped[dict[datetime, int]] = mapped_column(JSON, default=dict)
