@@ -33,8 +33,6 @@ async function fetchRunningPolls() {
             }
         })
 
-        console.log(res)
-
         running_polls.value = res.items
     } catch (err) {
         running_error.value = 'Failed to load running polls'
@@ -82,10 +80,10 @@ onMounted(() => {
                 {{ running_error }}
             </p>
 
-            <p v-else-if="running_polls.length === 0" class="text-gray-400">( No running polls )</p>
+            <p v-else-if="running_polls.length === 0" class="text-gray-400">( No running poll )</p>
 
             <div v-else class="w-full flex flex-wrap justify-center items-center gap-3">
-                <PollCard v-for="poll in running_polls" :key="poll.id" @click="navigateTo(`/dashboard/poll/${poll.id}`)" :question="poll.question" :votes="poll.votes" :top-pick="poll.top_pick" />
+                <PollCard v-for="poll in running_polls" :key="poll.id" @click="navigateTo(`/dashboard/poll/${poll.id}`)" :question="poll.question" :votes="poll.total_votes" :top-pick="poll.top_pick" />
             </div>
         </div>
 
@@ -98,10 +96,10 @@ onMounted(() => {
                 {{ closed_error }}
             </p>
 
-            <p v-else-if="closed_polls.length === 0" class="text-gray-400">( No closed polls )</p>
+            <p v-else-if="closed_polls.length === 0" class="text-gray-400">( No closed poll )</p>
 
             <div v-else class="w-full flex flex-wrap justify-center items-center gap-3">
-                <PollCard v-for="poll in closed_polls" :key="poll.id" @click="navigateTo(`/dashboard/poll/${poll.id}`)" :question="poll.question" :votes="poll.votes" :top-pick="poll.top_pick" />
+                <PollCard v-for="poll in closed_polls" :key="poll.id" @click="navigateTo(`/dashboard/poll/${poll.id}`)" :question="poll.question" :votes="poll.total_votes" :top-pick="poll.top_pick" />
             </div>
         </div>
     </div>

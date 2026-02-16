@@ -87,39 +87,43 @@ async function resendVerificationEmail() {
 </script>
 
 <template>
-    <section class="w-full min-h-screen p-5 flex flex-col justify-center items-center gap-12">
-        <h2 class="text-3xl">Login to Your Account</h2>
+    <section class="w-full min-h-screen p-5 bg-grid flex flex-col justify-center items-center gap-12">
+        <div class="w-full max-w-xl flex flex-col justify-center items-center gap-12 bg-white backdrop-blur-[100px] rounded-xl sm:p-10 p-5 shadow-md border border-green-300">
+            <h2 class="text-3xl">Login to Your Account</h2>
 
-        <p v-if="error" class="error-msg">{{ error }}</p>
+            <p v-if="error" class="error-msg">{{ error }}</p>
 
-        <form class="w-full max-w-xl flex flex-col gap-10" @submit.prevent="login">
-            <div class="flex flex-col gap-4">
-                <div class="flex flex-col gap-1">
-                    <label for="email">Email</label>
-                    <input id="email" v-model="email" required>
+            <form class="w-full flex flex-col gap-10" @submit.prevent="login">
+                <div class="flex flex-col gap-4">
+                    <div class="flex flex-col gap-1">
+                        <label for="email">Email</label>
+                        <input id="email" v-model="email" required>
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <label for="password">Password</label>
+                        <input id="password" v-model="password" type="password" required>
+                    </div>
                 </div>
 
-                <div class="flex flex-col gap-1">
-                    <label for="password">Password</label>
-                    <input id="password" v-model="password" type="password" required>
-                </div>
-            </div>
+                <button type="submit" :disabled="loading" class="btn">
+                    {{ loading ? 'Logging in...' : 'Login' }}
+                </button>
 
-            <button type="submit" :disabled="loading" class="btn">
-                {{ loading ? 'Logging in...' : 'Login' }}
-            </button>
+                <p v-if="resend_mail" class="text-md text-center">
+                    Verification email not received?
+                    <a @click="resendVerificationEmail" :disabled="loading" class="link text-green-400 font-medium hover:text-green-500">
+                        Resend verification email
+                    </a>
+                </p>
+            </form>
 
-            <p v-if="resend_mail" class="text-md text-center">
-                Verification email not received?
-                <a @click="resendVerificationEmail" :disabled="loading" class="link text-green-400 font-medium hover:text-green-500">
-                    Resend verification email
-                </a>
+            <hr class="w-[85%] border-t border-green-300">
+
+            <p class="text-md">
+                Don't have an account?
+                <NuxtLink to="/register" class="link text-green-400 font-medium hover:text-green-500">Register here</NuxtLink>
             </p>
-        </form>
-
-        <p class="text-md">
-            Don't have an account?
-            <NuxtLink to="/register" class="link text-green-400 font-medium hover:text-green-500">Register here</NuxtLink>
-        </p>
+        </div>
     </section>
 </template>

@@ -11,6 +11,7 @@ useHead({
 const { public: { apiBase } } = useRuntimeConfig()
 
 const duration = ref('infinite')
+const showResults = ref('no')
 const customDuration = ref('')
 const question = ref('')
 const options = ref(['', ''])
@@ -41,9 +42,21 @@ async function createPoll() {
         return
     }
 
+    if (question.value.length > 1024) {
+        error.value = 'Question cannot exceed 1024 characters'
+        return
+    }
+
     if (cleanedOptions.length < 2) {
         error.value = 'At least 2 options are required'
         return
+    }
+
+    for (const option of cleanedOptions) {
+        if (option.length > 256) {
+            error.value = 'Each option cannot exceed 256 characters'
+            return
+        }
     }
 
     try {
@@ -56,7 +69,8 @@ async function createPoll() {
             body: {
                 question: question.value,
                 options: cleanedOptions,
-                expires_at: duration.value === 'custom' && customDuration.value ? new Date(customDuration.value).toISOString() : null
+                expires_at: duration.value === 'custom' && customDuration.value ? new Date(customDuration.value).toISOString() : null,
+                results_public: showResults.value === 'yes'
             }
         })
 
@@ -89,20 +103,28 @@ async function createPoll() {
                     </select>
                 </div>
 
+                <div class="flex flex-col gap-1">
+                    <label for="show_results">Show Poll Result Publicly</label>
+                    <select id="show_results" v-model="showResults">
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </select>
+                </div>
+
                 <div v-if="duration === 'custom'" class="flex flex-col gap-1">
                     <label for="custom_duration">Enter Poll Duration</label>
                     <input type="datetime-local" v-model="customDuration" :min="now" required />
                 </div>
 
                 <div class="flex flex-col gap-1">
-                    <label for="question">Enter your question or opinion</label>
+                    <label for="question">Enter Your Question or Opinion</label>
                     <textarea id="question" v-model="question" class="h-20 resize-none" required />
                 </div>
 
                 <div class="flex flex-col gap-2">
                     <div class="flex items-center justify-between">
-                        <label>Enter options</label>
-                        <button type="button" class="text-sm text-green-400 hover:text-green-500 font-semibold transition duration-300 ease-in-out" @click="addOption">
+                        <label>Add Options</label>
+                        <button type="button" class="text-sm text-green-400 hover:text-green-500 font-semibold transition-all duration-300 ease-in-out" @click="addOption">
                             + Add option
                         </button>
                     </div>
@@ -110,7 +132,7 @@ async function createPoll() {
                     <div class="flex flex-col gap-2">
                         <div v-for="(option, idx) in options" :key="idx" class="flex items-center gap-2">
                             <input v-model="options[idx]" :placeholder="`Option ${idx + 1}`" class="flex-1" required>
-                            <button type="button" class="p-2 text-sm text-red-400 hover:text-red-500 font-bold transition duration-300 ease-in-out" :disabled="options.length === 2" title="Remove option" @click="removeOption(idx)">
+                            <button type="button" class="p-2 text-sm text-red-400 hover:text-red-500 font-bold transition-all duration-300 ease-in-out" :disabled="options.length === 2" title="Remove option" @click="removeOption(idx)">
                                 ✕
                             </button>
                         </div>

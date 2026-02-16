@@ -9,7 +9,7 @@ defineProps({
 </script>
 
 <template>
-    <div class="grow w-full max-w-[400px] border border-green-300 hover:border-green-400 rounded-lg py-3 px-5 flex flex-col gap-3 bg-green-50 hover:bg-gradient-to-br from-green-50 via-green-100 to-green-50 transition duration-300 cursor-pointer">
+    <div class="grow w-full max-w-[400px] border border-green-300 hover:border-green-400 rounded-lg py-3 px-5 flex flex-col gap-3 bg-green-50 hover:bg-gradient-to-br from-green-50 via-green-100 to-green-50 transition-all duration-300 cursor-pointer">
         <h4 class="text-2xl font-black">{{ question }}</h4>
 
         <div class="flex justify-between items-center gap-6">
