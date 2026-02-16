@@ -158,13 +158,6 @@ async def poll_ws(
             })
             return
 
-        await ws.send_json({
-            "type": "Poll data", 
-            "question": poll.question,
-            "options": poll.options,
-            "votes": poll.votes,
-        }) 
-
         # Listen loop
         while True: 
             lock = await redis_client.set("poll_sync_lock", "1", nx=True, ex=25)
@@ -193,7 +186,12 @@ async def poll_ws(
                 user = await get_current_user_ws(ws)
 
                 if user is None or not user: 
+                    await ws.send_json({
+                        "type": "error", 
+                        "message": "User not found or unauthorized",
+                    })
                     await ws.close(code=1008)   # Policy violation
+                    return
                     
                 await ws.accept()
 
