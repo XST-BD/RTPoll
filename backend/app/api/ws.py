@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db.model.poll import PollModel
-from app.deps import get_db
+from app.deps import get_db, session_local
 from app.setup.ws import wsmanager
 from app.setup.cache import redis_client 
 from app.setup.vars import FRONTEND_URL
@@ -63,13 +63,6 @@ async def vote_ws(
                 "message": "Poll not found",
             })
             return
-        
-        await ws.send_json({
-            "type": "Poll data", 
-            "question": poll.question,
-            "options": poll.options,
-            "votes": poll.votes,
-        })
 
         # Listen loop
         while True: 
@@ -88,8 +81,18 @@ async def vote_ws(
             # Handle refresh 
             if msg_type == "send_vote":
 
+                db = session_local
+                poll_vote = db.get(PollModel, poll_id)
+
+                if poll_vote is None: 
+                    await ws.send_json({
+                        "type": "error", 
+                        "message": "Poll not found",
+                    })
+                    return
+
                 option_id: str = data.get("option_id")
-                if option_id not in poll.options:
+                if option_id not in poll_vote.options:
 
                     await ws.send_json({
                         "type": "error",
@@ -100,7 +103,7 @@ async def vote_ws(
                 key = f'poll:{poll_id}:votes'
 
                 # Atomic increment
-                new_count = redis_client.hincrby(key, option_id, 1)
+                new_count = await redis_client.hincrby(key, option_id, 1) # type: ignore
 
                 # Broadcast update
                 await wsmanager.broadcast(
@@ -114,11 +117,21 @@ async def vote_ws(
 
             # Handle vote
             elif msg_type == "get_vote":
+                db = session_local
+                poll_vote = db.get(PollModel, poll_id)
+
+                if poll_vote is None: 
+                    await ws.send_json({
+                        "type": "error", 
+                        "message": "Poll not found",
+                    })
+                    return
+
                 await ws.send_json({
                     "type": "vote_data", 
-                    "question": poll.question,
-                    "options": poll.options,
-                    "votes": poll.votes,
+                    "question": poll_vote.question,
+                    "options": poll_vote.options,
+                    "votes": poll_vote.votes,
                 })
 
     except WebSocketDisconnect:
@@ -167,6 +180,16 @@ async def poll_ws(
 
             if msg_type == "poll_view":
 
+                db = session_local
+                poll_view = db.get(PollModel, poll_id)
+
+                if poll_view is None: 
+                    await ws.send_json({
+                        "type": "error", 
+                        "message": "Poll not found",
+                    })
+                    return
+                
                 user = await get_current_user_ws(ws)
 
                 if user is None or not user: 
@@ -174,7 +197,7 @@ async def poll_ws(
                     
                 await ws.accept()
 
-                response = await build_poll_response(poll)
+                response = await build_poll_response(poll_view)
                 await ws.send_json({
                     "type": f"poll_data_{poll_id}",
                     "data": response,
@@ -189,43 +212,18 @@ async def poll_ws(
     except WebSocketDisconnect: 
         wsmanager.disconnect(poll_id, ws)
 
-# WS vote structure (client) | Frontend sends like this
-#
-#   { type: "join", poll_id:{poll_id:int} }     -> Initiate
-#   { type: "get_vote" }                        -> Result
-#   { type: "send_vote", option_id:{option_id:str} } -> Vote 
+# For endpoint: ws://127.0.0.1:8000/ws/poll/{poll_id}
 
-# WS vote structure (server) | Frotnend recieves like this 
-#
-#   { "type": "vote_data", "question": "...", "options": [...], "votes": [...] }
-#   { "type": "vote_update", "option_id": "2", "count": 10 }
-#   { "type": "error", "message": "Invalid option" }
+# Send: {type: "poll_view"}  
+# Recieve: {type:"Poll data", question:str, options:[str], votes:[int]}
 
 
-# Workflow (vote)
-# send_type: get_vote, get_type: vote_data 
-# send_type: send_vote, get_type: vote_update 
+# For endpoint: ws://127.0.0.1:8000/ws/vote/{poll_id}
 
+# Send: {type: "get_vote"}
+# Recieve: {type: "vote_data", question:str, options:[str], votes:[int]}
 
-# WS poll structure (client) | Frontend sends like this 
-#   
-#   { type: "poll_view_all" }                       -> Get all poll overview created by user
-#   { type: "poll_view", poll_id:{poll_id:int} }    -> Get specific poll
-
-# WS poll structure (server) | Frontend recieves like this 
-#
-#   { 
-#       type: "poll_data_{poll_id:int}", 
-#       question: {question:str}, 
-#       options: [str], 
-#       total_votes: {total_votes:int}, 
-#       votes: [int],  
-#       expires_at:  {expires_at:datetime}
-#   }    
-#   -> Get specific poll
-
-# Workflow (poll)
-# send_type: poll_view, get_type: poll_data_{poll_id:int}
-
+# Send: {type: "send_vote", option_id: str}
+# Recieve: {'type': 'vote_update', 'option_id': str, 'count': int}
 
 

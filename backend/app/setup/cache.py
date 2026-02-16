@@ -5,12 +5,13 @@ from fastapi import FastAPI
 
 from sqlalchemy.orm import Session
 import redis.asyncio as redis
+from redis.asyncio import Redis
 
 from app.db.session import session_local
 from app.db.model.poll import PollModel
 
 # Caching
-redis_client = redis.from_url(
+redis_client: Redis = redis.from_url(
     'redis://rtpoll-redis:6379',
     decode_responses=True,
 )
@@ -29,7 +30,7 @@ async def sync_votes_db():
             for key in keys:
                 # key = poll:<poll_id>:votes
                 poll_id = int(key.split(":")[1])
-                votes = await redis_client.hgetall(key)
+                votes = await redis_client.hgetall(key) # type: ignore
 
                 if not votes: 
                     continue
