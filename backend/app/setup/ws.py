@@ -7,8 +7,6 @@ class WSConnectionManager:
         self.rooms: Dict[int, List[WebSocket]] = {}
     
     async def connect(self, poll_id: int, ws: WebSocket):
-        await ws.accept()
-
         if poll_id not in self.rooms: 
             self.rooms[poll_id] = []
 
