@@ -4,6 +4,7 @@ services:
     build:
       context: ./
       dockerfile: docker/backend/DockerFile
+    container_name: rtpoll-backend
     privileged: true
     ports:
       - "8000:8000"
@@ -15,6 +16,7 @@ services:
       - ./backend/data:/app/data
 
   redis:
+    container_name: rtpoll-redis 
     image: redis:7 
     ports:
       - "6379:6379"
@@ -22,6 +24,7 @@ services:
       - redis_data:/data
     
   rabbitmq: 
+    container_name: rtpoll-rmq 
     image: "rabbitmq:3-management"
     ports:
       - "5672:5672"
