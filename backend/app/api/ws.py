@@ -90,6 +90,14 @@ async def vote_ws(
                         "message": "Poll not found",
                     })
                     return
+                
+                if poll_vote.expires_at is not None: 
+                    if poll_vote.expires_at < datetime.now(): 
+                        await ws.send_json({
+                            "type": "error", 
+                            "message": "Polling ended",
+                        })
+                        return
 
                 option_id: str = data.get("option_id")
                 if option_id not in poll_vote.options:
