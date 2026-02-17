@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from fastapi_pagination import paginate, Page
 from pydantic import BaseModel, Field
@@ -10,10 +10,11 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from app.db.model.user import UserModel
-from app.db.model.poll import PollModel
+from app.db.model.poll import PollModel, PollHistoryEntry
 from app.deps import get_db
 from app.services.email import get_current_user
 from app.setup.paginator import CustomParams
+from app.setup.limiter import limiter
 
 router = APIRouter()
 
@@ -133,9 +134,22 @@ def poll_view(
 
     return paginate(items, params)
 
-
+# TODO: Add pagination
 @router.get('/poll/view/result/{poll_id}')
+@limiter.limit('5/Minute')  # Max 5 request per minute per IP
 def poll_result(
+    request: Request,
     poll_id: int,
+    db: Session = Depends(get_db),
 ):
-    pass
+    
+    entries = db.query(PollHistoryEntry)\
+        .filter(PollHistoryEntry.poll_id == poll_id)\
+        .order_by(PollHistoryEntry.timestamp).all()
+    
+    if entries is None: 
+        return {"message": "Poll history is empty or not found"}
+
+    # To JSON format
+    result = [{'x':  entry.timestamp.isoformat(), 'y': entry.value} for entry in entries]
+    return result
