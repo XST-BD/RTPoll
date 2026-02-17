@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.db.model.user import UserModel
 from app.deps import get_db, hash_password, verify_password
-from app.service import send_mail_verification, prepare_verification_link
+from app.services.email import send_mail_verification, prepare_verification_link
 from app.setup.vars import router
 from app.utils import validate_user_input
 from app.utils import validate_user_input, validate_db_entry

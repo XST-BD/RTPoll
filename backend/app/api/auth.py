@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.db.model.user import UserModel, EmailVerification
 from app.deps import get_db, verify_password, hash_password
-from app.service import get_current_user_state, send_mail_verification, prepare_verification_link
+from app.services.email import get_current_user_state, send_mail_verification, prepare_verification_link
 from app.setup.vars import router, FRONTEND_URL
 from app.setup.limiter import limiter
 

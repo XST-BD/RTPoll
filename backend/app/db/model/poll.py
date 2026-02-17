@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 import uuid
 
-from sqlalchemy import Boolean, String, JSON, Column, Integer, ForeignKey, DateTime, func
+from sqlalchemy import Boolean, String, JSON, Column, Integer, ForeignKey, DateTime, func, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from typing import Dict
@@ -23,16 +23,27 @@ class PollModel(Base):
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now()) 
 
-    # Add relationship back to PollHistoryModel
-    polls_history = relationship('PollHistoryModel', back_populates='related_poll')
+    # Add relationship back to PollHistoryEntry
+    polls_history: Mapped[list["PollHistoryEntry"]] = relationship(
+        back_populates='related_poll',
+        cascade="all, delete-orphan",
+        order_by="PollHistoryEntry.timestamp",
+    )
 
 
-class PollHistoryModel(Base): 
-    __tablename__ = "polls_history"
-    
+class PollHistoryEntry(Base): 
+    __tablename__ = "polls_history_record"
+
     id: Mapped[int] = mapped_column(primary_key=True)
+    poll_id: Mapped[int] = mapped_column(ForeignKey("polls.id"))
 
-    related_poll = relationship('PollModel', back_populates='polls_history')
-    related_poll_id: Mapped[Column] = mapped_column(ForeignKey('polls.id'), nullable=False)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    value: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    history: Mapped[dict[datetime, int]] = mapped_column(JSON, default=dict)
+    related_poll: Mapped["PollModel"] = relationship(
+        back_populates="polls_history"
+    )
+
+    __table_args__ = (
+        UniqueConstraint("poll_id", "timestamp", name="uix_poll_timestamp"),
+    )

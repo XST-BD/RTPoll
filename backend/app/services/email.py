@@ -3,7 +3,6 @@ import ssl
 import secrets
 import hashlib
 
-from datetime import datetime
 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -16,9 +15,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
 from app.db.model.user import EmailVerification, UserModel
-from app.db.model.poll import PollHistoryModel, PollModel
+from app.db.model.poll import PollHistoryEntry, PollModel
 from app.deps import get_db
-from app.setup.cache import redis_client
+
 
 from app.setup.vars import (
     SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, BACKEND_URL1
@@ -128,28 +127,3 @@ def get_current_user(
 def get_current_user_state(request: Request):
     return request.session.get('user_id')
 
-
-# ====================== POLL HISTORY RECORDER CODES ====================== #
-
-def record_poll_history(
-    poll_id: int,
-    total_votes: int, 
-    time: datetime,
-    db: Session = Depends(get_db)     
-): 
-    # TODO: This function needs logging system for poll history
-
-    poll = db.query(PollModel).filter(PollModel.id==poll_id).first()
-    new_poll_history = PollHistoryModel(
-        related_poll=poll,
-        related_poll_id=poll_id,
-        history= {total_votes, time}
-    )
-
-    db.add(new_poll_history)
-
-    try: 
-        db.commit()
-        db.refresh(new_poll_history)
-    except IntegrityError as e: 
-        db.rollback()
