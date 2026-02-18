@@ -200,8 +200,6 @@ async def poll_ws(
                     })
                     await ws.close(code=1008)   # Policy violation
                     return
-                    
-                await ws.accept()
 
                 response = await build_poll_response(poll_view)
                 await ws.send_json({
