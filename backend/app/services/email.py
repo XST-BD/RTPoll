@@ -101,29 +101,3 @@ def send_mail_verification(
         print(f"Error: Unable to send email. {e}")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
-
-
-# ====================== AUTH SERVICE CODES ====================== #
-
-def get_current_user(
-    request: Request, db: Session = Depends(get_db)
-) -> UserModel:
-    
-    user_id = request.session.get("user_id")
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated"
-        )
-    user = db.query(UserModel).filter(UserModel.user_id == user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
-        )
-    return user
-
-
-def get_current_user_state(request: Request):
-    return request.session.get('user_id')
-

@@ -18,12 +18,12 @@ async def sync_votes():
             keys = await redis_client.keys('poll:*:votes')
             for key in keys:
                 poll_id = int(key.split(":")[1])
-                votes = await redis_client.hgetall(key)
+                votes = await redis_client.hgetall(key) # type: ignore
 
                 poll = db.query(PollModel).filter(PollModel.id == poll_id).first()
 
                 if poll:
-                    poll.votes = {k: int(v) for k, v in votes.items()}
+                    poll.votes = {k: int(v) for k, v in votes.items()} # type: ignore
 
             db.commit()
 

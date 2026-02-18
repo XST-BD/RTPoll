@@ -1,7 +1,7 @@
 import os
 
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.sessions import SessionMiddleware
+# from starlette.middleware.sessions import SessionMiddleware
 
 from .vars import app, SECRET_KEY
 
@@ -21,11 +21,11 @@ def cors_permit():
         allow_headers=["*"],
     )
 
-    app.add_middleware(
-        SessionMiddleware, 
-        session_cookie='session',
-        secret_key=str(SECRET_KEY),
-        max_age=60*60*24*7,            # 1 week
-        https_only=False,  # must be False on localhost HTTP
-        same_site="lax",  # allows cross-site JS requests to send cookie
-    )
+    # app.add_middleware(
+    #     SessionMiddleware, 
+    #     session_cookie='session',
+    #     secret_key=str(SECRET_KEY),
+    #     max_age=60*60*24*7,            # 1 week
+    #     https_only=False,  # must be False on localhost HTTP
+    #     same_site="lax",  # allows cross-site JS requests to send cookie
+    # )

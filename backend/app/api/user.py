@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Request, Body, Depends
 from fastapi.exceptions import HTTPException
+from fastapi.responses import JSONResponse
+
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db.model.user import UserModel
 from app.deps import get_db, hash_password, verify_password
+from app.services.auth import create_access_token, create_refresh_token, oauth2_scheme
 from app.services.email import send_mail_verification, prepare_verification_link
 from app.setup.vars import router
 from app.utils import validate_user_input
@@ -44,6 +47,7 @@ def register_user(
     return {"message": "Check your mail box to verify your account"}
 
 
+
 @router.post('/login')
 def login_user(
     request: Request,
@@ -63,9 +67,20 @@ def login_user(
     if not verify_password(password, user.password): 
         raise HTTPException(status_code=400, detail="Wrong password")
     
-    request.session['user_id'] = user.user_id
+    access_token = create_access_token({'sub': email})
+    refresh_token = create_refresh_token({'sub': email})
 
-    return {"message": "Logged in successfully"}
+
+    response = JSONResponse(content={"access_token": access_token, "token_type": "bearer"})
+    # Set refresh token in HttpOnly cookie
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        samesite="lax",
+        max_age=7*24*60*60  # 7 days
+    )
+    return response
 
 
 @router.post('/logout')

@@ -1,30 +1,46 @@
 import hashlib
 
-from fastapi import APIRouter, Request, Depends, Body
+from fastapi import APIRouter, Request, Depends, Body, Cookie
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse
 
 from pydantic import BaseModel
+from typing import Optional
 
 from sqlalchemy.orm import Session
 
 from app.db.model.user import UserModel, EmailVerification
 from app.deps import get_db, verify_password, hash_password
-from app.services.email import get_current_user_state, send_mail_verification, prepare_verification_link
+from app.services.auth import create_access_token, decode_token
+from app.services.email import send_mail_verification, prepare_verification_link
 from app.setup.vars import router, FRONTEND_URL
 from app.setup.limiter import limiter
 
 router = APIRouter()
 
-@router.get('/check')
-def check_auth(
-    user_id: str = Depends(get_current_user_state)
+# Refresh token endpoint
+@router.post("/auth/refresh")
+async def refresh_token(
+    refresh_token: Optional[str] = Cookie(None),
+    db: Session = Depends(get_db)
 ):
 
-    return {
-        "authenticated": user_id is not None,
-        "user_id": user_id,
-    }
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="Missing refresh token")
+    
+    try:
+        payload = decode_token(refresh_token)
+        email = payload.get("sub")
+        user = db.query(UserModel).filter(UserModel.email==email).first()
+
+        if user is None:
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    new_access_token = create_access_token({"sub": email})
+    return {"access_token": new_access_token, "token_type": "bearer"}
+
 
 @router.patch('/recovery')
 def recover_password(
@@ -96,3 +112,5 @@ def resend_mail(
     return {"message": "Mail verification sent"}
 
 
+# Major changes: 
+# Removed /auth/check 
