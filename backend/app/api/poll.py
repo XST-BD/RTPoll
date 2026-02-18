@@ -80,6 +80,9 @@ def poll_view(
     user: UserModel = Depends(get_current_user),
 ):
     
+    if user is None: 
+        raise HTTPException(404, "User not found")
+
     now = datetime.now(timezone.utc)
     polls_query = db.query(PollModel).filter(PollModel.creator_id==user.user_id)
 

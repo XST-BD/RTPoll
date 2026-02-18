@@ -20,6 +20,7 @@ frontend/.env
 
 # Temporary files
 tmp/
+testpage.html
 
 # db file
 database.db

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Body, Depends
+from fastapi import APIRouter, Request, Body, Depends, Response
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse
 
@@ -77,7 +77,8 @@ def login_user(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        samesite="lax",
+        secure=True,
+        samesite="none",
         max_age=7*24*60*60  # 7 days
     )
     return response
@@ -85,10 +86,15 @@ def login_user(
 
 @router.post('/logout')
 def logout_user(
-    request: Request,
+    response: Response,
 ):
-    # clear sessions
-    request.session.clear()
-
+    response.delete_cookie(
+        key="refresh_token",
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path='/',
+        domain='none',
+    )
     return {"message": "Logged out successfully"}
 

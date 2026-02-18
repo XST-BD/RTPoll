@@ -19,7 +19,7 @@ from app.setup.limiter import limiter
 router = APIRouter()
 
 # Refresh token endpoint
-@router.post("/auth/refresh")
+@router.post("/refresh")
 async def refresh_token(
     refresh_token: Optional[str] = Cookie(None),
     db: Session = Depends(get_db)

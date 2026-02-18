@@ -47,6 +47,7 @@ def get_current_user(
         user = db.query(UserModel).filter(UserModel.email==email).first()
         if user is None:
             raise HTTPException(status_code=401, detail="Invalid refresh token")
+        return user
 
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
