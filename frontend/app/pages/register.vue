@@ -1,6 +1,10 @@
 <script setup>
 useHead({
-    title: 'Register',
+    title: 'Register'
+})
+
+definePageMeta({
+    middleware: 'guest'
 })
 
 const { public: { apiBase } } = useRuntimeConfig()

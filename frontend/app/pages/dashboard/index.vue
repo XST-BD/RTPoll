@@ -19,6 +19,8 @@ const closed_error = ref(null)
 const running_loading = ref(false)
 const closed_loading = ref(false)
 
+const token = useCookie('access_token')
+
 async function fetchRunningPolls() {
     running_loading.value = true
     running_error.value = null
@@ -26,8 +28,9 @@ async function fetchRunningPolls() {
     try {
         const res = await $fetch(`${apiBase}/dashboard/poll/view/all`, {
             method: 'GET',
-            headers: { "Content-Type": "application/json" },
-            credentials: 'include',
+            headers: {
+                Authorization: `Bearer ${token.value}`
+            },
             query: {
                 expired: false
             }
@@ -48,8 +51,9 @@ async function fetchClosedPolls() {
     try {
         const res = await $fetch(`${apiBase}/dashboard/poll/view/all`, {
             method: 'GET',
-            headers: { "Content-Type": "application/json" },
-            credentials: 'include',
+            headers: {
+                Authorization: `Bearer ${token.value}`
+            },
             query: {
                 expired: true
             }
@@ -83,7 +87,7 @@ onMounted(() => {
             <p v-else-if="running_polls.length === 0" class="text-gray-400">( No running poll )</p>
 
             <div v-else class="w-full flex flex-wrap justify-center items-center gap-3">
-                <PollCard v-for="poll in running_polls" :key="poll.id" @click="navigateTo(`/dashboard/poll/${poll.id}`)" :question="poll.question" :votes="poll.total_votes" :top-pick="poll.top_pick" />
+                <PollCard v-for="poll in running_polls" :key="poll.id" @click="navigateTo(`/dashboard/poll/${poll.id}`)" :question="poll.question" :expires_at="poll.expires_at.split('T')[0].split('-').reverse().join('-')" />
             </div>
         </div>
 
@@ -99,7 +103,7 @@ onMounted(() => {
             <p v-else-if="closed_polls.length === 0" class="text-gray-400">( No closed poll )</p>
 
             <div v-else class="w-full flex flex-wrap justify-center items-center gap-3">
-                <PollCard v-for="poll in closed_polls" :key="poll.id" @click="navigateTo(`/dashboard/poll/${poll.id}`)" :question="poll.question" :votes="poll.total_votes" :top-pick="poll.top_pick" />
+                <PollCard v-for="poll in closed_polls" :key="poll.id" @click="navigateTo(`/dashboard/poll/${poll.id}`)" :question="poll.question" :expires_at="poll.expires_at.split('T')[0].split('-').reverse().join('-')" />
             </div>
         </div>
     </div>

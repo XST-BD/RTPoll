@@ -18,7 +18,9 @@ const options = ref(['', ''])
 const loading = ref(false)
 const error = ref(null)
 
-const now = computed(() => new Date().toISOString().slice(0,16))
+const token = useCookie('access_token')
+
+const now = computed(() => new Date().toISOString().slice(0, 16))
 
 function addOption() {
     if (options.value.length < 10) {
@@ -64,8 +66,9 @@ async function createPoll() {
 
         const res = await $fetch(`${apiBase}/dashboard/poll/create`, {
             method: 'POST',
-            headers: { "Content-Type": "application/json" },
-            credentials: 'include',
+            headers: {
+                Authorization: `Bearer ${token.value}`
+            },
             body: {
                 question: question.value,
                 options: cleanedOptions,
@@ -103,17 +106,17 @@ async function createPoll() {
                     </select>
                 </div>
 
+                <div v-if="duration === 'custom'" class="flex flex-col gap-1">
+                    <label for="custom_duration">Enter Poll Duration</label>
+                    <input type="datetime-local" v-model="customDuration" :min="now" required />
+                </div>
+
                 <div class="flex flex-col gap-1">
                     <label for="show_results">Show Poll Result Publicly</label>
                     <select id="show_results" v-model="showResults">
                         <option value="yes">Yes</option>
                         <option value="no">No</option>
                     </select>
-                </div>
-
-                <div v-if="duration === 'custom'" class="flex flex-col gap-1">
-                    <label for="custom_duration">Enter Poll Duration</label>
-                    <input type="datetime-local" v-model="customDuration" :min="now" required />
                 </div>
 
                 <div class="flex flex-col gap-1">

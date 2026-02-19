@@ -19,8 +19,6 @@ async function fetchPoll() {
     try {
         const res = await $fetch(`${apiBase}/vote/poll/view`, {
             method: 'GET',
-            headers: { "Content-Type": "application/json" },
-            credentials: 'include',
             query: { poll_id: id }
         })
 

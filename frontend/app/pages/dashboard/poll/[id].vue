@@ -62,11 +62,20 @@ function connectWS(pollId) {
     socket.onopen = () => {
         console.log('WS Connected')
         loading.value = false
+
+        socket.send(JSON.stringify({
+            type: "poll_view"
+        }));
     }
 
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data)
-        // console.log("WS Data:", data)
+
+        if (data.type == "poll_view") {
+            console.log("WS Data:", data)
+        }
+
+        console.log("WS Data:", data)
 
         poll.value = data
 

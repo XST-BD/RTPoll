@@ -1,6 +1,10 @@
 <script setup>
 useHead({
-    title: 'Login',
+    title: 'Login'
+})
+
+definePageMeta({
+    middleware: 'guest'
 })
 
 const { public: { apiBase } } = useRuntimeConfig()
@@ -11,6 +15,12 @@ const error = ref(null)
 const loading = ref(false)
 const resend_mail = ref(false)
 
+const token = useCookie('access_token', {
+    maxAge: 60 * 60 * 24 * 7,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production'
+})
+
 async function login() {
     error.value = null
     loading.value = true
@@ -19,18 +29,15 @@ async function login() {
     try {
         const res = await $fetch(`${apiBase}/user/login`, {
             method: 'POST',
-            headers: { "Content-Type": "application/json" },
-            credentials: 'include',
             body: {
                 email: email.value,
                 password: password.value,
             }
         })
 
-        navigateTo('/dashboard')
+        token.value = res.access_token
 
-        email.value = ''
-        password.value = ''
+        await navigateTo('/dashboard')
     } catch (err) {
         const data = err?.data
 
@@ -38,9 +45,7 @@ async function login() {
             error.value = data.detail[0]?.msg ?? 'Validation error'
         }
         else if (typeof data?.detail === 'string') {
-            err = data.detail
-
-            error.value = err
+            error.value = data.detail
 
             if (err.includes('User is not verified')) {
                 resend_mail.value = true
@@ -61,7 +66,6 @@ async function resendVerificationEmail() {
         const res = await $fetch('http://127.0.0.1:8000/api/v0/auth/resend_mail', {
             method: 'POST',
             headers: { "Content-Type": "application/json" },
-            credentials: 'include',
             body: {
                 email: email.value
             }
