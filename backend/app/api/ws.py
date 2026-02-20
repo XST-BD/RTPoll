@@ -4,11 +4,14 @@ from datetime import datetime
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
 
+from jose import JWTError
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db.model.poll import PollModel
+from app.db.model.user import UserModel
 from app.deps import get_db, session_local
+from app.services.auth import decode_token
 from app.setup.ws import wsmanager
 from app.setup.cache import redis_client 
 from app.setup.vars import FRONTEND_URL
@@ -31,15 +34,15 @@ class PollResponseModel(BaseModel):
 async def build_poll_response(poll):
     return PollResponseModel.model_validate(poll)
 
-async def get_current_user_ws(ws: WebSocket):
-    session = ws.scope.get("session")
+# async def get_current_user_ws(ws: WebSocket):
+#     session = ws.scope.get("session")
 
-    if not session:
-        return None 
+#     if not session:
+#         return None 
     
-    user_id = session.get("user_id")
-    if not user_id: 
-        return None 
+#     user_id = session.get("user_id")
+#     if not user_id: 
+#         return None 
 
 
 
@@ -153,6 +156,30 @@ async def poll_ws(
     db: Session = Depends(get_db),
 ):
     await ws.accept()
+
+    token  = ws.query_params.get('token')
+    
+    if not token: 
+        await ws.send_json({"type": "error", "message": "Missing access token"})
+        await ws.close(code=1008)
+        return
+
+    try:
+        payload = decode_token(token)
+        email = payload.get('sub')
+
+        user = db.query(UserModel).filter(UserModel.email==email).first()
+        if not user: 
+            await ws.send_json({"type": "error", "message": "Unauthorized"})
+            await ws.close(code=1008)
+            return
+
+
+    except JWTError: 
+        await ws.send_json({"type": "error", "message": "Invalid token"})
+        await ws.close(code=1008)
+        return
+
     await wsmanager.connect(poll_id, ws)
 
     try: 
@@ -189,16 +216,6 @@ async def poll_ws(
                         "type": "error", 
                         "message": "Poll not found",
                     })
-                    return
-                
-                user = await get_current_user_ws(ws)
-
-                if user is None or not user: 
-                    await ws.send_json({
-                        "type": "error", 
-                        "message": "User not found or unauthorized",
-                    })
-                    await ws.close(code=1008)   # Policy violation
                     return
 
                 response = await build_poll_response(poll_view)
