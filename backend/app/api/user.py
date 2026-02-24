@@ -77,8 +77,8 @@ def login_user(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=True,
-        samesite="none",
+        secure=False,
+        samesite="lax",
         max_age=7*24*60*60  # 7 days
     )
     return response
@@ -91,10 +91,9 @@ def logout_user(
     response.delete_cookie(
         key="refresh_token",
         httponly=True,
-        secure=True,
-        samesite="none",
+        secure=False,
+        samesite="lax",
         path='/',
-        domain='none',
     )
     return {"message": "Logged out successfully"}
 

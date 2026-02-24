@@ -13,7 +13,7 @@ from app.deps import hash_password, verify_password, get_db
 from app.setup.vars import SECRET_KEY
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 5
+ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -21,7 +21,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def create_refresh_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.now() + timedelta(minutes=REFRESH_TOKEN_EXPIRE_DAYS)
+    expire = datetime.now() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode.update({'exp': expire})
     return jwt.encode(to_encode, str(SECRET_KEY), algorithm=ALGORITHM)
 
