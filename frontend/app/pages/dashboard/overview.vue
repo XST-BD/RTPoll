@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import VueApexCharts from "vue3-apexcharts";
+import VueApexCharts from "vue3-apexcharts"
 
 definePageMeta({
     middleware: 'auth',
-    layout: 'dashboard'
+    layout: 'dashboard',
+    ssr: false
 })
 
 useHead({
@@ -27,7 +28,7 @@ const series = ref([
             { x: "2024-01-07", y: 70 },
         ],
     },
-]);
+])
 
 const options = ref({
     chart: { type: "area", toolbar: { show: false } },
@@ -40,7 +41,7 @@ const options = ref({
     tooltip: {
         time: { format: "yyyy-MM-dd" },
     },
-});
+})
 </script>
 
 <template>

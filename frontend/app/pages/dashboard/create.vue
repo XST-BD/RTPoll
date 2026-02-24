@@ -1,7 +1,10 @@
 <script setup>
+import { useAuthFetch } from '@/composables/useAuthFetch'
+
 definePageMeta({
     middleware: 'auth',
-    layout: 'dashboard'
+    layout: 'dashboard',
+    ssr: false
 })
 
 useHead({
@@ -17,8 +20,6 @@ const question = ref('')
 const options = ref(['', ''])
 const loading = ref(false)
 const error = ref(null)
-
-const token = useCookie('access_token')
 
 const now = computed(() => new Date().toISOString().slice(0, 16))
 
@@ -64,11 +65,8 @@ async function createPoll() {
     try {
         loading.value = true
 
-        const res = await $fetch(`${apiBase}/dashboard/poll/create`, {
+        const res = await useAuthFetch(`${apiBase}/dashboard/poll/create`, {
             method: 'POST',
-            headers: {
-                Authorization: `Bearer ${token.value}`
-            },
             body: {
                 question: question.value,
                 options: cleanedOptions,

@@ -1,13 +1,13 @@
 <script setup>
-useHead({
-    title: 'Login'
-})
-
 definePageMeta({
     middleware: 'guest'
 })
 
-const { public: { apiBase } } = useRuntimeConfig()
+useHead({
+    title: 'Login'
+})
+
+const { login } = useAuth()
 
 const email = ref('')
 const password = ref('')
@@ -15,28 +15,13 @@ const error = ref(null)
 const loading = ref(false)
 const resend_mail = ref(false)
 
-const token = useCookie('access_token', {
-    maxAge: 60 * 60 * 24 * 7,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production'
-})
-
-async function login() {
+async function handleLogin() {
     error.value = null
     loading.value = true
     resend_mail.value = false
 
     try {
-        const res = await $fetch(`${apiBase}/user/login`, {
-            method: 'POST',
-            body: {
-                email: email.value,
-                password: password.value,
-            }
-        })
-
-        token.value = res.access_token
-
+        await login(email.value, password.value)
         await navigateTo('/dashboard')
     } catch (err) {
         const data = err?.data
@@ -47,7 +32,7 @@ async function login() {
         else if (typeof data?.detail === 'string') {
             error.value = data.detail
 
-            if (err.includes('User is not verified')) {
+            if (data.detail.includes('User is not verified')) {
                 resend_mail.value = true
             }
         }
@@ -61,18 +46,18 @@ async function login() {
 
 async function resendVerificationEmail() {
     error.value = null
+    loading.value = true
 
     try {
-        const res = await $fetch('http://127.0.0.1:8000/api/v0/auth/resend_mail', {
+        const { public: { apiBase } } = useRuntimeConfig()
+
+        const res = await $fetch(`${apiBase}/auth/resend_mail`, {
             method: 'POST',
-            headers: { "Content-Type": "application/json" },
-            body: {
-                email: email.value
-            }
+            headers: { 'Content-Type': 'application/json' },
+            body: { email: email.value }
         })
 
         alert(res.message)
-
         email.value = ''
     } catch (err) {
         const data = err?.data
@@ -86,6 +71,8 @@ async function resendVerificationEmail() {
         else {
             error.value = 'Something went wrong'
         }
+    } finally {
+        loading.value = false
     }
 }
 </script>
@@ -97,7 +84,7 @@ async function resendVerificationEmail() {
 
             <p v-if="error" class="error-msg">{{ error }}</p>
 
-            <form class="w-full flex flex-col gap-10" @submit.prevent="login">
+            <form class="w-full flex flex-col gap-10" @submit.prevent="handleLogin">
                 <div class="flex flex-col gap-4">
                     <div class="flex flex-col gap-1">
                         <label for="email">Email</label>

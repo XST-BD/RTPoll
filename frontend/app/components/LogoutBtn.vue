@@ -1,19 +1,15 @@
 <script setup>
 import { Icon } from "@iconify/vue";
 
+const { logout } = useAuth()
+
 const loading = ref(false)
 
-const token = useCookie('access_token')
-
-async function logout() {
+async function handleLogout() {
     loading.value = true
 
     try {
-        await $fetch('http://127.0.0.1:8000/api/v0/user/logout', {
-            method: 'POST'
-        })
-
-        token.value = null
+        await logout()
 
         await navigateTo('/login')
     } catch (err) {
@@ -35,7 +31,7 @@ async function logout() {
 </script>
 
 <template>
-    <button @click="logout" :disabled="loading" title="Logout" class="link-icon">
-        <Icon icon="carbon:logout" :ssr="true" class="text-3xl" />
+    <button @click="handleLogout" :disabled="loading" title="Logout" class="link-icon">
+        <Icon icon="carbon:logout" class="text-3xl" />
     </button>
 </template>

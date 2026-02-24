@@ -1,10 +1,11 @@
 <script setup>
-import { Icon } from "@iconify/vue";
-import Loading from "@/components/Loading.vue";
+import { Icon } from "@iconify/vue"
+import Loading from "@/components/Loading.vue"
 
 definePageMeta({
     middleware: 'auth',
-    layout: 'dashboard'
+    layout: 'dashboard',
+    ssr: false
 })
 
 useHead({
@@ -20,6 +21,8 @@ const poll = ref(null)
 const expires_at = ref(null)
 const error = ref(null)
 const loading = ref(false)
+
+const token = useCookie('access_token')
 
 // async function fetchPoll() {
 //     loading.value = true
@@ -61,14 +64,15 @@ function connectWS(pollId) {
 
     socket.onopen = () => {
         console.log('WS Connected')
-        loading.value = false
 
         socket.send(JSON.stringify({
-            type: "poll_view"
-        }));
+            type: "poll_view",
+            token: token.value
+        }))
     }
 
     socket.onmessage = (event) => {
+        loading.value = false
         const data = JSON.parse(event.data)
 
         if (data.type == "poll_view") {
@@ -104,6 +108,7 @@ function connectWS(pollId) {
 }
 
 onMounted(() => {
+    loading.value = true
     connectWS(id)
 })
 
@@ -140,7 +145,7 @@ function sharePoll(id) {
                 <div class="bg-green-400 p-4 rounded-t-xl flex justify-between gap-4">
                     <h2 class="text-white">{{ poll.question }}</h2>
 
-                    <Icon @click="sharePoll(id)" icon="majesticons:share" :ssr="true" class="text-3xl text-white shrink-0 cursor-pointer" />
+                    <Icon @click="sharePoll(id)" icon="majesticons:share" class="text-3xl text-white shrink-0 cursor-pointer" />
                 </div>
 
                 <ul class="border-2 border-green-400 rounded-b-xl">

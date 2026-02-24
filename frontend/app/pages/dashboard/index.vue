@@ -1,15 +1,15 @@
 <script setup>
-import PollCard from "@/components/PollCard.vue";
-
 definePageMeta({
     middleware: 'auth',
-    layout: 'dashboard'
+    layout: 'dashboard',
+    ssr: false
 })
 
 useHead({
     title: 'Dashboard'
 })
 
+const { authFetch } = useAuth()
 const { public: { apiBase } } = useRuntimeConfig()
 
 const running_polls = ref([])
@@ -19,21 +19,14 @@ const closed_error = ref(null)
 const running_loading = ref(false)
 const closed_loading = ref(false)
 
-const token = useCookie('access_token')
-
 async function fetchRunningPolls() {
     running_loading.value = true
     running_error.value = null
 
     try {
-        const res = await $fetch(`${apiBase}/dashboard/poll/view/all`, {
+        const res = await authFetch(`${apiBase}/dashboard/poll/view/all`, {
             method: 'GET',
-            headers: {
-                Authorization: `Bearer ${token.value}`
-            },
-            query: {
-                expired: false
-            }
+            query: { expired: false }
         })
 
         running_polls.value = res.items
@@ -49,14 +42,9 @@ async function fetchClosedPolls() {
     closed_error.value = null
 
     try {
-        const res = await $fetch(`${apiBase}/dashboard/poll/view/all`, {
+        const res = await authFetch(`${apiBase}/dashboard/poll/view/all`, {
             method: 'GET',
-            headers: {
-                Authorization: `Bearer ${token.value}`
-            },
-            query: {
-                expired: true
-            }
+            query: { expired: true }
         })
 
         closed_polls.value = res.items

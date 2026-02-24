@@ -1,7 +1,10 @@
-export default defineNuxtRouteMiddleware(() => {
-    const token = useCookie('access_token')
+export default defineNuxtRouteMiddleware(async () => {
+    const { isLoggedIn, restoreUser, refresh, isTokenExpired } = useAuth()
 
-    if (!token.value) {
-        return navigateTo('/login')
+    restoreUser()
+
+    if (!isLoggedIn.value || isTokenExpired()) {
+        const ok = await refresh()
+        if (!ok) return navigateTo('/login', { replace: true })
     }
 })
