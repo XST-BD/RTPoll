@@ -1,9 +1,7 @@
 export default defineNuxtRouteMiddleware(async () => {
-    const { isLoggedIn, restoreUser, refresh, isTokenExpired } = useAuth()
+    const { isLoggedIn, refresh } = useAuth()
 
-    restoreUser()
-
-    if (!isLoggedIn.value || isTokenExpired()) {
+    if (!isLoggedIn.value) {
         await refresh()
     }
 
