@@ -157,7 +157,8 @@ async def poll_ws(
 ):
     await ws.accept()
 
-    token  = ws.query_params.get('token')
+    auth_data = await ws.receive_json()
+    token  = auth_data.get('token')
     
     if not token: 
         await ws.send_json({"type": "error", "message": "Missing access token"})
