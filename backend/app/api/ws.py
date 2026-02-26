@@ -5,6 +5,7 @@ from datetime import datetime
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
 
 from jose import JWTError
+import json
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -31,27 +32,19 @@ class PollResponseModel(BaseModel):
 
 # service layer codes
 
-# async def build_poll_response(poll: PollModel) -> PollResponseModel:
-#     if not poll:
-#         raise ValueError("Poll not found")
+def vote_percentages(votes: list[int], poll_creator: bool) -> list[int] | list[float]:
+    total = sum(votes)
 
-#     total_votes = sum(poll.votes)  # sum integers from votes list
-#     options = poll.options  # already a list[str]
+    if poll_creator: 
+        if total == 0:
+            return [0] * len(votes)
 
-#     # Handle expires_at safely
-#     expires_at: datetime | str
-#     if poll.is_indefinite or poll.expires_at is None:
-#         expires_at = "Never"
-#     else:
-#         expires_at = poll.expires_at
+        return [round(v / total * 100) for v in votes]
+    else: 
+        if total == 0:
+            return [0.0] * len(votes)
 
-#     return PollResponseModel(
-#         id=poll.id,
-#         question=poll.question,
-#         options=options,
-#         total_votes=total_votes,
-#         expires_at=expires_at
-#     )
+        return [round(v / total * 100, 2) for v in votes]
 
 
 @router.websocket('/vote/{poll_id}')
@@ -144,12 +137,14 @@ async def vote_ws(
                         "message": "Poll not found",
                     })
                     return
+                
+                votes = vote_percentages(poll_vote.votes, False) if poll_vote.is_public else []
 
                 await ws.send_json({
                     "type": "vote_data", 
                     "question": poll_vote.question,
                     "options": poll_vote.options,
-                    "votes": poll_vote.votes,
+                    "votes": votes,
                 })
 
     except WebSocketDisconnect:
@@ -221,13 +216,18 @@ async def poll_ws(
                     "message": "Poll not found",
                 })
                 return
+            
+            votes_percantage = vote_percentages(poll_vote.votes, True)
 
             await ws.send_json({
                 "type": "poll_view", 
+                "result_public": poll_vote.is_public,
                 "question": poll_vote.question,
                 "options": poll_vote.options,
                 "votes": poll_vote.votes,
+                "percantage": votes_percantage,
                 "total_votes": sum(poll_vote.votes),
+                "expiry": json.dumps(poll_vote.expires_at, default=str),
             })
 
         # ================= LISTEN LOOP =================
@@ -247,29 +247,21 @@ async def poll_ws(
                     })
                     return
 
+                votes_percantage = vote_percentages(poll_vote.votes, True)
+
                 await ws.send_json({
                     "type": "poll_view", 
+                    "result_public": poll_vote.is_public,
                     "question": poll_vote.question,
                     "options": poll_vote.options,
                     "votes": poll_vote.votes,
+                    "percantage": votes_percantage,
                     "total_votes": sum(poll_vote.votes),
+                    "expiry": json.dumps(poll_vote.expires_at, default=str),
                 })
 
     except WebSocketDisconnect:
         wsmanager.disconnect(poll_id, ws)
 
-# For endpoint: ws://127.0.0.1:8000/ws/poll/{poll_id}
-
-# Send: {type: "poll_view"}  
-# Recieve: {type:"Poll data", question:str, options:[str], votes:[int]}
-
-
-# For endpoint: ws://127.0.0.1:8000/ws/vote/{poll_id}
-
-# Send: {type: "get_vote"}
-# Recieve: {type: "vote_data", question:str, options:[str], votes:[int]}
-
-# Send: {type: "send_vote", option_id: str}
-# Recieve: {'type': 'vote_update', 'option_id': str, 'count': int}
 
 
