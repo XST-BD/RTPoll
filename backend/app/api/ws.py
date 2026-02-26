@@ -31,38 +31,27 @@ class PollResponseModel(BaseModel):
 
 # service layer codes
 
-async def build_poll_response(poll: PollModel) -> PollResponseModel:
-    if not poll:
-        raise ValueError("Poll not found")
+# async def build_poll_response(poll: PollModel) -> PollResponseModel:
+#     if not poll:
+#         raise ValueError("Poll not found")
 
-    total_votes = sum(poll.votes)  # sum integers from votes list
-    options = poll.options  # already a list[str]
+#     total_votes = sum(poll.votes)  # sum integers from votes list
+#     options = poll.options  # already a list[str]
 
-    # Handle expires_at safely
-    expires_at: datetime | str
-    if poll.is_indefinite or poll.expires_at is None:
-        expires_at = "Never"
-    else:
-        expires_at = poll.expires_at
+#     # Handle expires_at safely
+#     expires_at: datetime | str
+#     if poll.is_indefinite or poll.expires_at is None:
+#         expires_at = "Never"
+#     else:
+#         expires_at = poll.expires_at
 
-    return PollResponseModel(
-        id=poll.id,
-        question=poll.question,
-        options=options,
-        total_votes=total_votes,
-        expires_at=expires_at
-    )
-
-# async def get_current_user_ws(ws: WebSocket):
-#     session = ws.scope.get("session")
-
-#     if not session:
-#         return None 
-    
-#     user_id = session.get("user_id")
-#     if not user_id: 
-#         return None 
-
+#     return PollResponseModel(
+#         id=poll.id,
+#         question=poll.question,
+#         options=options,
+#         total_votes=total_votes,
+#         expires_at=expires_at
+#     )
 
 
 @router.websocket('/vote/{poll_id}')
@@ -76,7 +65,6 @@ async def vote_ws(
 
     try: 
         # Send initial poll data (like /poll/view)
-        # votes = redis_client.hgetall(f"poll:{poll_id}:votes")
         poll = db.query(PollModel).filter(PollModel.id==poll_id).first()
 
         if poll is None: 
@@ -224,19 +212,22 @@ async def poll_ws(
         # ================= HANDLE FIRST REQUEST =================
         if msg_type == "poll_view":
 
-            poll = db.get(PollModel, poll_id)
+            db = session_local
+            poll_vote = db.get(PollModel, poll_id)
 
-            if not poll:
+            if poll_vote is None: 
                 await ws.send_json({
-                    "type": "error",
-                    "message": "Poll not found"
+                    "type": "error", 
+                    "message": "Poll not found",
                 })
                 return
-            
-            resp = await build_poll_response(poll)
+
             await ws.send_json({
-                "type": "poll_view",
-                "data": resp.model_dump()
+                "type": "poll_view", 
+                "question": poll_vote.question,
+                "options": poll_vote.options,
+                "votes": poll_vote.votes,
+                "total_votes": sum(poll_vote.votes),
             })
 
         # ================= LISTEN LOOP =================
@@ -246,25 +237,22 @@ async def poll_ws(
 
             if msg_type == "poll_view":
 
-                poll = db.get(PollModel, poll_id)
+                db = session_local
+                poll_vote = db.get(PollModel, poll_id)
 
-                if not poll:
+                if poll_vote is None: 
                     await ws.send_json({
-                        "type": "error",
-                        "message": "Poll not found"
+                        "type": "error", 
+                        "message": "Poll not found",
                     })
-                    continue
+                    return
 
-                resp = await build_poll_response(poll)
                 await ws.send_json({
-                    "type": "poll_view",
-                    "data": resp.model_dump()
-                })
-
-            else:
-                await ws.send_json({
-                    "type": "error",
-                    "message": "Unknown message type"
+                    "type": "poll_view", 
+                    "question": poll_vote.question,
+                    "options": poll_vote.options,
+                    "votes": poll_vote.votes,
+                    "total_votes": sum(poll_vote.votes),
                 })
 
     except WebSocketDisconnect:
