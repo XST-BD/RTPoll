@@ -34,10 +34,12 @@ def poll_create(
 ):
     
     is_indefinite = payload.expires_at is None
+    votes = [0] * len(payload.options)
 
     poll = PollModel(
         question=payload.question,
         options=payload.options,
+        votes=votes,
         creator_id=user.user_id,
         expires_at=payload.expires_at,
         is_indefinite=is_indefinite,

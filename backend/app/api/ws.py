@@ -219,6 +219,10 @@ async def poll_ws(
             
             votes_percantage = vote_percentages(poll_vote.votes, True)
 
+            expiry = "Never"
+            if poll_vote.expires_at: 
+               expiry = json.dumps(poll_vote.expires_at, default=str)
+
             await ws.send_json({
                 "type": "poll_view", 
                 "result_public": poll_vote.is_public,
@@ -227,7 +231,7 @@ async def poll_ws(
                 "votes": poll_vote.votes,
                 "percantage": votes_percantage,
                 "total_votes": sum(poll_vote.votes),
-                "expiry": json.dumps(poll_vote.expires_at, default=str),
+                "expiry": expiry,
             })
 
         # ================= LISTEN LOOP =================
@@ -249,6 +253,10 @@ async def poll_ws(
 
                 votes_percantage = vote_percentages(poll_vote.votes, True)
 
+                expiry = "Never"
+                if poll_vote.expires_at: 
+                    expiry = json.dumps(poll_vote.expires_at, default=str)
+
                 await ws.send_json({
                     "type": "poll_view", 
                     "result_public": poll_vote.is_public,
@@ -257,7 +265,7 @@ async def poll_ws(
                     "votes": poll_vote.votes,
                     "percantage": votes_percantage,
                     "total_votes": sum(poll_vote.votes),
-                    "expiry": json.dumps(poll_vote.expires_at, default=str),
+                    "expiry": expiry,
                 })
 
     except WebSocketDisconnect:
