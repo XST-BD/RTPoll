@@ -1,6 +1,4 @@
 <script setup>
-import { useAuthFetch } from '@/composables/useAuthFetch'
-
 definePageMeta({
     middleware: 'auth',
     layout: 'dashboard',
@@ -11,6 +9,7 @@ useHead({
     title: 'Create Poll',
 })
 
+const { authFetch } = useAuth()
 const { public: { apiBase } } = useRuntimeConfig()
 
 const duration = ref('infinite')
@@ -65,7 +64,7 @@ async function createPoll() {
     try {
         loading.value = true
 
-        const res = await useAuthFetch(`${apiBase}/dashboard/poll/create`, {
+        const res = await authFetch(`${apiBase}/dashboard/poll/create`, {
             method: 'POST',
             body: {
                 question: question.value,
@@ -76,9 +75,6 @@ async function createPoll() {
         })
 
         navigateTo(`/dashboard/poll/${res.id}`)
-
-        question.value = ''
-        options.value = ['', '']
 
     } catch (err) {
         error.value = 'Failed to create poll'
