@@ -8,6 +8,7 @@ useHead({
 })
 
 const { login } = useAuth()
+const { public: { apiBase } } = useRuntimeConfig()
 
 const email = ref('')
 const password = ref('')
@@ -49,8 +50,6 @@ async function resendVerificationEmail() {
     loading.value = true
 
     try {
-        const { public: { apiBase } } = useRuntimeConfig()
-
         const res = await $fetch(`${apiBase}/auth/resend_mail`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

@@ -12,6 +12,8 @@ useHead({
     title: 'Poll Details',
 })
 
+const { accessToken, refresh } = useAuth()
+
 let socket = null
 
 const route = useRoute()
@@ -22,52 +24,27 @@ const expires_at = ref(null)
 const error = ref(null)
 const loading = ref(false)
 
-const token = useCookie('access_token')
+async function connectWS(pollId) {
+    if (!accessToken.value) {
+        const ok = await refresh()
+        if (!ok) {
+            error.value = 'Authentication failed'
+            loading.value = false
+            return
+        }
+    }
 
-// async function fetchPoll() {
-//     loading.value = true
-//     error.value = null
+    const token = accessToken.value
 
-//     try {
-//         const res = await $fetch(`${apiBase}/dashboard/poll/view`, {
-//             method: 'GET',
-//             headers: { "Content-Type": "application/json" },
-//             credentials: 'include',
-//             query: { poll_id: id }
-//         })
-
-//         poll.value = res
-
-//         if (res.expires_at == "Never") {
-//             expires_at.value = res.expires_at
-//         }
-//         else {
-//             expires_at.value = new Date(res.expires_at).toLocaleString('en-US', {
-//                 year: 'numeric',
-//                 month: 'long',
-//                 day: '2-digit',
-//                 hour: 'numeric',
-//                 minute: '2-digit',
-//                 hour12: true
-//             })
-//         }
-//     } catch (err) {
-//         error.value = 'Failed to load poll'
-//     } finally {
-//         loading.value = false
-//     }
-// }
-
-
-function connectWS(pollId) {
     socket = new WebSocket(`ws://127.0.0.1:8000/ws/poll/${pollId}`)
 
     socket.onopen = () => {
         console.log('WS Connected')
+        console.log('Token being sent:', token)
 
         socket.send(JSON.stringify({
             type: "poll_view",
-            token: token.value
+            token: token
         }))
     }
 
@@ -75,11 +52,12 @@ function connectWS(pollId) {
         loading.value = false
         const data = JSON.parse(event.data)
 
-        if (data.type == "poll_view") {
-            console.log("WS Data:", data)
-        }
-
         console.log("WS Data:", data)
+
+        if (data.type === 'error') {
+            error.value = data.message
+            return
+        }
 
         poll.value = data
 
