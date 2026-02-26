@@ -31,8 +31,27 @@ class PollResponseModel(BaseModel):
 
 # service layer codes
 
-async def build_poll_response(poll):
-    return PollResponseModel.model_validate(poll)
+async def build_poll_response(poll: PollModel) -> PollResponseModel:
+    if not poll:
+        raise ValueError("Poll not found")
+
+    total_votes = sum(poll.votes)  # sum integers from votes list
+    options = poll.options  # already a list[str]
+
+    # Handle expires_at safely
+    expires_at: datetime | str
+    if poll.is_indefinite or poll.expires_at is None:
+        expires_at = "Never"
+    else:
+        expires_at = poll.expires_at
+
+    return PollResponseModel(
+        id=poll.id,
+        question=poll.question,
+        options=options,
+        total_votes=total_votes,
+        expires_at=expires_at
+    )
 
 # async def get_current_user_ws(ws: WebSocket):
 #     session = ws.scope.get("session")
@@ -149,89 +168,106 @@ async def vote_ws(
         wsmanager.disconnect(poll_id, ws)
 
 
-@router.websocket('/poll/{poll_id}')
+@router.websocket("/poll/{poll_id}")
 async def poll_ws(
-    ws: WebSocket, 
-    poll_id: int, 
+    ws: WebSocket,
+    poll_id: int,
     db: Session = Depends(get_db),
 ):
     await ws.accept()
 
-    auth_data = await ws.receive_json()
-    token  = auth_data.get('token')
-    
-    if not token: 
-        await ws.send_json({"type": "error", "message": "Missing access token"})
-        await ws.close(code=1008)
-        return
-
     try:
-        payload = decode_token(token)
-        email = payload.get('sub')
+        # ================= FIRST MESSAGE =================
+        data = await ws.receive_json()
 
-        user = db.query(UserModel).filter(UserModel.email==email).first()
-        if not user: 
-            await ws.send_json({"type": "error", "message": "Unauthorized"})
+        token = data.get("token")
+        msg_type = data.get("type")
+
+        if not token:
+            await ws.send_json({
+                "type": "error",
+                "message": "Missing access token"
+            })
             await ws.close(code=1008)
             return
 
+        # ================= AUTH =================
+        try:
+            payload = decode_token(token)
+            email = payload.get("sub")
 
-    except JWTError: 
-        await ws.send_json({"type": "error", "message": "Invalid token"})
-        await ws.close(code=1008)
-        return
+            user = (
+                db.query(UserModel)
+                .filter(UserModel.email == email)
+                .first()
+            )
 
-    await wsmanager.connect(poll_id, ws)
+            if not user:
+                await ws.send_json({
+                    "type": "error",
+                    "message": "Unauthorized"
+                })
+                await ws.close(code=1008)
+                return
 
-    try: 
-        # send initial poll data 
-        poll = db.query(PollModel).filter(PollModel.id==poll_id).first()
-
-        if poll is None: 
+        except JWTError:
             await ws.send_json({
                 "type": "error",
-                "message": "Poll not found",
+                "message": "Invalid token"
             })
+            await ws.close(code=1008)
             return
 
-        # Listen loop
-        while True: 
-            lock = await redis_client.set("poll_sync_lock", "1", nx=True, ex=25)
+        # ================= CONNECT =================
+        await wsmanager.connect(poll_id, ws)
 
-            if not lock: 
-                await asyncio.sleep(5) 
-                continue
+        # ================= HANDLE FIRST REQUEST =================
+        if msg_type == "poll_view":
 
+            poll = db.get(PollModel, poll_id)
+
+            if not poll:
+                await ws.send_json({
+                    "type": "error",
+                    "message": "Poll not found"
+                })
+                return
+            
+            resp = await build_poll_response(poll)
+            await ws.send_json({
+                "type": "poll_view",
+                "data": resp.model_dump()
+            })
+
+        # ================= LISTEN LOOP =================
+        while True:
             data = await ws.receive_json()
             msg_type = data.get("type")
 
-            # ================================= POLL ================================= #
-
             if msg_type == "poll_view":
 
-                db = session_local
-                poll_view = db.get(PollModel, poll_id)
+                poll = db.get(PollModel, poll_id)
 
-                if poll_view is None: 
+                if not poll:
                     await ws.send_json({
-                        "type": "error", 
-                        "message": "Poll not found",
+                        "type": "error",
+                        "message": "Poll not found"
                     })
-                    return
+                    continue
 
-                response = await build_poll_response(poll_view)
+                resp = await build_poll_response(poll)
                 await ws.send_json({
-                    "type": f"poll_data_{poll_id}",
-                    "data": response,
+                    "type": "poll_view",
+                    "data": resp.model_dump()
                 })
-            
+
             else:
                 await ws.send_json({
-                    "type": "error", 
-                    "message": "Unknown message type",
+                    "type": "error",
+                    "message": "Unknown message type"
                 })
 
-    except WebSocketDisconnect: 
+    except WebSocketDisconnect:
         wsmanager.disconnect(poll_id, ws)
 
 # For endpoint: ws://127.0.0.1:8000/ws/poll/{poll_id}
