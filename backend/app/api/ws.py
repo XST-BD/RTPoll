@@ -221,7 +221,7 @@ async def poll_ws(
 
             expiry = "Never"
             if poll_vote.expires_at: 
-               expiry = json.dumps(poll_vote.expires_at, default=str)
+               expiry = str(poll_vote.expires_at)
 
             await ws.send_json({
                 "type": "poll_view", 
@@ -255,7 +255,7 @@ async def poll_ws(
 
                 expiry = "Never"
                 if poll_vote.expires_at: 
-                    expiry = json.dumps(poll_vote.expires_at, default=str)
+                    expiry = str(poll_vote.expires_at)
 
                 await ws.send_json({
                     "type": "poll_view", 
