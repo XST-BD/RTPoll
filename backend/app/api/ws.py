@@ -1,6 +1,6 @@
 import asyncio
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
 
@@ -221,7 +221,7 @@ async def poll_ws(
 
             expiry = "Never"
             if poll_vote.expires_at: 
-               expiry = str(poll_vote.expires_at)
+               expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
             await ws.send_json({
                 "type": "poll_view", 
@@ -255,7 +255,7 @@ async def poll_ws(
 
                 expiry = "Never"
                 if poll_vote.expires_at: 
-                    expiry = str(poll_vote.expires_at)
+                    expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
                 await ws.send_json({
                     "type": "poll_view", 
