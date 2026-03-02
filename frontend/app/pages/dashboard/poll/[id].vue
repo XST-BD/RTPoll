@@ -1,11 +1,5 @@
 <script setup>
 import { Icon } from "@iconify/vue"
-import Loading from "@/components/Loading.vue"
-
-// Lazy-load only on client — this library accesses `document` at import time
-const Vue3FlipCountdown = defineAsyncComponent(() =>
-    import('vue3-flip-countdown').then(m => m.Countdown)
-)
 
 definePageMeta({
     middleware: 'auth',
@@ -34,6 +28,10 @@ const url = computed(() => {
     if (import.meta.server) return ''
     return `${window.location.origin}/poll/${id}`
 })
+
+const Vue3FlipCountdown = defineAsyncComponent(() =>
+    import('vue3-flip-countdown').then(m => m.Countdown)
+)
 
 function closeWS() {
     if (socket) {
@@ -69,8 +67,6 @@ async function connectWS(pollId) {
     socket.onmessage = (event) => {
         loading.value = false
         const data = JSON.parse(event.data)
-
-        console.log("WS Data:", data)
 
         if (data.type === 'error') {
             error.value = data.message
@@ -216,10 +212,17 @@ const getBackground = (percentage) => {
 
             <div class="w-full flex items-center overflow-x-auto">
                 <table class="w-full text-center overflow-x-auto">
-                    <tr>
-                        <th class="shrink-0 border-2 border-green-400 font-[Anton] text-lg text-green-400 font-normal">Option No.</th>
-                        <th class="border-2 border-green-400 font-[Anton] text-lg text-green-400 font-normal">Votes Received</th>
-                    </tr>
+                    <thead>
+                        <tr>
+                            <th class="border-2 border-green-400 font-[Anton] text-lg text-green-400 font-normal">
+                                Option No.
+                            </th>
+                            <th class="border-2 border-green-400 font-[Anton] text-lg text-green-400 font-normal">
+                                Votes Received
+                            </th>
+                        </tr>
+                    </thead>
+
                     <tr v-for="(option, index) in poll.options" :key="index">
                         <td class="shrink-0 border-2 border-green-400">{{ index + 1 }}</td>
                         <td class="border-2 border-green-400">{{ poll.votes[index] }}</td>
