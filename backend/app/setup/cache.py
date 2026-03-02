@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 import redis.asyncio as redis
 from redis.asyncio import Redis
 
-from app.db.session import session_local
+from app.db.session import SessionLocal
 from app.db.model.poll import PollModel
 
 # Caching
@@ -22,7 +22,7 @@ async def sync_votes_db():
 
     while True: 
 
-        db: Session = session_local
+        db: Session = SessionLocal()
 
         try: 
             keys = await redis_client.keys('poll:*:votes')

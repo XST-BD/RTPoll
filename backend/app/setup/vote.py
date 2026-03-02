@@ -2,7 +2,7 @@ import asyncio
 
 from cache import redis_client
 
-from app.db.session import session_local
+from app.db.session import SessionLocal
 from app.db.model.poll import PollModel
 
 
@@ -12,7 +12,7 @@ async def sync_votes():
     while True:
         await asyncio.sleep(30)
 
-        db = session_local
+        db = SessionLocal()
 
         try: 
             keys = await redis_client.keys('poll:*:votes')

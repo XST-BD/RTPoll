@@ -1,8 +1,8 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import sessionmaker
 
 from app.db.base import dbengine
 
-session_local = Session(
+SessionLocal = sessionmaker(
     bind=dbengine, 
     autocommit=False, 
     autoflush=False

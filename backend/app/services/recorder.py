@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.db.model.poll import PollHistoryEntry
 from app.deps import get_db
 from app.setup.cache import redis_client
-from app.deps import session_local
+from app.deps import SessionLocal
 
 RABBITMQ_URL="amqp://rtpoll-rmq:5672"
 
@@ -31,7 +31,7 @@ async def process_message(message: aio_pika.IncomingMessage):
 async def flush_db_votes():
     while True: 
         await asyncio.sleep(60)
-        db = session_local
+        db = SessionLocal()
         now = datetime.now().replace(second=0, microsecond=0)
 
         try: 

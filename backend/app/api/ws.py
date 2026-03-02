@@ -3,6 +3,7 @@ import asyncio
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
+from fastapi.concurrency import run_in_threadpool
 
 from jose import JWTError
 import json
@@ -11,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.db.model.poll import PollModel
 from app.db.model.user import UserModel
-from app.deps import get_db, session_local
+from app.deps import get_db, SessionLocal
 from app.services.auth import decode_token
 from app.setup.ws import wsmanager
 from app.setup.cache import redis_client 
@@ -50,13 +51,13 @@ def vote_percentages(votes: list[int], poll_creator: bool) -> list[int] | list[f
 async def vote_ws(
     ws: WebSocket, 
     poll_id: int,
-    db: Session = Depends(get_db),
 ):
     await ws.accept()
     await wsmanager.connect(poll_id, ws)
 
     try: 
         # Send initial poll data (like /poll/view)
+        db = SessionLocal()
         poll = db.query(PollModel).filter(PollModel.id==poll_id).first()
 
         if poll is None: 
@@ -69,12 +70,6 @@ async def vote_ws(
         # Listen loop
         while True: 
             
-            lock = await redis_client.set("poll_sync_lock", "1", nx=True, ex=25)
-
-            if not lock: 
-                await asyncio.sleep(5)
-                continue
-
             data = await ws.receive_json()
             msg_type = data.get("type")
 
@@ -83,8 +78,9 @@ async def vote_ws(
             # Handle refresh 
             if msg_type == "send_vote":
 
-                db = session_local
-                poll_vote = db.get(PollModel, poll_id)
+                db = SessionLocal()
+                # poll_vote = db.get(PollModel, poll_id)
+                poll_vote = await run_in_threadpool(db.get, PollModel, poll_id)
 
                 if poll_vote is None: 
                     await ws.send_json({
@@ -127,8 +123,9 @@ async def vote_ws(
 
             # Handle vote
             elif msg_type == "get_vote":
-                db = session_local
-                poll_vote = db.get(PollModel, poll_id)
+                db = SessionLocal()
+                # poll_vote = db.get(PollModel, poll_id)
+                poll_vote = await run_in_threadpool(db.get, PollModel, poll_id)
 
                 if poll_vote is None: 
                     await ws.send_json({
@@ -211,7 +208,7 @@ async def poll_ws(
         # ================= HANDLE FIRST REQUEST =================
         if msg_type == "poll_view":
 
-            db = session_local
+            db = SessionLocal()
             poll_vote = db.get(PollModel, poll_id)
 
             if poll_vote is None: 
@@ -248,7 +245,7 @@ async def poll_ws(
 
             if msg_type == "poll_view":
 
-                db = session_local
+                db = SessionLocal()
                 poll_vote = db.get(PollModel, poll_id)
 
                 if poll_vote is None: 

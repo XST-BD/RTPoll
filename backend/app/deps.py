@@ -1,8 +1,8 @@
-from app.db.session import session_local
+from app.db.session import SessionLocal
 from passlib.context import CryptContext
 
 def get_db():
-    db = session_local
+    db = SessionLocal()
 
     try:
         yield db
