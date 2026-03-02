@@ -4,25 +4,30 @@
 @tailwind components;
 @tailwind utilities;
 
+.no-style {
+    all: unset;
+}
+
 html {
     font-family: 'Nunito', sans-serif;
     scroll-behavior: smooth;
+    @apply text-green-900;
 }
 
 h1 {
-    @apply font-[Anton] text-3xl text-green-400;
+    @apply font-[Anton] text-3xl text-green-400 text-center;
 }
 
 h2 {
-    @apply font-[Anton] text-3xl text-green-400;
+    @apply font-[Anton] text-3xl text-green-400 text-center;
 }
 
 h3 {
-    @apply font-[Anton] text-2xl text-green-400;
+    @apply font-[Anton] text-2xl text-green-400 text-center;
 }
 
 h4 {
-    @apply text-lg text-green-400;
+    @apply text-lg text-green-400 text-center;
 }
 
 button,
@@ -48,14 +53,18 @@ label {
     @apply font-medium;
 }
 
-input,
+input {
+    @apply outline-none;
+}
+
+.ipt,
 textarea,
 select {
     @apply p-2 border rounded-md border-green-300 transition duration-300 focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400 focus:ring-opacity-30;
 }
 
 .error-msg {
-    @apply text-red-400 text-sm;
+    @apply text-red-500 text-sm;
 }
 
 .dashboard-body {

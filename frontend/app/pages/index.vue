@@ -16,7 +16,7 @@ useHead({
             </h2>
 
             <p class="max-w-3xl text-lg text-shadow-2xs">
-                RTPoll is a platform that allows you to create polls, share them by public links and see the results in real-time.
+                RTPoll allows you to create polls, share them by public links and see the results in real-time
             </p>
         </section>
 

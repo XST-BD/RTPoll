@@ -87,12 +87,12 @@ async function resendVerificationEmail() {
                 <div class="flex flex-col gap-4">
                     <div class="flex flex-col gap-1">
                         <label for="email">Email</label>
-                        <input id="email" v-model="email" required>
+                        <input id="email" v-model="email" class="ipt" required>
                     </div>
 
                     <div class="flex flex-col gap-1">
                         <label for="password">Password</label>
-                        <input id="password" v-model="password" type="password" required>
+                        <input id="password" v-model="password" type="password" class="ipt" required>
                     </div>
                 </div>
 

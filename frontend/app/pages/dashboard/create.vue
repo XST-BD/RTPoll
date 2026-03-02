@@ -102,7 +102,7 @@ async function createPoll() {
 
                 <div v-if="duration === 'custom'" class="flex flex-col gap-1">
                     <label for="custom_duration">Enter Poll Duration</label>
-                    <input type="datetime-local" v-model="customDuration" :min="now" required />
+                    <input type="datetime-local" v-model="customDuration" :min="now" class="ipt" required />
                 </div>
 
                 <div class="flex flex-col gap-1">
@@ -115,7 +115,7 @@ async function createPoll() {
 
                 <div class="flex flex-col gap-1">
                     <label for="question">Enter Your Question or Opinion</label>
-                    <textarea id="question" v-model="question" class="h-20 resize-none" required />
+                    <textarea id="question" v-model="question" class="ipt h-20 resize-none" required />
                 </div>
 
                 <div class="flex flex-col gap-2">
@@ -128,8 +128,8 @@ async function createPoll() {
 
                     <div class="flex flex-col gap-2">
                         <div v-for="(option, idx) in options" :key="idx" class="flex items-center gap-2">
-                            <input v-model="options[idx]" :placeholder="`Option ${idx + 1}`" class="flex-1" required>
-                            <button type="button" class="p-2 text-sm text-red-400 hover:text-red-500 font-bold transition-all duration-300 ease-in-out" :disabled="options.length === 2" title="Remove option" @click="removeOption(idx)">
+                            <input v-model="options[idx]" :placeholder="`Option ${idx + 1}`" class="ipt flex-1" required>
+                            <button type="button" class="p-2 text-sm text-red-500 hover:text-red-600 font-bold transition-all duration-300 ease-in-out" :disabled="options.length === 2" title="Remove option" @click="removeOption(idx)">
                                 ✕
                             </button>
                         </div>

@@ -11,12 +11,19 @@ const { public: { apiBase } } = useRuntimeConfig()
 
 const email = ref('')
 const password = ref('')
+const confirm_password = ref('')
 const error = ref(null)
 const loading = ref(false)
 
-async function register() {
+async function handleRegister() {
     error.value = null
     loading.value = true
+
+    if (password.value !== confirm_password.value) {
+        error.value = 'Passwords do not match'
+        loading.value = false
+        return
+    }
 
     try {
         const res = await $fetch(`${apiBase}/user/register`, {
@@ -57,16 +64,21 @@ async function register() {
 
             <p v-if="error" class="error-msg">{{ error }}</p>
 
-            <form class="w-full flex flex-col gap-10" @submit.prevent="register">
+            <form class="w-full flex flex-col gap-10" @submit.prevent="handleRegister">
                 <div class="flex flex-col gap-4">
                     <div class="flex flex-col gap-1">
-                        <label for="email">Email</label>
-                        <input id="email" v-model="email" required>
+                        <label for="email">Enter Your Email</label>
+                        <input id="email" v-model="email" class="ipt" required>
                     </div>
 
                     <div class="flex flex-col gap-1">
-                        <label for="password">Password</label>
-                        <input id="password" v-model="password" type="password" required>
+                        <label for="password">Enter Your Password</label>
+                        <input id="password" v-model="password" type="password" class="ipt" required>
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <label for="confirm_password">Confirm Your Password</label>
+                        <input id="confirm_password" v-model="confirm_password" type="password" class="ipt" required>
                     </div>
                 </div>
 

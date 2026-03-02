@@ -22,6 +22,8 @@ async function fetchPoll() {
             query: { poll_id: id }
         })
 
+        console.log(res)
+
         poll.value = res
     } catch (err) {
         error.value = 'Failed to load poll'
@@ -53,7 +55,7 @@ onMounted(() => {
                     <label v-for="(option, index) in poll.options" :key="index" class="border-t border-green-400 flex cursor-pointer items-center gap-4 p-4 transition-all has-[:checked]:bg-green-100">
                         <input type="radio" name="plan" :value="option" class="peer sr-only" />
 
-                        <div class="h-5 w-5 shrink-0 rounded-full border border-green-200 bg-white transition-all peer-checked:border-[6px] peer-checked:border-green-400 peer-focus-visible:ring-2 peer-focus-visible:ring-green-400 peer-focus-visible:ring-offset-2"></div>
+                        <div class="h-5 w-5 shrink-0 rounded-full border border-green-400 bg-white transition-all peer-checked:border-[6px] peer-focus-visible:ring-2 peer-focus-visible:ring-green-400 peer-focus-visible:ring-offset-2"></div>
 
                         <span class="font-medium text-slate-700">{{ option }}</span>
                     </label>
