@@ -15,7 +15,6 @@ from app.deps import get_db, session_local
 from app.services.auth import decode_token
 from app.setup.ws import wsmanager
 from app.setup.cache import redis_client 
-from app.setup.vars import FRONTEND_URL
 
 router = APIRouter()
 
@@ -138,6 +137,10 @@ async def vote_ws(
                     })
                     return
                 
+                expiry = "Never"
+                if poll_vote.expires_at: 
+                   expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
+
                 votes = vote_percentages(poll_vote.votes, False) if poll_vote.is_public else []
 
                 await ws.send_json({
@@ -145,6 +148,7 @@ async def vote_ws(
                     "question": poll_vote.question,
                     "options": poll_vote.options,
                     "votes": votes,
+                    "expiry": expiry,
                 })
 
     except WebSocketDisconnect:
@@ -221,7 +225,9 @@ async def poll_ws(
 
             expiry = "Never"
             if poll_vote.expires_at: 
-               expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+               expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
+
+            creation = poll_vote.created_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
 
             await ws.send_json({
                 "type": "poll_view", 
@@ -231,6 +237,7 @@ async def poll_ws(
                 "votes": poll_vote.votes,
                 "percantage": votes_percantage,
                 "total_votes": sum(poll_vote.votes),
+                "creation": creation,
                 "expiry": expiry,
             })
 
@@ -255,7 +262,9 @@ async def poll_ws(
 
                 expiry = "Never"
                 if poll_vote.expires_at: 
-                    expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+                    expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
+
+                creation = poll_vote.created_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
 
                 await ws.send_json({
                     "type": "poll_view", 
@@ -265,6 +274,7 @@ async def poll_ws(
                     "votes": poll_vote.votes,
                     "percantage": votes_percantage,
                     "total_votes": sum(poll_vote.votes),
+                    "creation": creation,
                     "expiry": expiry,
                 })
 
