@@ -8,13 +8,25 @@ from typing import Dict
 
 from app.db.base import Base 
 
+class PollOption(Base):
+    __tablename__ = "poll_options"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    poll_id: Mapped[int] = mapped_column(ForeignKey('polls.id'), index=True, nullable=False)
+    text: Mapped[str] = mapped_column(String, nullable=False)
+    votes: Mapped[int] = mapped_column(Integer, default=0)
+
+    related_poll: Mapped['PollModel'] = relationship(back_populates='options')
+
 class PollModel(Base):
     __tablename__ = "polls"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    question: Mapped[str] = mapped_column(nullable=False)
-    options: Mapped[list[str]] = mapped_column(JSON, default=list)
-    votes: Mapped[list[int]] = mapped_column(JSON, default=list)
+    question: Mapped[str] = mapped_column(String, nullable=False)
+    options: Mapped[list['PollOption']] = relationship(
+        back_populates='related_poll',
+        cascade="all, delete-orphan",
+    )
 
     creator = relationship('UserModel', back_populates='polls')
     creator_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)

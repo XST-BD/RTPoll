@@ -8,9 +8,9 @@ from fastapi.concurrency import run_in_threadpool
 from jose import JWTError
 import json
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
-from app.db.model.poll import PollModel
+from app.db.model.poll import PollModel, PollOption
 from app.db.model.user import UserModel
 from app.deps import get_db, SessionLocal
 from app.services.auth import decode_token
@@ -32,18 +32,21 @@ class PollResponseModel(BaseModel):
 
 # service layer codes
 
-def vote_percentages(votes: list[int], poll_creator: bool) -> list[int] | list[float]:
-    total = sum(votes)
+def vote_percentages(votes: dict[int, int], poll_creator: bool) -> list[int] | list[float]:
+    """
+    votes: dict of option_id -> vote count
+    poll_creator: True -> return int percentages, False -> float with 2 decimals
+    """
+    counts = list(votes.values())
+    total = sum(counts)
 
     if poll_creator: 
         if total == 0:
             return [0] * len(votes)
-
         return [round(v / total * 100) for v in votes]
     else: 
         if total == 0:
             return [0.0] * len(votes)
-
         return [round(v / total * 100, 2) for v in votes]
 
 
@@ -61,10 +64,7 @@ async def vote_ws(
         poll = db.query(PollModel).filter(PollModel.id==poll_id).first()
 
         if poll is None: 
-            await ws.send_json({
-                "type": "error", 
-                "message": "Poll not found",
-            })
+            await ws.send_json({"type": "error", "message": "Poll not found"})
             return
 
         # Listen loop
@@ -79,74 +79,104 @@ async def vote_ws(
             if msg_type == "send_vote":
 
                 db = SessionLocal()
-                # poll_vote = db.get(PollModel, poll_id)
-                poll_vote = await run_in_threadpool(db.get, PollModel, poll_id)
 
-                if poll_vote is None: 
-                    await ws.send_json({
-                        "type": "error", 
-                        "message": "Poll not found",
-                    })
-                    return
+                try:
+                    poll_vote = await run_in_threadpool(db.get, PollModel, poll_id)
+
+                    if not poll_vote: 
+                        await ws.send_json({"type": "error", "message": "Poll not found"})
+                        return
                 
-                if poll_vote.expires_at is not None: 
-                    if poll_vote.expires_at < datetime.now(): 
-                        await ws.send_json({
-                            "type": "error", 
-                            "message": "Polling ended",
-                        })
+                    if poll_vote.expires_at and poll_vote.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc): 
+                        await ws.send_json({"type": "error", "message": "This poll has ended"})
                         return
 
-                option_id: str = data.get("option_id")
-                if option_id not in poll_vote.options:
+                    try:
+                        option_id = int(data.get("option_id"))
+                    except (TypeError, ValueError):
+                        await ws.send_json({"type": "error", "message": "Invalid option"})
+                        continue
+            
+                    option = await run_in_threadpool(db.get, PollOption, option_id)
+                    if not option or option.poll_id != poll_id:
+                        await ws.send_json({"type": "error", "message": "Invalid option"})
+                        continue
 
-                    await ws.send_json({
-                        "type": "error",
-                        "message": "Invalid option",
-                    })
-                    continue
+                    key = f'poll:{poll_id}:votes'
 
-                key = f'poll:{poll_id}:votes'
+                    # Atomic increment
+                    new_count = await redis_client.hincrby(key, str(option_id), 1) # type: ignore
 
-                # Atomic increment
-                new_count = await redis_client.hincrby(key, option_id, 1) # type: ignore
-
-                # Broadcast update
-                await wsmanager.broadcast(
-                    poll_id,
-                    {
-                        "type": "vote_update",
-                        "option_id": option_id,
-                        "count": new_count,
-                    },
-                )
+                    # Broadcast update
+                    await wsmanager.broadcast(
+                        poll_id,
+                        {
+                            "type": "vote_update",
+                            "option_id": option_id,
+                            "count": new_count,
+                        },
+                    )
+                finally: 
+                    db.close()
 
             # Handle vote
             elif msg_type == "get_vote":
                 db = SessionLocal()
-                # poll_vote = db.get(PollModel, poll_id)
-                poll_vote = await run_in_threadpool(db.get, PollModel, poll_id)
 
-                if poll_vote is None: 
-                    await ws.send_json({
-                        "type": "error", 
-                        "message": "Poll not found",
-                    })
-                    return
+                try: 
+                    poll_vote = await run_in_threadpool(
+                        lambda: db.query(PollModel)
+                        .options(selectinload(PollModel.options))
+                        .filter(PollModel.id == poll_id)
+                        .first()
+                    )
+
+                    if poll_vote is None: 
+                        await ws.send_json({"type": "error", "message": "Poll not found"})
+                        return
                 
-                expiry = "Never"
-                if poll_vote.expires_at: 
-                   expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
+                    if poll_vote.expires_at and poll_vote.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc): 
+                        await ws.send_json({"type": "error", "message": "This poll has ended"})
+                        return
+                    
+                    # Read live votes from Redis
+                    key = f'poll:{poll_id}:votes'
+                    redis_votes = await redis_client.hgetall(key) # type: ignore
+                    redis_votes = {int(k): int(v) for k, v in redis_votes.items()} # Convert to {option_id: count}
+                    total_votes = sum(redis_votes.values())
 
-                votes = vote_percentages(poll_vote.votes, False) if poll_vote.is_public else []
+                    votes_data = [
+                        {
+                            "id": opt.id,
+                            "text": opt.text,
+                            "votes": vote_percentages(redis_votes, False),
+                        }
+                        for opt in poll_vote.options
+                    ]
 
-                await ws.send_json({
-                    "type": "vote_data", 
-                    "question": poll_vote.question,
-                    "options": poll_vote.options,
-                    "votes": votes,
-                    "expiry": expiry,
-                })
+                    expiry = "Never"
+                    if poll_vote.expires_at: 
+                       expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
+
+                    if not poll_vote.is_public:
+                        await ws.send_json({
+                            "type": "vote_data", 
+                            "question": poll_vote.question,
+                            "options": votes_data,
+                            "expiry": expiry,
+                        })
+
+                    else:
+                        await ws.send_json({
+                            "type": "vote_data", 
+                            "question": poll_vote.question,
+                            "options": votes_data,
+                            "total_votes": total_votes,
+                            "expiry": expiry,
+                        })
+
+                finally: 
+                    db.close()
 
     except WebSocketDisconnect:
         wsmanager.disconnect(poll_id, ws)
@@ -209,34 +239,59 @@ async def poll_ws(
         if msg_type == "poll_view":
 
             db = SessionLocal()
-            poll_vote = db.get(PollModel, poll_id)
 
-            if poll_vote is None: 
+            try: 
+                poll_vote = await run_in_threadpool(
+                    lambda: db.query(PollModel)
+                    .options(selectinload(PollModel.options))
+                    .filter(PollModel.id == poll_id)
+                    .first()
+                )
+
+                if poll_vote is None: 
+                    await ws.send_json({"type": "error", "message": "Poll not found"})
+                    return
+                
+                if poll_vote.expires_at and poll_vote.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc): 
+                    await ws.send_json({"type": "error", "message": "This poll has ended"})
+                    return
+                    
+                # Read live votes from Redis
+                key = f'poll:{poll_id}:votes'
+                redis_votes = await redis_client.hgetall(key) # type: ignore
+                redis_votes = {int(k): int(v) for k, v in redis_votes.items()} # Convert to {option_id: count}
+                total_votes = sum(redis_votes.values())
+
+                votes_data = [
+                    {
+                        "id": opt.id,
+                        "text": opt.text,
+                        "votes": redis_votes.get(opt.id, 0),
+                    }
+                    for opt in poll_vote.options
+                ]
+
+                votes_percantage = vote_percentages(redis_votes, True)
+
+                expiry = "Never"
+                if poll_vote.expires_at: 
+                   expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
+
+                creation = poll_vote.created_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
+
                 await ws.send_json({
-                    "type": "error", 
-                    "message": "Poll not found",
+                    "type": "poll_view", 
+                    "result_public": poll_vote.is_public,
+                    "question": poll_vote.question,
+                    "options": votes_data,
+                    "percantage": votes_percantage,
+                    "total_votes": total_votes,
+                    "creation": creation,
+                    "expiry": expiry,
                 })
-                return
-            
-            votes_percantage = vote_percentages(poll_vote.votes, True)
 
-            expiry = "Never"
-            if poll_vote.expires_at: 
-               expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
-
-            creation = poll_vote.created_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
-
-            await ws.send_json({
-                "type": "poll_view", 
-                "result_public": poll_vote.is_public,
-                "question": poll_vote.question,
-                "options": poll_vote.options,
-                "votes": poll_vote.votes,
-                "percantage": votes_percantage,
-                "total_votes": sum(poll_vote.votes),
-                "creation": creation,
-                "expiry": expiry,
-            })
+            finally:
+                db.close()
 
         # ================= LISTEN LOOP =================
         while True:
@@ -246,34 +301,59 @@ async def poll_ws(
             if msg_type == "poll_view":
 
                 db = SessionLocal()
-                poll_vote = db.get(PollModel, poll_id)
 
-                if poll_vote is None: 
+                try: 
+                    poll_vote = await run_in_threadpool(
+                        lambda: db.query(PollModel)
+                        .options(selectinload(PollModel.options))
+                        .filter(PollModel.id == poll_id)
+                        .first()
+                    )
+
+                    if poll_vote is None: 
+                        await ws.send_json({"type": "error", "message": "Poll not found"})
+                        return
+                
+                    if poll_vote.expires_at and poll_vote.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc): 
+                        await ws.send_json({"type": "error", "message": "This poll has ended"})
+                        return
+                    
+                    # Read live votes from Redis
+                    key = f'poll:{poll_id}:votes'
+                    redis_votes = await redis_client.hgetall(key) # type: ignore
+                    redis_votes = {int(k): int(v) for k, v in redis_votes.items()} # Convert to {option_id: count}
+                    total_votes = sum(redis_votes.values())
+
+                    votes_data = [
+                        {
+                            "id": opt.id,
+                            "text": opt.text,
+                            "votes": redis_votes.get(opt.id, 0),
+                        }
+                        for opt in poll_vote.options
+                    ]
+
+                    votes_percantage = vote_percentages(redis_votes, True)
+
+                    expiry = "Never"
+                    if poll_vote.expires_at: 
+                       expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
+
+                    creation = poll_vote.created_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
+
                     await ws.send_json({
-                        "type": "error", 
-                        "message": "Poll not found",
+                        "type": "poll_view", 
+                        "result_public": poll_vote.is_public,
+                        "question": poll_vote.question,
+                        "options": votes_data,
+                        "percantage": votes_percantage,
+                        "total_votes": total_votes,
+                        "creation": creation,
+                        "expiry": expiry,
                     })
-                    return
-
-                votes_percantage = vote_percentages(poll_vote.votes, True)
-
-                expiry = "Never"
-                if poll_vote.expires_at: 
-                    expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
-
-                creation = poll_vote.created_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
-
-                await ws.send_json({
-                    "type": "poll_view", 
-                    "result_public": poll_vote.is_public,
-                    "question": poll_vote.question,
-                    "options": poll_vote.options,
-                    "votes": poll_vote.votes,
-                    "percantage": votes_percantage,
-                    "total_votes": sum(poll_vote.votes),
-                    "creation": creation,
-                    "expiry": expiry,
-                })
+                
+                finally: 
+                    db.close()
 
     except WebSocketDisconnect:
         wsmanager.disconnect(poll_id, ws)

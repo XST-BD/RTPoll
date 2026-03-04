@@ -10,11 +10,12 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from app.db.model.user import UserModel
-from app.db.model.poll import PollModel, PollHistoryEntry
+from app.db.model.poll import PollModel, PollHistoryEntry, PollOption
 from app.deps import get_db
 from app.services.auth import get_current_user
 from app.setup.paginator import CustomParams
 from app.setup.limiter import limiter
+from app.setup.cache import redis_client
 
 router = APIRouter()
 
@@ -34,34 +35,27 @@ def poll_create(
 ):
     
     is_indefinite = payload.expires_at is None
-    votes = [0] * len(payload.options)
 
     poll = PollModel(
         question=payload.question,
-        options=payload.options,
-        votes=votes,
         creator_id=user.user_id,
         expires_at=payload.expires_at,
         is_indefinite=is_indefinite,
+        options=[
+            PollOption(text=option_text)
+            for option_text in payload.options
+        ]
     )
 
     db.add(poll)
     db.commit()
     db.refresh(poll)
 
-    if is_indefinite: 
-        return {
-            "message": "Poll created",
-            "id": poll.id,
-            "is_indefinite": poll.is_indefinite,
-            "expires_at": "never",
-        }
-
     return {
         "message": "Poll created",
         "id": poll.id,
         "is_indefinite": poll.is_indefinite,
-        "expires_at": poll.expires_at,
+        "expires_at": poll.expires_at if not is_indefinite else "never",
     }
 
 
@@ -69,13 +63,15 @@ class PollResponseAllModel(BaseModel):
     id: int
     question: str
     expires_at: datetime | str
+    top_option: str
+    total_votes: int
 
     class Config:
         from_attributes = True
 
 
 @router.get('/poll/view/all', response_model=Page[PollResponseAllModel])
-def poll_view(
+async def poll_view(
     expired: bool = False,
     params: CustomParams = Depends(),
     db: Session = Depends(get_db),
@@ -111,29 +107,31 @@ def poll_view(
 
     for poll in polls_query: 
 
-        poll_top_pick: str
-        poll_expires_at: datetime | str
-        # poll_total_votes: int = 0
+        # Redis live votes
+        key = f'poll:{poll.id}:votes'
+        redis_votes = await redis_client.hgetall(key)  # type: ignore
+        redis_votes = {int(k): int(v) for k, v in redis_votes.items()}
 
-        # for vote in poll.votes:
-        #     poll_total_votes += 1
-
-        if poll.votes:
-            max_index = max(range(len(poll.votes)), key=lambda i: poll.votes[i])
-            poll_top_pick = poll.options[max_index]
+        if redis_votes: 
+            top_option_id = max(redis_votes, key=lambda k: redis_votes[k])
+            poll_top_pick = next(
+                (opt.text for opt in poll.options if opt.id == top_option_id),
+                "None"
+            )
         else:
             poll_top_pick = "None"
-        
-        if poll.expires_at is None: 
-            poll_expires_at = "Never"
-        else:
-            poll_expires_at = poll.expires_at
+
+        poll_expires_at = "Never" if poll.expires_at is None else poll.expires_at.replace(tzinfo=timezone.utc)
+
+        total_votes = sum(redis_votes.values())
 
         items.append(
             PollResponseAllModel(
                 id=poll.id,
                 question=poll.question,
                 expires_at=poll_expires_at,
+                top_option=poll_top_pick,
+                total_votes=total_votes,
             )
         )
 
