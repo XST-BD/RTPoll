@@ -41,10 +41,11 @@ def poll_create(
         creator_id=user.user_id,
         expires_at=payload.expires_at,
         is_indefinite=is_indefinite,
+        is_public=payload.result_public,
         options=[
-            PollOption(text=option_text)
-            for option_text in payload.options
-        ]
+            PollOption(text=option_text, position=option_pos)
+            for option_pos, option_text in enumerate(payload.options, start=1)
+        ], 
     )
 
     db.add(poll)

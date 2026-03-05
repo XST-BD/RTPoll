@@ -10,9 +10,11 @@ from app.db.base import Base
 
 class PollOption(Base):
     __tablename__ = "poll_options"
+    __table_args__ = (UniqueConstraint("poll_id", "position"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     poll_id: Mapped[int] = mapped_column(ForeignKey('polls.id'), index=True, nullable=False)
+    position: Mapped[int] = mapped_column(Integer)
     text: Mapped[str] = mapped_column(String, nullable=False)
     votes: Mapped[int] = mapped_column(Integer, default=0)
 
@@ -26,13 +28,14 @@ class PollModel(Base):
     options: Mapped[list['PollOption']] = relationship(
         back_populates='related_poll',
         cascade="all, delete-orphan",
+        order_by="PollOption.position",
     )
 
     creator = relationship('UserModel', back_populates='polls')
     creator_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
 
     is_indefinite: Mapped[bool] = mapped_column(default=False)
-    is_public: Mapped[bool] = mapped_column(default=False)
+    is_public: Mapped[bool] = mapped_column(default=False, nullable=False)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now()) 
 

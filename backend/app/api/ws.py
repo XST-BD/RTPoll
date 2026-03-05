@@ -85,11 +85,11 @@ async def vote_ws(
 
                     if not poll_vote: 
                         await ws.send_json({"type": "error", "message": "Poll not found"})
-                        return
+                        continue
                 
                     if poll_vote.expires_at and poll_vote.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc): 
                         await ws.send_json({"type": "error", "message": "This poll has ended"})
-                        return
+                        continue
 
                     try:
                         option_id = int(data.get("option_id"))
@@ -133,11 +133,11 @@ async def vote_ws(
 
                     if poll_vote is None: 
                         await ws.send_json({"type": "error", "message": "Poll not found"})
-                        return
+                        continue
                 
                     if poll_vote.expires_at and poll_vote.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc): 
                         await ws.send_json({"type": "error", "message": "This poll has ended"})
-                        return
+                        continue
                     
                     # Read live votes from Redis
                     key = f'poll:{poll_id}:votes'
@@ -147,9 +147,9 @@ async def vote_ws(
 
                     votes_data = [
                         {
-                            "id": opt.id,
+                            "id": opt.position,
                             "text": opt.text,
-                            "votes": vote_percentages(redis_votes, False),
+                            "votes_perc": vote_percentages(redis_votes, False) if poll_vote.is_public else -1,
                         }
                         for opt in poll_vote.options
                     ]
@@ -158,22 +158,14 @@ async def vote_ws(
                     if poll_vote.expires_at: 
                        expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
 
-                    if not poll_vote.is_public:
-                        await ws.send_json({
-                            "type": "vote_data", 
-                            "question": poll_vote.question,
-                            "options": votes_data,
-                            "expiry": expiry,
-                        })
-
-                    else:
-                        await ws.send_json({
-                            "type": "vote_data", 
-                            "question": poll_vote.question,
-                            "options": votes_data,
-                            "total_votes": total_votes,
-                            "expiry": expiry,
-                        })
+                    
+                    await ws.send_json({
+                        "type": "vote_data", 
+                        "question": poll_vote.question,
+                        "options": votes_data,
+                        "total_votes": total_votes if poll_vote.is_public else -1,
+                        "expiry": expiry,
+                    })
 
                 finally: 
                     db.close()
@@ -264,14 +256,13 @@ async def poll_ws(
 
                 votes_data = [
                     {
-                        "id": opt.id,
+                        "id": opt.position,
                         "text": opt.text,
                         "votes": redis_votes.get(opt.id, 0),
+                        "votes_perc": vote_percentages(redis_votes, True),
                     }
                     for opt in poll_vote.options
                 ]
-
-                votes_percantage = vote_percentages(redis_votes, True)
 
                 expiry = "Never"
                 if poll_vote.expires_at: 
@@ -284,7 +275,6 @@ async def poll_ws(
                     "result_public": poll_vote.is_public,
                     "question": poll_vote.question,
                     "options": votes_data,
-                    "percantage": votes_percantage,
                     "total_votes": total_votes,
                     "creation": creation,
                     "expiry": expiry,
@@ -326,14 +316,13 @@ async def poll_ws(
 
                     votes_data = [
                         {
-                            "id": opt.id,
+                            "id": opt.position,
                             "text": opt.text,
                             "votes": redis_votes.get(opt.id, 0),
+                            "votes_perc": vote_percentages(redis_votes, True),
                         }
                         for opt in poll_vote.options
                     ]
-
-                    votes_percantage = vote_percentages(redis_votes, True)
 
                     expiry = "Never"
                     if poll_vote.expires_at: 
@@ -346,7 +335,6 @@ async def poll_ws(
                         "result_public": poll_vote.is_public,
                         "question": poll_vote.question,
                         "options": votes_data,
-                        "percantage": votes_percantage,
                         "total_votes": total_votes,
                         "creation": creation,
                         "expiry": expiry,
