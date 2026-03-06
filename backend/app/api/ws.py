@@ -157,7 +157,6 @@ async def vote_ws(
                     votes_data = [
                         {
                             "id": opt.id,
-                            "position": opt.position,
                             "text": opt.text,
                             "votes_perc": votes_perc[i] if poll_vote.is_public else -1,
                         }
@@ -264,7 +263,6 @@ async def poll_ws(
                 votes_data = [
                     {
                         "id": opt.id,
-                        "position": opt.position,
                         "text": opt.text,
                         "votes": redis_votes.get(opt.id, 0),
                         "votes_perc": votes_perc[i],
@@ -322,7 +320,6 @@ async def poll_ws(
                     votes_data = [
                         {
                             "id": opt.id,
-                            "position": opt.position,
                             "text": opt.text,
                             "votes": redis_votes.get(opt.id, 0),
                             "votes_perc": votes_perc[i]
