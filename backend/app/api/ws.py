@@ -31,23 +31,31 @@ class PollResponseModel(BaseModel):
         from_attributes = True
 
 # service layer codes
+    
+def vote_percentages(
+    votes: dict[int, int],
+    option_count: int,
+    poll_creator: bool
+) -> list[int] | list[float]:
 
-def vote_percentages(votes: dict[int, int], poll_creator: bool) -> list[int] | list[float]:
-    """
-    votes: dict of option_id -> vote count
-    poll_creator: True -> return int percentages, False -> float with 2 decimals
-    """
-    counts = list(votes.values())
-    total = sum(counts)
+    total = sum(votes.values())
 
-    if poll_creator: 
-        if total == 0:
-            return [0] * len(votes)
-        return [round(v / total * 100) for v in votes]
-    else: 
-        if total == 0:
-            return [0.0] * len(votes)
-        return [round(v / total * 100, 2) for v in votes]
+    if total == 0:
+        if poll_creator:
+            return [0] * option_count
+        else:
+            return [0.0] * option_count
+
+    if poll_creator:
+        return [
+            round(votes.get(i, 0) / total * 100)
+            for i in range(1, option_count + 1)
+        ]
+    else:
+        return [
+            round(votes.get(i, 0) / total * 100, 2)
+            for i in range(1, option_count + 1)
+        ]
 
 
 @router.websocket('/vote/{poll_id}')
@@ -136,7 +144,7 @@ async def vote_ws(
                         continue
                 
                     if poll_vote.expires_at and poll_vote.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc): 
-                        await ws.send_json({"type": "error", "message": "This poll has ended"})
+                        await ws.send_json({"type": "notice", "message": "This poll has ended"})
                         continue
                     
                     # Read live votes from Redis
@@ -144,14 +152,15 @@ async def vote_ws(
                     redis_votes = await redis_client.hgetall(key) # type: ignore
                     redis_votes = {int(k): int(v) for k, v in redis_votes.items()} # Convert to {option_id: count}
                     total_votes = sum(redis_votes.values())
+                    votes_perc = vote_percentages(redis_votes, len(poll_vote.options), poll_vote.is_public)
 
                     votes_data = [
                         {
                             "id": opt.position,
                             "text": opt.text,
-                            "votes_perc": vote_percentages(redis_votes, False) if poll_vote.is_public else -1,
+                            "votes_perc": votes_perc[i]
                         }
-                        for opt in poll_vote.options
+                        for i, opt in enumerate(poll_vote.options)
                     ]
 
                     expiry = "Never"
@@ -163,7 +172,7 @@ async def vote_ws(
                         "type": "vote_data", 
                         "question": poll_vote.question,
                         "options": votes_data,
-                        "total_votes": total_votes if poll_vote.is_public else -1,
+                        "total_votes": total_votes,
                         "expiry": expiry,
                     })
 
@@ -253,15 +262,16 @@ async def poll_ws(
                 redis_votes = await redis_client.hgetall(key) # type: ignore
                 redis_votes = {int(k): int(v) for k, v in redis_votes.items()} # Convert to {option_id: count}
                 total_votes = sum(redis_votes.values())
+                votes_perc = vote_percentages(redis_votes, len(poll_vote.options), poll_vote.is_public)
 
                 votes_data = [
                     {
                         "id": opt.position,
                         "text": opt.text,
                         "votes": redis_votes.get(opt.id, 0),
-                        "votes_perc": vote_percentages(redis_votes, True),
+                        "votes_perc": votes_perc[i],
                     }
-                    for opt in poll_vote.options
+                    for i, opt in enumerate(poll_vote.options)
                 ]
 
                 expiry = "Never"
@@ -313,15 +323,16 @@ async def poll_ws(
                     redis_votes = await redis_client.hgetall(key) # type: ignore
                     redis_votes = {int(k): int(v) for k, v in redis_votes.items()} # Convert to {option_id: count}
                     total_votes = sum(redis_votes.values())
+                    votes_perc = vote_percentages(redis_votes, len(poll_vote.options), poll_vote.is_public)
 
                     votes_data = [
                         {
                             "id": opt.position,
                             "text": opt.text,
                             "votes": redis_votes.get(opt.id, 0),
-                            "votes_perc": vote_percentages(redis_votes, True),
+                            "votes_perc": votes_perc[i]
                         }
-                        for opt in poll_vote.options
+                        for i, opt in enumerate(poll_vote.options)
                     ]
 
                     expiry = "Never"
