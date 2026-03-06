@@ -106,7 +106,7 @@ async def vote_ws(
                         continue
             
                     option = await run_in_threadpool(db.get, PollOption, option_id)
-                    if not option or option.poll_id != poll_id:
+                    if not option or option.id != poll_id:
                         await ws.send_json({"type": "error", "message": "Invalid option"})
                         continue
 
@@ -156,9 +156,9 @@ async def vote_ws(
 
                     votes_data = [
                         {
-                            "id": opt.position,
+                            "position": opt.position,
                             "text": opt.text,
-                            "votes_perc": votes_perc[i]
+                            "votes_perc": votes_perc[i] if poll_vote.is_public else -1,
                         }
                         for i, opt in enumerate(poll_vote.options)
                     ]
@@ -172,7 +172,7 @@ async def vote_ws(
                         "type": "vote_data", 
                         "question": poll_vote.question,
                         "options": votes_data,
-                        "total_votes": total_votes,
+                        "total_votes": total_votes  if poll_vote.is_public else -1,
                         "expiry": expiry,
                     })
 
@@ -252,10 +252,6 @@ async def poll_ws(
                 if poll_vote is None: 
                     await ws.send_json({"type": "error", "message": "Poll not found"})
                     return
-                
-                if poll_vote.expires_at and poll_vote.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc): 
-                    await ws.send_json({"type": "error", "message": "This poll has ended"})
-                    return
                     
                 # Read live votes from Redis
                 key = f'poll:{poll_id}:votes'
@@ -266,7 +262,8 @@ async def poll_ws(
 
                 votes_data = [
                     {
-                        "id": opt.position,
+                        "id": opt.id,
+                        "position": opt.position,
                         "text": opt.text,
                         "votes": redis_votes.get(opt.id, 0),
                         "votes_perc": votes_perc[i],
@@ -313,10 +310,6 @@ async def poll_ws(
                     if poll_vote is None: 
                         await ws.send_json({"type": "error", "message": "Poll not found"})
                         return
-                
-                    if poll_vote.expires_at and poll_vote.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc): 
-                        await ws.send_json({"type": "error", "message": "This poll has ended"})
-                        return
                     
                     # Read live votes from Redis
                     key = f'poll:{poll_id}:votes'
@@ -327,7 +320,8 @@ async def poll_ws(
 
                     votes_data = [
                         {
-                            "id": opt.position,
+                            "id": opt.id,
+                            "position": opt.position,
                             "text": opt.text,
                             "votes": redis_votes.get(opt.id, 0),
                             "votes_perc": votes_perc[i]

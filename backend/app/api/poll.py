@@ -24,7 +24,7 @@ class CreatePollRequest(BaseModel):
     question: str = Field(min_length=1, max_length=1024)
     options: List[str] = Field(min_length=1, max_length=256)
     expires_at: Optional[datetime] = None
-    result_public: bool = False
+    results_public: bool = False
 
 
 @router.post('/poll/create')
@@ -41,7 +41,7 @@ def poll_create(
         creator_id=user.user_id,
         expires_at=payload.expires_at,
         is_indefinite=is_indefinite,
-        is_public=payload.result_public,
+        is_public=payload.results_public,
         options=[
             PollOption(text=option_text, position=option_pos)
             for option_pos, option_text in enumerate(payload.options, start=1)

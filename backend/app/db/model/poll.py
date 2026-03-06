@@ -35,7 +35,7 @@ class PollModel(Base):
     creator_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
 
     is_indefinite: Mapped[bool] = mapped_column(default=False)
-    is_public: Mapped[bool] = mapped_column(default=False, nullable=False)
+    is_public: Mapped[bool] = mapped_column(Boolean, nullable=False)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now()) 
 
