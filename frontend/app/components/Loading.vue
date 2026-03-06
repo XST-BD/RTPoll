@@ -4,6 +4,6 @@ import { Icon } from "@iconify/vue";
 
 <template>
     <div class="text-green-400">
-        <Icon icon="eos-icons:bubble-loading" :ssr="true" class="text-6xl" />
+        <Icon icon="eos-icons:bubble-loading" class="text-6xl" />
     </div>
 </template>

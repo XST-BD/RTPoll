@@ -1,5 +1,8 @@
 <script setup>
 import { Icon } from "@iconify/vue"
+const Vue3FlipCountdown = defineAsyncComponent(() =>
+    import('vue3-flip-countdown').then(m => m.Countdown)
+)
 
 definePageMeta({
     middleware: 'auth',
@@ -28,10 +31,6 @@ const url = computed(() => {
     if (import.meta.server) return ''
     return `${window.location.origin}/poll/${id}`
 })
-
-const Vue3FlipCountdown = defineAsyncComponent(() =>
-    import('vue3-flip-countdown').then(m => m.Countdown)
-)
 
 function closeWS() {
     if (socket) {
@@ -68,6 +67,8 @@ async function connectWS(pollId) {
         loading.value = false
         const data = JSON.parse(event.data)
 
+        console.log('Received data:', data)
+
         if (data.type === 'error') {
             error.value = data.message
             return
@@ -76,7 +77,7 @@ async function connectWS(pollId) {
         error.value = null
         poll.value = data
 
-        created_at.value = new Date(poll.value.expiry).toLocaleString('en-US', {
+        created_at.value = new Date(poll.value.creation).toLocaleString('en-US', {
             year: 'numeric',
             month: 'long',
             day: '2-digit',
@@ -137,7 +138,7 @@ function sharePoll(id) {
 }
 
 const getBackground = (percentage) => {
-    if (!percentage) return {}
+    if (percentage < 0) return {}
 
     return {
         background: `linear-gradient(to right, #DCFCE7 ${percentage}%, white ${percentage}%)`
@@ -168,13 +169,13 @@ const getBackground = (percentage) => {
                 </div>
 
                 <ul class="border-2 border-green-400 rounded-b-xl overflow-hidden">
-                    <li v-for="(option, index) in poll.options" :key="index" class="flex justify-between gap-3 items-center border-t-2 border-green-400 p-4 text-xl" :style="getBackground(poll.percantage[index])">
+                    <li v-for="(option, index) in poll.options" :key="index" class="flex justify-between gap-3 items-center border-t-2 border-green-400 p-4 text-xl" :style="getBackground(option.votes_perc)">
                         <div class="text-green-400 flex items-start gap-3">
                             <span class="font-[Anton] text-md">{{ index + 1 }}.</span>
-                            <span>{{ option }}</span>
+                            <span>{{ option.text }}</span>
                         </div>
 
-                        <span class="shrink-0 font-[Anton] text-sm text-right">{{ poll.percantage[index] }}%</span>
+                        <span class="shrink-0 font-[Anton] text-sm text-right">{{ option.votes_perc }}%</span>
                     </li>
                 </ul>
             </div>
@@ -225,7 +226,7 @@ const getBackground = (percentage) => {
 
                     <tr v-for="(option, index) in poll.options" :key="index">
                         <td class="shrink-0 border-2 border-green-400">{{ index + 1 }}</td>
-                        <td class="border-2 border-green-400">{{ poll.votes[index] }}</td>
+                        <td class="border-2 border-green-400">{{ option.votes.toLocaleString() }}</td>
                     </tr>
                 </table>
             </div>

@@ -10,8 +10,7 @@
 
 html {
     font-family: 'Nunito', sans-serif;
-    scroll-behavior: smooth;
-    @apply text-green-900;
+    @apply text-green-900 break-words select-none box-border scroll-smooth;
 }
 
 h1 {

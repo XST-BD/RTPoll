@@ -70,7 +70,7 @@ async function createPoll() {
                 question: question.value,
                 options: cleanedOptions,
                 expires_at: duration.value === 'custom' && customDuration.value ? new Date(customDuration.value).toISOString() : null,
-                results_public: showResults.value === 'yes'
+                result_public: showResults.value === 'yes'
             }
         })
 
