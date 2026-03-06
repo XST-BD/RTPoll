@@ -156,6 +156,7 @@ async def vote_ws(
 
                     votes_data = [
                         {
+                            "id": opt.id,
                             "position": opt.position,
                             "text": opt.text,
                             "votes_perc": votes_perc[i] if poll_vote.is_public else -1,
