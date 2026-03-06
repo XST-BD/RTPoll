@@ -106,7 +106,7 @@ async def vote_ws(
                         continue
             
                     option = await run_in_threadpool(db.get, PollOption, option_id)
-                    if not option or option.id != poll_id:
+                    if not option or option.id != option_id:
                         await ws.send_json({"type": "error", "message": "Invalid option"})
                         continue
 
