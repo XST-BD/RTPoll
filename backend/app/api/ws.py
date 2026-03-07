@@ -34,7 +34,7 @@ class PollResponseModel(BaseModel):
     
 def vote_percentages(
     votes: dict[int, int],
-    option_count: int,
+    option_ids: list[int],
     poll_creator: bool
 ) -> list[int] | list[float]:
 
@@ -42,19 +42,19 @@ def vote_percentages(
 
     if total == 0:
         if poll_creator:
-            return [0] * option_count
+            return [0] * len(option_ids)
         else:
-            return [0.0] * option_count
+            return [0.0] * len(option_ids)
 
     if poll_creator:
         return [
-            round(votes.get(i, 0) / total * 100)
-            for i in range(1, option_count + 1)
+            round(votes.get(opt_id, 0) / total * 100)
+            for opt_id in option_ids
         ]
     else:
         return [
-            round(votes.get(i, 0) / total * 100, 2)
-            for i in range(1, option_count + 1)
+            round(votes.get(opt_id, 0) / total * 100, 2)
+            for opt_id in option_ids
         ]
 
 
@@ -116,13 +116,28 @@ async def vote_ws(
                     new_count = await redis_client.hincrby(key, str(option_id), 1) # type: ignore
 
                     # Broadcast update
+
+                    # Read live votes from Redis
+                    redis_votes = await redis_client.hgetall(key) # type: ignore
+                    redis_votes = {int(k): int(v) for k, v in redis_votes.items()} # Convert to {option_id: count}
+                    total_votes = sum(redis_votes.values())
+                    option_ids = [opt.id for opt in poll_vote.options]
+                    votes_perc = vote_percentages(redis_votes, option_ids, poll_vote.is_public)
+
                     await wsmanager.broadcast(
                         poll_id,
                         {
                             "type": "vote_update",
-                            "option_id": option_id,
-                            "count": new_count,
-                        },
+                            "options": [
+                                {
+                                    "id": oid,
+                                    "votes": redis_votes.get(oid, 0),
+                                    "votes_perc": votes_perc[i],
+                                }
+                                for i, oid in enumerate(option_ids)
+                            ],
+                            "total_votes": total_votes,
+                        }
                     )
                 finally: 
                     db.close()
@@ -152,7 +167,8 @@ async def vote_ws(
                     redis_votes = await redis_client.hgetall(key) # type: ignore
                     redis_votes = {int(k): int(v) for k, v in redis_votes.items()} # Convert to {option_id: count}
                     total_votes = sum(redis_votes.values())
-                    votes_perc = vote_percentages(redis_votes, len(poll_vote.options), poll_vote.is_public)
+                    option_ids = [opt.id for opt in poll_vote.options]
+                    votes_perc = vote_percentages(redis_votes, option_ids, poll_vote.is_public)
 
                     votes_data = [
                         {
@@ -258,7 +274,8 @@ async def poll_ws(
                 redis_votes = await redis_client.hgetall(key) # type: ignore
                 redis_votes = {int(k): int(v) for k, v in redis_votes.items()} # Convert to {option_id: count}
                 total_votes = sum(redis_votes.values())
-                votes_perc = vote_percentages(redis_votes, len(poll_vote.options), poll_vote.is_public)
+                option_ids = [opt.id for opt in poll_vote.options]
+                votes_perc = vote_percentages(redis_votes, option_ids, poll_vote.is_public)
 
                 votes_data = [
                     {
@@ -309,14 +326,14 @@ async def poll_ws(
                     if poll_vote is None: 
                         await ws.send_json({"type": "error", "message": "Poll not found"})
                         return
-                    
+
                     # Read live votes from Redis
                     key = f'poll:{poll_id}:votes'
                     redis_votes = await redis_client.hgetall(key) # type: ignore
                     redis_votes = {int(k): int(v) for k, v in redis_votes.items()} # Convert to {option_id: count}
                     total_votes = sum(redis_votes.values())
-                    votes_perc = vote_percentages(redis_votes, len(poll_vote.options), poll_vote.is_public)
-
+                    option_ids = [opt.id for opt in poll_vote.options]
+                    votes_perc = vote_percentages(redis_votes, option_ids, poll_vote.is_public)
                     votes_data = [
                         {
                             "id": opt.id,
@@ -342,7 +359,7 @@ async def poll_ws(
                         "creation": creation,
                         "expiry": expiry,
                     })
-                
+
                 finally: 
                     db.close()
 
