@@ -16,6 +16,7 @@ from app.deps import get_db, SessionLocal
 from app.services.auth import decode_token
 from app.setup.ws import wsmanager
 from app.setup.cache import redis_client 
+from app.utils import vote_percentages, create_payload
 
 router = APIRouter()
 
@@ -29,33 +30,6 @@ class PollResponseModel(BaseModel):
 
     class Config:
         from_attributes = True
-
-# service layer codes
-    
-def vote_percentages(
-    votes: dict[int, int],
-    option_ids: list[int],
-    poll_creator: bool
-) -> list[int] | list[float]:
-
-    total = sum(votes.values())
-
-    if total == 0:
-        if poll_creator:
-            return [0] * len(option_ids)
-        else:
-            return [0.0] * len(option_ids)
-
-    if poll_creator:
-        return [
-            round(votes.get(opt_id, 0) / total * 100)
-            for opt_id in option_ids
-        ]
-    else:
-        return [
-            round(votes.get(opt_id, 0) / total * 100, 2)
-            for opt_id in option_ids
-        ]
 
 
 @router.websocket('/vote/{poll_id}')
@@ -137,6 +111,8 @@ async def vote_ws(
                     if poll_vote.expires_at: 
                        expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
 
+                    creation = poll.created_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
+
 
                     await wsmanager.broadcast(
                         poll_id,
@@ -157,6 +133,7 @@ async def vote_ws(
                             "question": poll_vote.question,
                             "options": votes_data,
                             "total_votes": total_votes,
+                            "creation": creation,
                             "expiry": expiry,
                         },
                     )
@@ -185,33 +162,8 @@ async def vote_ws(
                     
                     # Read live votes from Redis
                     key = f'poll:{poll_id}:votes'
-                    redis_votes = await redis_client.hgetall(key) # type: ignore
-                    redis_votes = {int(k): int(v) for k, v in redis_votes.items()} # Convert to {option_id: count}
-                    total_votes = sum(redis_votes.values())
-                    option_ids = [opt.id for opt in poll_vote.options]
-                    votes_perc = vote_percentages(redis_votes, option_ids, poll_vote.is_public)
-
-                    votes_data = [
-                        {
-                            "id": opt.id,
-                            "text": opt.text,
-                            "votes_perc": votes_perc[i] if poll_vote.is_public else -1,
-                        }
-                        for i, opt in enumerate(poll_vote.options)
-                    ]
-
-                    expiry = "Never"
-                    if poll_vote.expires_at: 
-                       expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
-
-                    
-                    await ws.send_json({
-                        "type": "vote_data", 
-                        "question": poll_vote.question,
-                        "options": votes_data,
-                        "total_votes": total_votes  if poll_vote.is_public else -1,
-                        "expiry": expiry,
-                    })
+                    payload = await create_payload("vote_data", key, poll_vote)
+                    await ws.send_json(payload)
 
                 finally: 
                     db.close()
@@ -292,37 +244,9 @@ async def poll_ws(
                     
                 # Read live votes from Redis
                 key = f'poll:{poll_id}:votes'
-                redis_votes = await redis_client.hgetall(key) # type: ignore
-                redis_votes = {int(k): int(v) for k, v in redis_votes.items()} # Convert to {option_id: count}
-                total_votes = sum(redis_votes.values())
-                option_ids = [opt.id for opt in poll_vote.options]
-                votes_perc = vote_percentages(redis_votes, option_ids, poll_vote.is_public)
+                payload = await create_payload("poll_view", key, poll_vote)
 
-                votes_data = [
-                    {
-                        "id": opt.id,
-                        "text": opt.text,
-                        "votes": redis_votes.get(opt.id, 0),
-                        "votes_perc": votes_perc[i],
-                    }
-                    for i, opt in enumerate(poll_vote.options)
-                ]
-
-                expiry = "Never"
-                if poll_vote.expires_at: 
-                   expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
-
-                creation = poll_vote.created_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
-
-                await ws.send_json({
-                    "type": "poll_view", 
-                    "result_public": poll_vote.is_public,
-                    "question": poll_vote.question,
-                    "options": votes_data,
-                    "total_votes": total_votes,
-                    "creation": creation,
-                    "expiry": expiry,
-                })
+                await ws.send_json(payload)
 
             finally:
                 db.close()
@@ -350,36 +274,8 @@ async def poll_ws(
 
                     # Read live votes from Redis
                     key = f'poll:{poll_id}:votes'
-                    redis_votes = await redis_client.hgetall(key) # type: ignore
-                    redis_votes = {int(k): int(v) for k, v in redis_votes.items()} # Convert to {option_id: count}
-                    total_votes = sum(redis_votes.values())
-                    option_ids = [opt.id for opt in poll_vote.options]
-                    votes_perc = vote_percentages(redis_votes, option_ids, poll_vote.is_public)
-                    votes_data = [
-                        {
-                            "id": opt.id,
-                            "text": opt.text,
-                            "votes": redis_votes.get(opt.id, 0),
-                            "votes_perc": votes_perc[i]
-                        }
-                        for i, opt in enumerate(poll_vote.options)
-                    ]
-
-                    expiry = "Never"
-                    if poll_vote.expires_at: 
-                       expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
-
-                    creation = poll_vote.created_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
-
-                    await ws.send_json({
-                        "type": "poll_view", 
-                        "result_public": poll_vote.is_public,
-                        "question": poll_vote.question,
-                        "options": votes_data,
-                        "total_votes": total_votes,
-                        "creation": creation,
-                        "expiry": expiry,
-                    })
+                    payload = await create_payload("poll_view", key, poll_vote)
+                    await ws.send_json(payload)
 
                 finally: 
                     db.close()
