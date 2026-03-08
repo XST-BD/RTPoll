@@ -64,7 +64,7 @@ async def vote_ws(
     poll_id: int,
 ):
     await ws.accept()
-    await wsmanager.connect(poll_id, ws)
+    await wsmanager.connect(poll_id, ws, False)
 
     try: 
         # Send initial poll data (like /poll/view)
@@ -140,14 +140,25 @@ async def vote_ws(
 
                     await wsmanager.broadcast(
                         poll_id,
-                        {
+                        voter_payload= {
+                            "type": "vote_update",
+                            "result_public": poll_vote.is_public,
+                            "question": poll_vote.question,
+                            "options": [
+                                {"id": o["id"], "text": o["text"], "votes_perc": o["votes_perc"] if poll_vote.is_public else -1}
+                                for o in votes_data
+                            ],
+                            "total_votes": total_votes  if poll_vote.is_public else -1,
+                            "expiry": expiry,
+                        },
+                        creator_payload= {
                             "type": "vote_update",
                             "result_public": poll_vote.is_public,
                             "question": poll_vote.question,
                             "options": votes_data,
                             "total_votes": total_votes,
                             "expiry": expiry,
-                        }
+                        },
                     )
                 finally: 
                     db.close()
@@ -260,7 +271,7 @@ async def poll_ws(
             return
 
         # ================= CONNECT =================
-        await wsmanager.connect(poll_id, ws)
+        await wsmanager.connect(poll_id, ws, True)
 
         # ================= HANDLE FIRST REQUEST =================
         if msg_type == "poll_view":
