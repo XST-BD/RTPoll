@@ -123,20 +123,30 @@ async def vote_ws(
                     total_votes = sum(redis_votes.values())
                     option_ids = [opt.id for opt in poll_vote.options]
                     votes_perc = vote_percentages(redis_votes, option_ids, poll_vote.is_public)
+                    votes_data = [
+                        {
+                            "id": opt.id,
+                            "text": opt.text,
+                            "votes": redis_votes.get(opt.id, 0),
+                            "votes_perc": votes_perc[i]
+                        }
+                        for i, opt in enumerate(poll_vote.options)
+                    ]
+
+                    expiry = "Never"
+                    if poll_vote.expires_at: 
+                       expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
+
 
                     await wsmanager.broadcast(
                         poll_id,
                         {
                             "type": "vote_update",
-                            "options": [
-                                {
-                                    "id": oid,
-                                    "votes": redis_votes.get(oid, 0),
-                                    "votes_perc": votes_perc[i],
-                                }
-                                for i, oid in enumerate(option_ids)
-                            ],
+                            "result_public": poll_vote.is_public,
+                            "question": poll_vote.question,
+                            "options": votes_data,
                             "total_votes": total_votes,
+                            "expiry": expiry,
                         }
                     )
                 finally: 
