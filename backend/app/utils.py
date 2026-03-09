@@ -73,7 +73,7 @@ def vote_percentages(
         ]
     else:
         return [
-            round(votes.get(opt_id, 0) / total * 100, 2)
+            round(votes.get(opt_id, 0) / total * 100, 1)
             for opt_id in option_ids
         ]
 
