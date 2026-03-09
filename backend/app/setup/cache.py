@@ -20,43 +20,58 @@ SYNC_INTERVAL = 30
 
 async def sync_votes_db():
 
-    while True: 
+    print("Vote sync worker started")
+
+    while True:
 
         db: Session = SessionLocal()
 
-        try: 
-            keys = await redis_client.keys('poll:*:votes')
+        try:
+            cursor = 0
 
-            for key in keys:
-                # key = poll:<poll_id>:votes
-                poll_id = int(key.split(":")[1])
-                votes = await redis_client.hgetall(key) # type: ignore
+            while True:
+                cursor, keys = await redis_client.scan(
+                    cursor, match="poll:*:votes", count=100
+                )
 
-                if not votes: 
-                    continue
+                for key in keys:
 
-                poll = db.query(PollModel).filter(
-                    PollModel.id == poll_id
-                ).first()
+                    poll_id = int(key.split(":")[1])
 
-                if not poll:
-                    continue
+                    votes = await redis_client.hgetall(key)     # type: ignore
+                    if not votes:
+                        continue
 
-                # Convert to list[int] based on options
-                new_votes = []
+                    votes = {int(k): int(v) for k, v in votes.items()}
 
-                for opt in poll.options:
-                    new_votes.append(
-                        int(votes.get(str(opt), 0))
-                    )
+                    poll = db.query(PollModel).filter(
+                        PollModel.id == poll_id
+                    ).first()
 
-                poll.votes = new_votes
+                    if not poll:
+                        continue
+
+                    print("Redis votes:", votes)
+
+                    for opt in poll.options:
+                        new_votes = votes.get(opt.id, 0)
+
+                        print("Updating", opt.id, "->", new_votes)
+
+                        if opt.votes != new_votes:
+                            opt.votes = new_votes
+
+                if cursor == 0:
+                    break
 
             db.commit()
 
-        except Exception as e: 
-            print("Sync error: ", e)
-        finally: 
+        except Exception as e:
+            print("Sync error:", e)
+
+        finally:
             db.close()
+
+        print("Running sync cycle")
 
         await asyncio.sleep(SYNC_INTERVAL)

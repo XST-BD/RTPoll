@@ -86,7 +86,7 @@ async def vote_ws(
                     key = f'poll:{poll_id}:votes'
 
                     # Atomic increment
-                    new_count = await redis_client.hincrby(key, str(option_id), 1) # type: ignore
+                    await redis_client.hincrby(key, str(option_id), 1) # type: ignore
 
                     # Broadcast update
 
