@@ -10,6 +10,7 @@ rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 COPY backend/ /app/
+COPY backend/start.sh /app/start.sh
 
 RUN mkdir -p /app/data 
 RUN chmod 777 /app/data
@@ -19,6 +20,5 @@ RUN ls -R /app
 
 EXPOSE 8000
 
-# Run the backend (uvicorn with reload for dev)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/app/start.sh"]
 
