@@ -11,15 +11,14 @@ from sqlalchemy.orm import Session
 
 from app.db.model.user import UserModel, EmailVerification
 from app.deps import get_db, verify_password, hash_password
-from app.services.auth import create_access_token, decode_token
+from app.services.auth import create_access_token, decode_token, get_current_user
 from app.services.email import send_mail_verification, prepare_verification_link
 from app.setup.vars import router, FRONTEND_URL
 from app.setup.limiter import limiter
 
 router = APIRouter()
 
-# Refresh token endpoint
-@router.post("/refresh")
+@router.post("/refresh", description="Refresh token endpoint")
 async def refresh_token(
     refresh_token: Optional[str] = Cookie(None),
     db: Session = Depends(get_db)
@@ -42,7 +41,50 @@ async def refresh_token(
     return {"access_token": new_access_token, "token_type": "bearer"}
 
 
-@router.patch('/recovery')
+@router.get("/manage", description="Account details endpoint")
+def view_account(
+    user: UserModel = Depends(get_current_user),
+):
+    if not user.is_verified:
+       raise HTTPException(400, "Unverified user")
+    
+    response = {
+        "user_id": user.user_id, 
+        "email": user.email, 
+        "created_at": user.creation_date,
+        "polls_created": user.polls,
+        "verified": user.is_verified,
+    }
+    return response
+
+@router.post("/manage", description="Email change endpoint")
+def change_email(
+    new_email: str = Body(...),
+    old_email: str = Body(...),
+    password: str = Body(...),
+    db: Session = Depends(get_db),
+    user: UserModel = Depends(get_current_user),
+):
+    if not user.is_verified:
+       raise HTTPException(400, "Unverified user")
+     
+    if user.email != old_email: 
+        raise HTTPException(400, "Wrong email")
+
+    if not verify_password(password, user.password): 
+        raise HTTPException(400, "Wrong password")
+    
+    user.email = new_email
+    db.commit()
+    db.refresh(user)
+
+    response = {
+        "message": "Email changed successfully",
+        "new_email": user.email,
+    }
+    return response
+
+@router.patch("/manage", description="Password recovery endpoint")
 def recover_password(
     email: str = Body(...),
     password1: str = Body(...),
@@ -66,9 +108,56 @@ def recover_password(
     db.refresh(user)
 
     return {"message": "Password changed successfully"}
-    
 
-@router.get('/verify_mail')
+
+@router.put("/manage", description="Password change endpoint")
+def change_password(
+    email: str = Body(...),
+    old_password: str = Body(...),
+    new_password: str = Body(...),
+    db: Session = Depends(get_db),
+    user: UserModel = Depends(get_current_user),
+):
+    if not user.is_verified:
+        raise HTTPException(400, "Unverified user")
+    
+    if not verify_password(old_password, user.password): 
+        raise HTTPException(400, "Wrong old password")
+
+    if email is not user.email: 
+        raise HTTPException(400, "Wrong email")
+
+    hashed_password = hash_password(new_password)
+    user.password = hashed_password
+    db.commit()
+    db.refresh(user)
+
+    return {"message": "Password changed successfully"}
+
+
+@router.delete("/manage", description="Account deletion endpoint")
+def delete_account(
+    email: str = Body(...),
+    password: str = Body(...),
+    db: Session = Depends(get_db),
+    user: UserModel = Depends(get_current_user),
+):
+    if not user.is_verified:
+        raise HTTPException(400, "Unverified user")
+
+    if not verify_password(password, user.password): 
+        raise HTTPException(400, "Wrong password")
+    
+    if email is not user.email: 
+        raise HTTPException(400, "Wrong email")
+    
+    db.delete(user)
+    db.commit()
+
+    return {"message": "Account deleted successfully"}
+
+
+@router.get("/verify_mail", description="Mail verification endpoint")
 def verify_mail(
     token: str, db: Session = Depends(get_db)
 ):
@@ -100,7 +189,7 @@ def verify_mail(
 class ResendMailRequest(BaseModel):
     email: str
 
-@router.post('/resend_mail')
+@router.post("/resend_mail", description="Mail resend endpoint")
 @limiter.limit('5/minute')   # allow max 5 requests per minute per IP
 def resend_mail(
     request: Request,
@@ -112,5 +201,3 @@ def resend_mail(
     return {"message": "Mail verification sent"}
 
 
-# Major changes: 
-# Removed /auth/check 

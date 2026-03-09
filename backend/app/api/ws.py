@@ -155,6 +155,10 @@ async def vote_ws(
                         await ws.send_json({"type": "error", "message": "Poll not found"})
                         continue
 
+                    if poll_vote.expires_at and poll_vote.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc): 
+                        await ws.send_json({"type": "notice", "message": "This poll has ended"})
+                        continue    
+                        
                     # Read live votes from Redis
                     key = f'poll:{poll_id}:votes'
                     payload = await create_payload("vote_data", key, poll_vote)
