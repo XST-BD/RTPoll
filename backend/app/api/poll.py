@@ -1,6 +1,7 @@
+import asyncio
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
 
 from fastapi_pagination import paginate, Page
 from pydantic import BaseModel, Field
@@ -16,6 +17,7 @@ from app.services.auth import get_current_user
 from app.setup.paginator import CustomParams
 from app.setup.limiter import limiter
 from app.setup.cache import redis_client
+from app.utils import poll_timer
 
 router = APIRouter()
 
@@ -28,8 +30,9 @@ class CreatePollRequest(BaseModel):
 
 
 @router.post('/poll/create')
-def poll_create(
+async def poll_create(
     payload: CreatePollRequest, 
+    bgtasks: BackgroundTasks,
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user)
 ):
@@ -51,6 +54,9 @@ def poll_create(
     db.add(poll)
     db.commit()
     db.refresh(poll)
+
+    if poll.expires_at: 
+        bgtasks.add_task(poll_timer, poll.id, poll.expires_at)
 
     return {
         "message": "Poll created",

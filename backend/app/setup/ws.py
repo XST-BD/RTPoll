@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 from fastapi import WebSocket
 
 class WSConnectionManager: 
@@ -21,12 +21,20 @@ class WSConnectionManager:
         if not self.rooms[poll_id]:
             del self.rooms[poll_id] 
 
-    async def broadcast(self, poll_id: int, voter_payload, creator_payload):
+    async def broadcast(
+        self, 
+        poll_id: int, 
+        voter_payload,
+        creator_payload,
+    ):
         if poll_id not in self.rooms: 
             return 
 
         for ws, is_creator in self.rooms[poll_id]:
             payload = creator_payload if is_creator else voter_payload
+        
+            if payload is None:
+                continue
 
             try: 
                 await ws.send_json(payload)

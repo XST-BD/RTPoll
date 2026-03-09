@@ -6,7 +6,6 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPExce
 from fastapi.concurrency import run_in_threadpool
 
 from jose import JWTError
-import json
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, selectinload
 
@@ -70,7 +69,7 @@ async def vote_ws(
                         continue
                 
                     if poll_vote.expires_at and poll_vote.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc): 
-                        await ws.send_json({"type": "error", "message": "This poll has ended"})
+                        await ws.send_json({"type": "notice", "message": "This poll has ended"})
                         continue
 
                     try:
@@ -155,11 +154,7 @@ async def vote_ws(
                     if poll_vote is None: 
                         await ws.send_json({"type": "error", "message": "Poll not found"})
                         continue
-                
-                    if poll_vote.expires_at and poll_vote.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc): 
-                        await ws.send_json({"type": "notice", "message": "This poll has ended"})
-                        continue
-                    
+
                     # Read live votes from Redis
                     key = f'poll:{poll_id}:votes'
                     payload = await create_payload("vote_data", key, poll_vote)

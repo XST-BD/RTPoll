@@ -1,13 +1,17 @@
+import asyncio
 import re
-from datetime import timezone
+from datetime import timezone, datetime
 import dns.resolver
 import dns.exception
 from typing import Any
 
+from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import HTTPException
 
 from app.db.model.poll import PollModel
+from app.deps import SessionLocal
 from app.setup.cache import redis_client
+from app.setup.ws import wsmanager
 
 def validate_email(email_addr: str):
     # Step 1: Basic format check
@@ -128,3 +132,24 @@ async def create_payload(
             "total_votes": total_votes  if poll.is_public else -1,
             "expiry": expiry,
         }
+    
+async def poll_timer(poll_id:int, expires_at: datetime):
+    now = datetime.now(timezone.utc)
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    remaining = (expires_at - now).total_seconds()
+    if remaining > 0:
+        await asyncio.sleep(remaining)
+
+    # Broadcast to all connected clients (only show message, not counts if not public)
+    db = SessionLocal()
+    key = f'poll:{poll_id}:votes'
+    poll_vote = await run_in_threadpool(db.get, PollModel, poll_id)
+    creator_payload = create_payload("poll_view", key, poll_vote)
+
+    await wsmanager.broadcast(
+        poll_id,
+        voter_payload={"type": "notice", "message": "This poll has ended"},
+        creator_payload= creator_payload,
+    )

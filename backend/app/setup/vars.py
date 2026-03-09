@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 from fastapi import FastAPI, APIRouter
 
-from app.setup.cache import lifespan
+from app.setup.lifespan import lifespan
 
 load_dotenv()
 

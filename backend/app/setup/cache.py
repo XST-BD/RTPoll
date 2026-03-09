@@ -60,14 +60,3 @@ async def sync_votes_db():
             db.close()
 
         await asyncio.sleep(SYNC_INTERVAL)
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
-    task = asyncio.create_task(sync_votes_db())
-
-    yield
-
-    # Shutdown
-    task.cancel()
