@@ -47,7 +47,6 @@ def register_user(
     return {"message": "Check your mail box to verify your account"}
 
 
-
 @router.post('/login')
 def login_user(
     request: Request,

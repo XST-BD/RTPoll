@@ -157,10 +157,19 @@ def delete_account(
     return {"message": "Account deleted successfully"}
 
 
-@router.get("/verify_mail", description="Mail verification endpoint")
+@router.post("/verify_mail", description="Mail verification endpoint")
 def verify_mail(
-    token: str, db: Session = Depends(get_db)
+    request: Request,
+    token: str, 
+    db: Session = Depends(get_db),
 ):
+    # Detect scanners 
+    accept = request.headers.get("accept", "")
+
+    # Block non-browser navigation
+    if "text/html" not in accept: 
+        return {"message": "verification link"}
+
     # token setup
     token_hash = hashlib.sha256(token.encode()).hexdigest()
     record = db.query(EmailVerification).filter(EmailVerification.token_hash==token_hash).first()

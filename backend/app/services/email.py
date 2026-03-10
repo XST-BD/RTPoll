@@ -20,7 +20,7 @@ from app.deps import get_db
 
 
 from app.setup.vars import (
-    SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, BACKEND_URL1
+    SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, FRONTEND_URL
 )
 
 from app.utils import validate_db_entry
@@ -50,7 +50,7 @@ def prepare_verification_link(db: Session, email: str):
 
     db.refresh(verification)
 
-    link = f"{BACKEND_URL1}/api/v0/auth/verify_mail?token={token}"
+    link = f"{FRONTEND_URL}/verify_mail?token={token}"
     return link
 
 
