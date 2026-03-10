@@ -10,7 +10,7 @@ from app.deps import get_db
 from app.setup.cache import redis_client
 from app.deps import SessionLocal
 
-HISTORY_RECORD_INTERVAL = 3600
+HISTORY_RECORD_INTERVAL = 300
 
 async def sync_poll_history():
     
