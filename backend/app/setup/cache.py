@@ -16,7 +16,7 @@ redis_client: Redis = redis.from_url(
     decode_responses=True,
 )
 
-SYNC_INTERVAL = 30
+DB_SYNC_INTERVAL = 30
 
 async def sync_votes_db():
 
@@ -51,12 +51,8 @@ async def sync_votes_db():
                     if not poll:
                         continue
 
-                    print("Redis votes:", votes)
-
                     for opt in poll.options:
                         new_votes = votes.get(opt.id, 0)
-
-                        print("Updating", opt.id, "->", new_votes)
 
                         if opt.votes != new_votes:
                             opt.votes = new_votes
@@ -67,11 +63,10 @@ async def sync_votes_db():
             db.commit()
 
         except Exception as e:
-            print("Sync error:", e)
+            print("DB Sync error:", e)
 
         finally:
             db.close()
 
-        print("Running sync cycle")
-
-        await asyncio.sleep(SYNC_INTERVAL)
+        print("Running database sync cycle")
+        await asyncio.sleep(DB_SYNC_INTERVAL)

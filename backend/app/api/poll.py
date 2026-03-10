@@ -14,6 +14,7 @@ from app.db.model.user import UserModel
 from app.db.model.poll import PollModel, PollHistoryEntry, PollOption
 from app.deps import get_db
 from app.services.auth import get_current_user
+from app.services.history import sync_poll_history
 from app.setup.paginator import CustomParams
 from app.setup.limiter import limiter
 from app.setup.cache import redis_client
@@ -145,7 +146,7 @@ async def poll_view(
     return paginate(items, params)
 
 # TODO: Add pagination
-@router.get('/poll/view/result/{poll_id}')
+@router.get('/poll/result/{poll_id}')
 @limiter.limit('5/Minute')  # Max 5 request per minute per IP
 def poll_result(
     request: Request,
@@ -157,8 +158,8 @@ def poll_result(
         .filter(PollHistoryEntry.poll_id == poll_id)\
         .order_by(PollHistoryEntry.timestamp).all()
     
-    if entries is None: 
-        return {"message": "Poll history is empty or not found"}
+    if not entries:
+        return {"message": "Poll history is empty"}
 
     # To JSON format
     result = [{'x':  entry.timestamp.isoformat(), 'y': entry.value} for entry in entries]
