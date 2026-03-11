@@ -30,7 +30,7 @@ class CreatePollRequest(BaseModel):
     result_public: bool = False
 
 
-@router.post('/poll/create')
+@router.post('/poll')
 async def poll_create(
     payload: CreatePollRequest, 
     bgtasks: BackgroundTasks,
@@ -66,6 +66,57 @@ async def poll_create(
         "expires_at": poll.expires_at if not is_indefinite else "never",
     }
 
+class PollResponseModel(BaseModel):
+    question: str
+    expires_at: datetime | str
+    total_votes: int
+
+    class Config:
+        from_attributes = True
+
+@router.get('/poll/{poll_id}', response_model=PollResponseModel)
+async def poll_view(
+    poll_id: int,
+    db: Session = Depends(get_db),
+    user: UserModel = Depends(get_current_user),
+):
+    poll = db.query(PollModel).filter(PollModel.id==poll_id).first()
+
+    if poll is None: 
+        raise HTTPException(404, "Poll not found")
+    
+    # Redis live votes
+    key = f'poll:{poll.id}:votes'
+    redis_votes = await redis_client.hgetall(key)  # type: ignore
+    redis_votes = {int(k): int(v) for k, v in redis_votes.items()}
+    
+    poll_expires_at = "Never" if poll.expires_at is None else poll.expires_at.replace(tzinfo=timezone.utc)
+    total_votes = sum(redis_votes.values())
+
+    PollResponseModel(
+        question=poll.question,
+        expires_at=poll_expires_at,
+        total_votes=total_votes,
+    )
+
+
+@router.delete('/poll/{poll_id}')
+async def poll_delete(
+    poll_id: int,
+    db: Session = Depends(get_db),
+    user: UserModel = Depends(get_current_user),
+):
+    poll = db.query(PollModel).filter(PollModel.id==poll_id).first()
+
+    if poll is None: 
+        raise HTTPException(404, "Poll not found")
+    
+    db.delete(poll)
+    db.commit()
+    
+    return {"message": f"Poll: {poll_id} deleted successfully"}
+
+
 
 class PollResponseAllModel(BaseModel):
     id: int
@@ -78,8 +129,8 @@ class PollResponseAllModel(BaseModel):
         from_attributes = True
 
 
-@router.get('/poll/view/all', response_model=Page[PollResponseAllModel])
-async def poll_view(
+@router.get('/poll/all', response_model=Page[PollResponseAllModel])
+async def poll_view_all(
     expired: bool = False,
     params: CustomParams = Depends(),
     db: Session = Depends(get_db),
@@ -144,6 +195,21 @@ async def poll_view(
         )
 
     return paginate(items, params)
+
+@router.delete('/poll/all')
+async def poll_delete_all(
+    db: Session = Depends(get_db),
+    user: UserModel = Depends(get_current_user),
+):
+    polls = db.query(PollModel).filter(PollModel.creator_id==user.id).all()
+
+    for poll in polls: 
+        db.delete(poll)
+
+    db.commit()
+
+    return {"message": "All polls deleted"}
+
 
 # TODO: Add pagination
 @router.get('/poll/result/{poll_id}')

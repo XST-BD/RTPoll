@@ -42,7 +42,7 @@ def register_user(
         validate_db_entry(str(e.orig).lower())
 
 
-    link = prepare_verification_link(db=db, email=email)
+    link = prepare_verification_link(db=db, email=email, recovery=False)
     send_mail_verification(email, link)
     return {"message": "Check your mail box to verify your account"}
 
