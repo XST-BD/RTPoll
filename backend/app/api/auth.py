@@ -87,8 +87,6 @@ def change_email(
 @router.patch("/manage", description="Password recovery endpoint")
 def recover_password(
     email: str = Body(...),
-    password1: str = Body(...),
-    password2: str = Body(...),
     db: Session = Depends(get_db),
 ):
     user = db.query(UserModel).filter(UserModel.email==email).first()
@@ -98,21 +96,13 @@ def recover_password(
     
     if not user.is_verified:
         raise HTTPException(400, "Unverified user")
-    
-    if not verify_password(password1, password2): 
-        raise HTTPException(400, "Passwords don't match")
-    
-    hashed_password = hash_password(password1)
-    user.password = hashed_password
-    db.commit()
-    db.refresh(user)
 
-    return {"message": "Password changed successfully"}
+    link = prepare_verification_link(db, email)
+    send_mail_verification(email, link)
 
 
 @router.put("/manage", description="Password change endpoint")
 def change_password(
-    email: str = Body(...),
     old_password: str = Body(...),
     new_password: str = Body(...),
     db: Session = Depends(get_db),
@@ -124,9 +114,6 @@ def change_password(
     if not verify_password(old_password, user.password): 
         raise HTTPException(400, "Wrong old password")
 
-    if email is not user.email: 
-        raise HTTPException(400, "Wrong email")
-
     hashed_password = hash_password(new_password)
     user.password = hashed_password
     db.commit()
@@ -137,7 +124,6 @@ def change_password(
 
 @router.delete("/manage", description="Account deletion endpoint")
 def delete_account(
-    email: str = Body(...),
     password: str = Body(...),
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
@@ -148,19 +134,18 @@ def delete_account(
     if not verify_password(password, user.password): 
         raise HTTPException(400, "Wrong password")
     
-    if email is not user.email: 
-        raise HTTPException(400, "Wrong email")
-    
     db.delete(user)
     db.commit()
 
     return {"message": "Account deleted successfully"}
 
 
-@router.post("/verify_mail", description="Mail verification endpoint")
+@router.post("/verify", description="Mail verification endpoint")
 def verify_mail(
     request: Request,
     token: str, 
+    recovery: bool,
+    new_password: str = Body(...),
     db: Session = Depends(get_db),
 ):
     # Detect scanners 
@@ -184,8 +169,11 @@ def verify_mail(
     if user is None:
         raise HTTPException(status_code=400, detail="User not found during mail validation")
 
-    user.is_verified = True
-    record.used = True
+    if not recovery:
+        user.is_verified = True
+        record.used = True
+    else:
+        user.password = hash_password(new_password)
 
     db.commit()
 
@@ -198,7 +186,7 @@ def verify_mail(
 class ResendMailRequest(BaseModel):
     email: str
 
-@router.post("/resend_mail", description="Mail resend endpoint")
+@router.post("/resend", description="Mail resend endpoint")
 @limiter.limit('5/minute')   # allow max 5 requests per minute per IP
 def resend_mail(
     request: Request,
