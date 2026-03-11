@@ -1,4 +1,4 @@
-from app.api import auth, poll, user, vote, ws
+from app.api import auth, poll, user, ws
 from app.db.base import Base, dbengine
 from app.setup.vars import app, router
 from app.setup.cors import cors_permit
@@ -16,9 +16,8 @@ async def response_root():
     return {"status": "ok"}
 
 router.include_router(auth.router, prefix='/api/v0/auth', tags=['Authentication endpoint'])
-router.include_router(poll.router, prefix='/api/v0/dashboard', tags=['Dashboard endpoint'])
+router.include_router(poll.router, prefix='/api/v0', tags=['Dashboard endpoint'])
 router.include_router(user.router, prefix='/api/v0/user', tags=['User management endpoint'])
-router.include_router(vote.router, prefix='/api/v0/vote', tags=['Vote endpoint'])
 router.include_router(ws.router, prefix='/ws', tags=['Websocket endpoint'])
 
 app.include_router(router)
