@@ -34,7 +34,7 @@ def generate_login_url_token() -> tuple[str, str]:
     return token, token_hash()
 
 
-def prepare_verification_link(db: Session, email: str):
+def prepare_verification_link(db: Session, email: str, recovery: bool):
     # token setup
     token, token_hash = generate_login_url_token()
 
@@ -50,7 +50,11 @@ def prepare_verification_link(db: Session, email: str):
 
     db.refresh(verification)
 
-    link = f"{FRONTEND_URL}/verify_mail?token={token}"
+    if recovery: 
+        link = f"{FRONTEND_URL}/recovery?token={token}"
+    else: 
+        link = f"{FRONTEND_URL}/verify?token={token}"
+    
     return link
 
 

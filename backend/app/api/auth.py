@@ -96,14 +96,16 @@ def recover_password(
     
     if not user.is_verified:
         raise HTTPException(400, "Unverified user")
-
-    link = prepare_verification_link(db, email)
+    
+    link = prepare_verification_link(db=db, email=email, recovery=True)
     send_mail_verification(email, link)
-
+    return {"message": "Mail verification sent"}
+    
 
 @router.put("/manage", description="Password change endpoint")
 def change_password(
-    old_password: str = Body(...),
+    recovery: bool,
+    old_password: Optional[str] = Body(...),
     new_password: str = Body(...),
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
@@ -111,8 +113,9 @@ def change_password(
     if not user.is_verified:
         raise HTTPException(400, "Unverified user")
     
-    if not verify_password(old_password, user.password): 
-        raise HTTPException(400, "Wrong old password")
+    if not recovery and old_password:
+        if not verify_password(old_password, user.password): 
+            raise HTTPException(400, "Wrong old password")
 
     hashed_password = hash_password(new_password)
     user.password = hashed_password
@@ -144,8 +147,6 @@ def delete_account(
 def verify_mail(
     request: Request,
     token: str, 
-    recovery: bool,
-    new_password: str = Body(...),
     db: Session = Depends(get_db),
 ):
     # Detect scanners 
@@ -169,11 +170,8 @@ def verify_mail(
     if user is None:
         raise HTTPException(status_code=400, detail="User not found during mail validation")
 
-    if not recovery:
-        user.is_verified = True
-        record.used = True
-    else:
-        user.password = hash_password(new_password)
+    user.is_verified = True
+    record.used = True
 
     db.commit()
 
@@ -193,7 +191,7 @@ def resend_mail(
     payload: ResendMailRequest,
     db: Session = Depends(get_db),
 ):
-    link = prepare_verification_link(db=db, email=payload.email)
+    link = prepare_verification_link(db=db, email=payload.email, recovery=False)
     send_mail_verification(payload.email, link)
     return {"message": "Mail verification sent"}
 
