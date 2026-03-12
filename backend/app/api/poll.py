@@ -198,13 +198,25 @@ async def poll_view_all(
 
 @router.delete('/poll')
 async def poll_delete_all(
+    closed: bool = False,
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
 ):
-    polls = db.query(PollModel).filter(PollModel.creator_id==user.id).all()
+    polls = db.query(PollModel).filter(PollModel.creator_id==user.user_id)
+    now = datetime.now(timezone.utc)
 
-    for poll in polls: 
-        db.delete(poll)
+    if closed: 
+        polls_query = polls.filter(
+            PollModel.expires_at.isnot(None),
+            PollModel.expires_at <= now
+        )
+
+        for poll in polls_query: 
+            db.delete(poll)
+
+    else:
+        for poll in polls: 
+            db.delete(poll)
 
     db.commit()
 
