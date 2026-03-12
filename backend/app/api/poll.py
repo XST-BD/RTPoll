@@ -129,7 +129,7 @@ class PollResponseAllModel(BaseModel):
         from_attributes = True
 
 
-@router.get('/poll/all', response_model=Page[PollResponseAllModel])
+@router.get('/poll', response_model=Page[PollResponseAllModel])
 async def poll_view_all(
     expired: bool = False,
     params: CustomParams = Depends(),
@@ -196,7 +196,7 @@ async def poll_view_all(
 
     return paginate(items, params)
 
-@router.delete('/poll/all')
+@router.delete('/poll')
 async def poll_delete_all(
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
