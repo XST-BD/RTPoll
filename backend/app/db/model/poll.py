@@ -13,7 +13,7 @@ class PollOption(Base):
     __table_args__ = (UniqueConstraint("poll_id", "position"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    poll_id: Mapped[int] = mapped_column(ForeignKey('polls.id'), index=True, nullable=False)
+    poll_id: Mapped[int] = mapped_column(ForeignKey('polls.id', ondelete="CASCADE"), index=True, nullable=False)
     position: Mapped[int] = mapped_column(Integer)
     text: Mapped[str] = mapped_column(String, nullable=False)
     votes: Mapped[int] = mapped_column(Integer, default=0)
@@ -32,7 +32,7 @@ class PollModel(Base):
     )
 
     creator = relationship('UserModel', back_populates='polls')
-    creator_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    creator_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
 
     is_indefinite: Mapped[bool] = mapped_column(default=False)
     is_public: Mapped[bool] = mapped_column(Boolean, nullable=False)
@@ -51,7 +51,7 @@ class PollHistoryEntry(Base):
     __tablename__ = "polls_history_record"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    poll_id: Mapped[int] = mapped_column(ForeignKey("polls.id"))
+    poll_id: Mapped[int] = mapped_column(ForeignKey("polls.id", ondelete="CASCADE"))
 
     timestamp: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     value: Mapped[int] = mapped_column(Integer, nullable=False)

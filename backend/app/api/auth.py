@@ -18,7 +18,7 @@ from app.setup.limiter import limiter
 
 router = APIRouter()
 
-@router.post("/refresh", description="Refresh token endpoint")
+@router.get("/refresh", description="Refresh token endpoint")
 async def refresh_token(
     refresh_token: Optional[str] = Cookie(None),
     db: Session = Depends(get_db)
@@ -101,43 +101,48 @@ def recover_password(
     send_mail_verification(email, link)
     return {"message": "Mail verification sent"}
     
+class ChangePasswordRequest(BaseModel):
+    recovery: bool
+    old_password: Optional[str]
+    new_password: str
 
 @router.put("/manage", description="Password change endpoint")
 def change_password(
-    recovery: bool,
-    old_password: Optional[str] = Body(...),
-    new_password: str = Body(...),
+    payload: ChangePasswordRequest,
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
 ):
     if not user.is_verified:
         raise HTTPException(400, "Unverified user")
     
-    if not recovery and old_password:
-        if not verify_password(old_password, user.password): 
+    if not payload.recovery and payload.old_password:
+        if not verify_password(payload.old_password, user.password): 
             raise HTTPException(400, "Wrong old password")
 
-    hashed_password = hash_password(new_password)
+    hashed_password = hash_password(payload.new_password)
     user.password = hashed_password
     db.commit()
     db.refresh(user)
 
     return {"message": "Password changed successfully"}
 
+class DeleteAccRequest(BaseModel):
+    password: str
 
-@router.delete("/manage", description="Account deletion endpoint")
+@router.delete("/manage", description="Account deletion endpoint", status_code=204)
 def delete_account(
-    password: str = Body(...),
+    payload: DeleteAccRequest,
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
 ):
     if not user.is_verified:
         raise HTTPException(400, "Unverified user")
 
-    if not verify_password(password, user.password): 
+    if not verify_password(payload.password, user.password): 
         raise HTTPException(400, "Wrong password")
     
-    db.delete(user)
+    db_user = db.query(UserModel).filter(UserModel.user_id==user.user_id).first()
+    db.delete(db_user)
     db.commit()
 
     return {"message": "Account deleted successfully"}
