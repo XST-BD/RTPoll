@@ -160,6 +160,12 @@ def delete_account(
     if db_user:
         db_user.is_active = False
         db_user.is_verified = False
+
+        polls = db.query(PollModel).filter(PollModel.creator_id==db_user.user_id).all()
+
+        for poll in polls: 
+            db.delete(poll)
+
         db.commit()
         print(f"Active:", db_user.is_active)
 
