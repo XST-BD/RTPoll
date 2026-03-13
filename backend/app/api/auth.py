@@ -2,23 +2,25 @@ import hashlib
 
 from fastapi import APIRouter, Request, Depends, Body, Cookie
 from fastapi.exceptions import HTTPException
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse
 
 from pydantic import BaseModel
 from typing import Optional
 
+from sqlalchemy import select,func
 from sqlalchemy.orm import Session
 
 from app.db.model.user import UserModel, EmailVerification
-from app.deps import get_db, verify_password, hash_password
+from app.db.model.poll import PollModel
+from app.deps import get_db, verify_password, hash_password, SessionLocal
 from app.services.auth import create_access_token, decode_token, get_current_user
 from app.services.email import send_mail_verification, prepare_verification_link
-from app.setup.vars import router, FRONTEND_URL
+from app.setup.vars import router
 from app.setup.limiter import limiter
 
 router = APIRouter()
 
-@router.get("/refresh", description="Refresh token endpoint")
+@router.post("/refresh", description="Refresh token endpoint")
 async def refresh_token(
     refresh_token: Optional[str] = Cookie(None),
     db: Session = Depends(get_db)
@@ -43,17 +45,29 @@ async def refresh_token(
 
 @router.get("/manage", description="Account details endpoint")
 def view_account(
+    db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
 ):
     if not user.is_verified:
        raise HTTPException(400, "Unverified user")
     
+    polls_created = db.query(PollModel).filter(PollModel.creator_id==user.user_id).count()
+
+    with SessionLocal() as session:
+        polls_expired =  session.scalar(
+            select(func.count(PollModel.id))
+                .where(
+                    PollModel.creator_id == user.user_id,
+                    PollModel.expires_at.is_not(None),
+                    PollModel.expires_at < func.now()
+                )
+            )
+    
     response = {
-        "user_id": user.user_id, 
         "email": user.email, 
         "created_at": user.creation_date,
-        "polls_created": user.polls,
-        "verified": user.is_verified,
+        "polls_created": polls_created,
+        "polls_expired": polls_expired,
     }
     return response
 
@@ -97,7 +111,7 @@ def recover_password(
     if not user.is_verified:
         raise HTTPException(400, "Unverified user")
     
-    link = prepare_verification_link(db=db, email=email, recovery=True)
+    link = prepare_verification_link(db=db, email=email)
     send_mail_verification(email, link)
     return {"message": "Mail verification sent"}
     
@@ -141,49 +155,49 @@ def delete_account(
     if not verify_password(payload.password, user.password): 
         raise HTTPException(400, "Wrong password")
     
-    db_user = db.query(UserModel).filter(UserModel.user_id==user.user_id).first()
-    db.delete(db_user)
-    db.commit()
+    db_user = db.query(UserModel).filter(UserModel.user_id == user.user_id).first()
+    
+    if db_user:
+        db_user.is_active = False
+        db_user.is_verified = False
+        db.commit()
+        print(f"Active:", db_user.is_active)
 
-    return {"message": "Account deleted successfully"}
 
+class MailVerifyRequest(BaseModel):
+    type: str
+    token: str
 
 @router.post("/verify", description="Mail verification endpoint")
 def verify_mail(
     request: Request,
-    token: str, 
+    payload: MailVerifyRequest, 
     db: Session = Depends(get_db),
 ):
-    # Detect scanners 
-    accept = request.headers.get("accept", "")
-
-    # Block non-browser navigation
-    if "text/html" not in accept: 
-        return {"message": "verification link"}
-
     # token setup
-    token_hash = hashlib.sha256(token.encode()).hexdigest()
-    record = db.query(EmailVerification).filter(EmailVerification.token_hash==token_hash).first()
+    record = None
+    if payload.type == "registration":
+        token_hash = hashlib.sha256(payload.token.encode()).hexdigest()
+        record = db.query(EmailVerification).filter(EmailVerification.token_hash==token_hash).first()
+    else:
+        return {"error": "Unknown type"}
 
     if not record:
-        raise HTTPException(status_code=400, detail="Invalid link")
+        return {"error": "Invalid link"}
     
     if record.used: 
-        raise HTTPException(status_code=400, detail="Link is already used and expired")
+        return {"message": "Link is already used and expired"}
     
     user = (db.query(UserModel).filter(UserModel.email==record.email).first())
     if user is None:
-        raise HTTPException(status_code=400, detail="User not found during mail validation")
+        return {"error": "User not found"}
 
     user.is_verified = True
     record.used = True
 
     db.commit()
 
-    return RedirectResponse(
-        url=f"{FRONTEND_URL}/login",
-        status_code=302
-    )
+    return {"message": "User is verified"}
 
 
 class ResendMailRequest(BaseModel):
@@ -196,7 +210,15 @@ def resend_mail(
     payload: ResendMailRequest,
     db: Session = Depends(get_db),
 ):
-    link = prepare_verification_link(db=db, email=payload.email, recovery=False)
+    user = db.query(UserModel).filter(UserModel.email==payload.email).first()
+
+    if not user: 
+        return {"error": "User not found during mail validation"}
+    
+    if user.is_verified: 
+        return {"message": "User already verified"}
+
+    link = prepare_verification_link(db=db, email=payload.email)
     send_mail_verification(payload.email, link)
     return {"message": "Mail verification sent"}
 

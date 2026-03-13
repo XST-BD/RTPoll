@@ -20,10 +20,8 @@ from app.deps import get_db
 
 
 from app.setup.vars import (
-    SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, FRONTEND_URL
+    SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, FRONTEND_URL_LOCAL
 )
-
-from app.utils import validate_db_entry
 
 # ====================== MAIL SERVICE CODES ====================== #
 
@@ -34,27 +32,20 @@ def generate_login_url_token() -> tuple[str, str]:
     return token, token_hash()
 
 
-def prepare_verification_link(db: Session, email: str, recovery: bool):
+def prepare_verification_link(db: Session, email: str):
     # token setup
     token, token_hash = generate_login_url_token()
 
     verification = EmailVerification(email=email, token_hash=token_hash)
-
     db.add(verification)
+
     try:
         db.commit()
+        db.refresh(verification)
     except IntegrityError as e:
         db.rollback()
-        # Handle unique constraint violations
-        validate_db_entry(str(e).lower())
 
-    db.refresh(verification)
-
-    if recovery: 
-        link = f"{FRONTEND_URL}/recovery?token={token}"
-    else: 
-        link = f"{FRONTEND_URL}/verify?token={token}"
-    
+    link = f"{FRONTEND_URL_LOCAL}/verify-mail?t={token}"
     return link
 
 

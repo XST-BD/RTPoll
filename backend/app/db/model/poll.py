@@ -32,7 +32,7 @@ class PollModel(Base):
     )
 
     creator = relationship('UserModel', back_populates='polls')
-    creator_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
+    creator_id = Column(String(36), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
 
     is_indefinite: Mapped[bool] = mapped_column(default=False)
     is_public: Mapped[bool] = mapped_column(Boolean, nullable=False)

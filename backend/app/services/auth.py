@@ -44,6 +44,7 @@ def get_current_user(
     try:
         payload = decode_token(token)
         email = payload.get("sub")
+        db.expire_all()   # force fresh read from DB
         user = db.query(UserModel).filter(UserModel.email==email).first()
         if user is None:
             raise HTTPException(status_code=401, detail="Invalid refresh token")

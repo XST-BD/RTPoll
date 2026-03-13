@@ -8,6 +8,8 @@ from typing import Any
 from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import HTTPException
 
+from sqlalchemy.orm import selectinload
+
 from app.db.model.poll import PollModel
 from app.deps import SessionLocal
 from app.setup.cache import redis_client
@@ -38,18 +40,6 @@ def validate_user_input(email: str, password: str):
         return "Password must be at least 8 characters long"
 
     return None
-
-
-def validate_db_entry(err_msg: str):
-
-    if "username" in err_msg:
-            raise HTTPException(status_code=400, detail="Username already taken")
-    elif "email" in err_msg:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    elif "token" in err_msg:
-            raise HTTPException(status_code=400, detail="Token already in use")
-    else:
-        raise HTTPException(status_code=400, detail="Database error")
 
 
 def vote_percentages(
@@ -153,3 +143,11 @@ async def poll_timer(poll_id:int, expires_at: datetime):
         voter_payload={"type": "notice", "message": "This poll has ended"},
         creator_payload= creator_payload,
     )
+
+def fetch_poll(poll_id: int):
+    db = SessionLocal()
+    try:
+        poll = db.query(PollModel).options(selectinload(PollModel.options)).filter(PollModel.id == poll_id).first()
+        return poll
+    finally:
+        db.close()

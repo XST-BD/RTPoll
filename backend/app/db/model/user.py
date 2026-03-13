@@ -21,7 +21,8 @@ class UserModel(Base):
     email: Mapped[str] = mapped_column(nullable=False, unique=True)
     password: Mapped[str] = mapped_column(nullable=False)
     is_verified: Mapped[bool] = mapped_column(default=False)
-    creation_date = Column(Date, nullable=False, default=date.today())
+    is_active: Mapped[bool] = mapped_column(default=False)
+    creation_date = Column(Date, nullable=False, default=date.today)
 
     # relationship to PollModel (polls get deleted with user if user is deleted)
     polls = relationship('PollModel', back_populates="creator", cascade="all, delete-orphan")

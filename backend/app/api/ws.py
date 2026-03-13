@@ -1,8 +1,6 @@
-import asyncio
-
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 from fastapi.concurrency import run_in_threadpool
 
 from jose import JWTError
@@ -15,7 +13,7 @@ from app.deps import get_db, SessionLocal
 from app.services.auth import decode_token
 from app.setup.ws import wsmanager
 from app.setup.cache import redis_client 
-from app.utils import vote_percentages, create_payload
+from app.utils import vote_percentages, create_payload, fetch_poll
 
 router = APIRouter()
 
@@ -141,15 +139,9 @@ async def vote_ws(
 
             # Handle vote
             elif msg_type == "get_vote":
-                db = SessionLocal()
 
                 try: 
-                    poll_vote = await run_in_threadpool(
-                        lambda: db.query(PollModel)
-                        .options(selectinload(PollModel.options))
-                        .filter(PollModel.id == poll_id)
-                        .first()
-                    )
+                    poll_vote = await run_in_threadpool(lambda: fetch_poll(poll_id))
 
                     if poll_vote is None: 
                         await ws.send_json({"type": "error", "message": "Poll not found"})
@@ -163,6 +155,9 @@ async def vote_ws(
                     key = f'poll:{poll_id}:votes'
                     payload = await create_payload("vote_data", key, poll_vote)
                     await ws.send_json(payload)
+                except Exception as e:
+                    # Catch everything so the WS doesn’t disconnect
+                    await ws.send_json({"type": "error", "message": str(e)})
 
                 finally: 
                     db.close()
@@ -227,15 +222,8 @@ async def poll_ws(
         # ================= HANDLE FIRST REQUEST =================
         if msg_type == "poll_view":
 
-            db = SessionLocal()
-
             try: 
-                poll_vote = await run_in_threadpool(
-                    lambda: db.query(PollModel)
-                    .options(selectinload(PollModel.options))
-                    .filter(PollModel.id == poll_id)
-                    .first()
-                )
+                poll_vote = await run_in_threadpool(lambda: fetch_poll(poll_id))
 
                 if poll_vote is None: 
                     await ws.send_json({"type": "error", "message": "Poll not found"})
@@ -247,6 +235,10 @@ async def poll_ws(
 
                 await ws.send_json(payload)
 
+            except Exception as e:
+                    # Catch everything so the WS doesn’t disconnect
+                    await ws.send_json({"type": "error", "message": str(e)})
+
             finally:
                 db.close()
 
@@ -257,15 +249,8 @@ async def poll_ws(
 
             if msg_type == "poll_view":
 
-                db = SessionLocal()
-
                 try: 
-                    poll_vote = await run_in_threadpool(
-                        lambda: db.query(PollModel)
-                        .options(selectinload(PollModel.options))
-                        .filter(PollModel.id == poll_id)
-                        .first()
-                    )
+                    poll_vote = await run_in_threadpool(lambda: fetch_poll(poll_id))
 
                     if poll_vote is None: 
                         await ws.send_json({"type": "error", "message": "Poll not found"})
@@ -275,6 +260,9 @@ async def poll_ws(
                     key = f'poll:{poll_id}:votes'
                     payload = await create_payload("poll_view", key, poll_vote)
                     await ws.send_json(payload)
+                except Exception as e:
+                    # Catch everything so the WS doesn’t disconnect
+                    await ws.send_json({"type": "error", "message": str(e)})
 
                 finally: 
                     db.close()
