@@ -22,13 +22,6 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    
-  rabbitmq: 
-    container_name: rtpoll-rmq 
-    image: "rabbitmq:3-management"
-    ports:
-      - "5672:5672"
-      - "15672:15672"
 
 volumes:
   redis_data:
