@@ -10,23 +10,23 @@
 
 html {
     font-family: 'Nunito', sans-serif;
-    @apply text-green-900 break-words select-none box-border scroll-smooth;
+    @apply text-indigo-900 break-words select-none box-border scroll-smooth;
 }
 
 h1 {
-    @apply font-[Anton] text-3xl text-green-400 text-center;
+    @apply font-[Anton] text-3xl text-indigo-400 text-center;
 }
 
 h2 {
-    @apply font-[Anton] text-3xl text-green-400 text-center;
+    @apply font-[Anton] text-3xl text-indigo-400 text-center;
 }
 
 h3 {
-    @apply font-[Anton] text-2xl text-green-400 text-center;
+    @apply font-[Anton] text-2xl text-indigo-400 text-center;
 }
 
 h4 {
-    @apply text-lg text-green-400 text-center;
+    @apply text-lg text-indigo-400 text-center;
 }
 
 button,
@@ -35,7 +35,7 @@ a {
 }
 
 .btn {
-    @apply p-2 bg-green-400 text-white font-medium rounded-md transition-all duration-300 hover:bg-green-500 hover:ring-4 hover:ring-green-400 hover:ring-opacity-30 focus:outline-none focus:bg-green-500 active:scale-95 cursor-pointer;
+    @apply p-2 bg-indigo-400 text-white font-medium rounded-md transition-all duration-300 hover:bg-indigo-500 hover:ring-4 hover:ring-indigo-400 hover:ring-opacity-30 focus:outline-none focus:bg-indigo-500 active:scale-95 cursor-pointer;
 }
 
 .link {
@@ -45,7 +45,7 @@ a {
 .link-icon {
     all: unset;
 
-    @apply p-2 flex items-center gap-2 rounded-md text-sm text-green-400 transition-all duration-200 hover:bg-green-100 hover:text-green-500 active:scale-90 active:text-green-500 cursor-pointer;
+    @apply p-2 flex items-center gap-2 rounded-md text-sm text-indigo-400 transition-all duration-200 hover:bg-indigo-100 hover:text-indigo-500 active:scale-90 active:text-indigo-500 cursor-pointer;
 }
 
 label {
@@ -59,11 +59,11 @@ input {
 .ipt,
 textarea,
 select {
-    @apply p-2 border rounded-md border-green-300 transition duration-300 focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400 focus:ring-opacity-30;
+    @apply p-2 border rounded-md border-indigo-300 transition duration-300 focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-400 focus:ring-opacity-30;
 }
 
 .error-msg {
-    @apply text-red-500 text-sm;
+    @apply text-red-500 text-sm text-center capitalize;
 }
 
 .dashboard-body {
@@ -71,5 +71,10 @@ select {
 }
 
 .bg-grid {
-    background-image: url("data:image/svg+xml,<svg id='patternId' width='100%' height='100%' xmlns='http://www.w3.org/2000/svg'><defs><pattern id='a' patternUnits='userSpaceOnUse' width='20' height='20' patternTransform='scale(2) rotate(0)'><rect x='0' y='0' width='100%' height='100%' fill='%23ffffffff'/><path d='M 10,-2.55e-7 V 20 Z M -1.1677362e-8,10 H 20 Z'  stroke-width='0.5' stroke='%23bbf7d0b2' fill='none'/></pattern></defs><rect width='800%' height='800%' transform='translate(0,0)' fill='url(%23a)'/></svg>")
+    /* background-image: url("data:image/svg+xml,<svg id='patternId' width='100%' height='100%' xmlns='http://www.w3.org/2000/svg'><defs><pattern id='a' patternUnits='userSpaceOnUse' width='20' height='20' patternTransform='scale(2) rotate(0)'><rect x='0' y='0' width='100%' height='100%' fill='%23ffffffff'/><path d='M 10,-2.55e-7 V 20 Z M -1.1677362e-8,10 H 20 Z'  stroke-width='0.5' stroke='%23bbf7d0b2' fill='none'/></pattern></defs><rect width='800%' height='800%' transform='translate(0,0)' fill='url(%23a)'/></svg>") */
+    background-image: url("data:image/svg+xml,<svg id='patternId' width='100%' height='100%' xmlns='http://www.w3.org/2000/svg'><defs><pattern id='a' patternUnits='userSpaceOnUse' width='20' height='20' patternTransform='scale(2) rotate(0)'><rect x='0' y='0' width='100%' height='100%' fill='%23ffffffff'/><path d='M 10,-2.55e-7 V 20 Z M -1.1677362e-8,10 H 20 Z'  stroke-width='0.5' stroke='%23e0e8ffc5' fill='none'/></pattern></defs><rect width='800%' height='800%' transform='translate(-10,0)' fill='url(%23a)'/></svg>")
+}
+
+.notice {
+    @apply text-3xl capitalize font-['Anton'];
 }

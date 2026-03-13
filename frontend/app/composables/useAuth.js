@@ -55,8 +55,8 @@ export const useAuth = () => {
     async function login(email, password) {
         const data = await $fetch(`${apiBase}/user/login`, {
             method: 'POST',
-            body: { email, password },
             credentials: 'include',
+            body: { email, password }
         })
 
         accessToken.value = data.access_token
@@ -67,7 +67,7 @@ export const useAuth = () => {
         try {
             const data = await $fetch(`${apiBase}/auth/refresh`, {
                 method: 'POST',
-                credentials: 'include',
+                credentials: 'include'
             })
 
             accessToken.value = data.access_token
@@ -84,7 +84,7 @@ export const useAuth = () => {
     async function logout() {
         await $fetch(`${apiBase}/user/logout`, {
             method: 'POST',
-            credentials: 'include',
+            credentials: 'include'
         })
 
         clearAuth()

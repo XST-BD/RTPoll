@@ -64,7 +64,7 @@ async function createPoll() {
     try {
         loading.value = true
 
-        const res = await authFetch(`${apiBase}/dashboard/poll/create`, {
+        const res = await authFetch(`${apiBase}/poll`, {
             method: 'POST',
             body: {
                 question: question.value,
@@ -121,7 +121,7 @@ async function createPoll() {
                 <div class="flex flex-col gap-2">
                     <div class="flex items-center justify-between">
                         <label>Add Options</label>
-                        <button type="button" class="text-sm text-green-400 hover:text-green-500 font-semibold transition-all duration-300 ease-in-out" @click="addOption">
+                        <button type="button" class="text-sm text-indigo-400 hover:text-indigo-500 font-semibold transition-all duration-300 ease-in-out" @click="addOption">
                             + Add option
                         </button>
                     </div>

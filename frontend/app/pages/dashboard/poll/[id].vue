@@ -14,6 +14,7 @@ useHead({
     title: 'Poll Details',
 })
 
+const { public: { wsBase } } = useRuntimeConfig()
 const { accessToken, refresh } = useAuth()
 
 let socket = null
@@ -52,7 +53,7 @@ async function connectWS(pollId) {
         }
     }
 
-    socket = new WebSocket(`ws://127.0.0.1:8000/ws/poll/${pollId}`)
+    socket = new WebSocket(`${wsBase}/poll/${pollId}`)
 
     socket.onopen = () => {
         console.log('WS Connected')
@@ -141,7 +142,7 @@ const getBackground = (percentage) => {
     if (percentage < 0) return {}
 
     return {
-        background: `linear-gradient(to right, #DCFCE7 ${percentage}%, white ${percentage}%)`
+        background: `linear-gradient(to right, #E0E7FF ${percentage}%, white ${percentage}%)`
     }
 }
 </script>
@@ -155,22 +156,26 @@ const getBackground = (percentage) => {
         <p v-else-if="!poll" class="error-msg">Poll not found</p>
 
         <div v-else class="w-full flex flex-col items-center gap-4">
-            <div class="w-full flex justify-center overflow-hidden">
-                <input class="flex-1 px-3 py-1 flex font-mono border-2 border-r-0 border-green-400 rounded-l-full" :value="url" readonly @click="$event.target.select()">
+            <div class="w-full flex justify-center items-center gap-2">
+                <div class="w-full flex justify-center">
+                    <input class="flex-1 px-3 py-1 flex font-mono border-2 border-r-0 border-indigo-400 rounded-l-full" :value="url" readonly @click="$event.target.select()">
 
-                <button @click="sharePoll(id)" class="bg-green-400 rounded-r-full py-1 px-4 hover:bg-green-500 transition-all duration-300 ease-in-out">
-                    <Icon icon="fluent:share-16-regular" class="text-white text-2xl shrink-0" />
-                </button>
+                    <button @click="sharePoll(id)" class="bg-indigo-400 rounded-r-full py-1 px-4 hover:bg-indigo-500 transition-all duration-300 ease-in-out">
+                        <Icon icon="fluent:share-16-regular" class="text-white text-2xl shrink-0" />
+                    </button>
+                </div>
+
+                <PollSettings :pollId="Number(id)" class="cursor-pointer" />
             </div>
 
             <div class="w-full">
-                <div class="bg-green-400 p-4 rounded-t-xl flex justify-between gap-4">
+                <div class="bg-indigo-400 p-4 rounded-t-xl flex justify-between gap-4">
                     <h2 class="text-white">{{ poll.question }}</h2>
                 </div>
 
-                <ul class="border-2 border-green-400 rounded-b-xl overflow-hidden">
-                    <li v-for="(option, index) in poll.options" :key="index" class="flex justify-between gap-3 items-center border-t-2 border-green-400 p-4 text-xl" :style="getBackground(option.votes_perc)">
-                        <div class="text-green-400 flex items-start gap-3">
+                <ul class="border-2 border-indigo-400 rounded-b-xl overflow-hidden">
+                    <li v-for="(option, index) in poll.options" :key="index" class="flex justify-between gap-3 items-center border-t-2 border-indigo-400 p-4 text-xl" :style="getBackground(option.votes_perc)">
+                        <div class="text-indigo-400 flex items-start gap-3">
                             <span class="font-[Anton] text-md">{{ index + 1 }}.</span>
                             <span>{{ option.text }}</span>
                         </div>
@@ -181,7 +186,7 @@ const getBackground = (percentage) => {
             </div>
 
             <ClientOnly>
-                <vue3-flip-countdown v-if="poll.expiry !== 'Never' && new Date(poll.expiry) > new Date()" :deadlineISO="poll.expiry" mainColor="#ffffffff" secondFlipColor="#ffffffff" mainFlipBackgroundColor="#22C55E" secondFlipBackgroundColor="#4ADE80" labelColor="#4ADE80"
+                <vue3-flip-countdown v-if="poll.expiry !== 'Never' && new Date(poll.expiry) > new Date()" :deadlineISO="poll.expiry" mainColor="#ffffffff" secondFlipColor="#ffffffff" mainFlipBackgroundColor="#6366F1" secondFlipBackgroundColor="#818CF8" labelColor="#818CF8"
                     countdownSize="clamp(0px, 8vw, 3.5em)" labelSize="clamp(0px, 4vw, 1.5em)" />
             </ClientOnly>
 
@@ -190,22 +195,22 @@ const getBackground = (percentage) => {
             </div>
 
             <div class="w-full text-white text-center grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div class="flex flex-col justify-center items-center gap-1 bg-green-400 p-4 rounded-lg">
+                <div class="flex flex-col justify-center items-center gap-1 bg-indigo-400 p-4 rounded-lg">
                     <span class="font-[Anton] text-lg">Creation Time</span>
                     <span>{{ created_at }}</span>
                 </div>
 
-                <div class="flex flex-col justify-center items-center gap-1 bg-green-400 p-4 rounded-lg">
+                <div class="flex flex-col justify-center items-center gap-1 bg-indigo-400 p-4 rounded-lg">
                     <span class="font-[Anton] text-lg">Expiry Time</span>
                     <span>{{ expires_at }}</span>
                 </div>
 
-                <div class="flex flex-col justify-center items-center gap-1 bg-green-400 p-4 rounded-lg">
+                <div class="flex flex-col justify-center items-center gap-1 bg-indigo-400 p-4 rounded-lg">
                     <span class="font-[Anton] text-lg">Total Votes</span>
                     <span>{{ poll.total_votes }}</span>
                 </div>
 
-                <div class="flex flex-col justify-center items-center gap-1 bg-green-400 p-4 rounded-lg">
+                <div class="flex flex-col justify-center items-center gap-1 bg-indigo-400 p-4 rounded-lg">
                     <span class="font-[Anton] text-lg">Poll Results</span>
                     <span>{{ poll.result_public ? 'Public' : 'Private' }}</span>
                 </div>
@@ -215,18 +220,18 @@ const getBackground = (percentage) => {
                 <table class="w-full text-center overflow-x-auto">
                     <thead>
                         <tr>
-                            <th class="border-2 border-green-400 font-[Anton] text-lg text-green-400 font-normal">
+                            <th class="border-2 border-indigo-400 font-[Anton] text-lg text-indigo-400 font-normal">
                                 Option No.
                             </th>
-                            <th class="border-2 border-green-400 font-[Anton] text-lg text-green-400 font-normal">
+                            <th class="border-2 border-indigo-400 font-[Anton] text-lg text-indigo-400 font-normal">
                                 Votes Received
                             </th>
                         </tr>
                     </thead>
 
                     <tr v-for="(option, index) in poll.options" :key="index">
-                        <td class="shrink-0 border-2 border-green-400">{{ index + 1 }}</td>
-                        <td class="border-2 border-green-400">{{ option.votes.toLocaleString() }}</td>
+                        <td class="shrink-0 border-2 border-indigo-400">{{ index + 1 }}</td>
+                        <td class="border-2 border-indigo-400">{{ option.votes.toLocaleString() }}</td>
                     </tr>
                 </table>
             </div>

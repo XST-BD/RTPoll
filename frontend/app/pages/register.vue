@@ -12,8 +12,8 @@ const { public: { apiBase } } = useRuntimeConfig()
 const email = ref('')
 const password = ref('')
 const confirm_password = ref('')
-const error = ref(null)
 const loading = ref(false)
+const error = ref(null)
 
 async function handleRegister() {
     error.value = null
@@ -28,7 +28,6 @@ async function handleRegister() {
     try {
         const res = await $fetch(`${apiBase}/user/register`, {
             method: 'POST',
-            headers: { "Content-Type": "application/json" },
             credentials: 'include',
             body: {
                 email: email.value,
@@ -58,8 +57,8 @@ async function handleRegister() {
 </script>
 
 <template>
-    <section class="w-full min-h-screen p-5 bg-grid flex flex-col justify-center items-center gap-12">
-        <div class="w-full max-w-xl flex flex-col justify-center items-center gap-12 bg-white backdrop-blur-[100px] rounded-xl sm:p-10 p-5 shadow-md border border-green-300">
+    <section class="w-full min-h-screen px-5 py-10 bg-grid flex flex-col justify-center items-center gap-12">
+        <div class="w-full max-w-xl flex flex-col justify-center items-center gap-12 bg-white backdrop-blur-[100px] rounded-xl sm:px-10 px-5 py-10 shadow-md border border-indigo-300">
             <h2 class="">Register an Account</h2>
 
             <p v-if="error" class="error-msg">{{ error }}</p>
@@ -87,11 +86,11 @@ async function handleRegister() {
                 </button>
             </form>
 
-            <hr class="w-[85%] border-t border-green-300">
+            <hr class="w-[85%] border-t border-indigo-300">
 
             <p class="text-md">
                 Already have an account?
-                <NuxtLink to="/login" class="link text-green-400 font-medium hover:text-green-500">Login here</NuxtLink>
+                <NuxtLink to="/login" class="link text-indigo-400 font-medium hover:text-indigo-500">Login here</NuxtLink>
             </p>
         </div>
     </section>

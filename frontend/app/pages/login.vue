@@ -12,9 +12,9 @@ const { public: { apiBase } } = useRuntimeConfig()
 
 const email = ref('')
 const password = ref('')
-const error = ref(null)
-const loading = ref(false)
 const resend_mail = ref(false)
+const loading = ref(false)
+const error = ref(null)
 
 async function handleLogin() {
     error.value = null
@@ -50,9 +50,8 @@ async function resendVerificationEmail() {
     loading.value = true
 
     try {
-        const res = await $fetch(`${apiBase}/auth/resend_mail`, {
+        const res = await $fetch(`${apiBase}/auth/resend`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: { email: email.value }
         })
 
@@ -77,8 +76,8 @@ async function resendVerificationEmail() {
 </script>
 
 <template>
-    <section class="w-full min-h-screen p-5 bg-grid flex flex-col justify-center items-center gap-12">
-        <div class="w-full max-w-xl flex flex-col justify-center items-center gap-12 bg-white backdrop-blur-[100px] rounded-xl sm:p-10 p-5 shadow-md border border-green-300">
+    <section class="w-full min-h-screen px-5 py-10 bg-grid flex flex-col justify-center items-center gap-12">
+        <div class="w-full max-w-xl flex flex-col justify-center items-center gap-12 bg-white backdrop-blur-[100px] rounded-xl sm:px-10 px-5 py-10 shadow-md border border-indigo-300">
             <h2 class="text-3xl">Login to Your Account</h2>
 
             <p v-if="error" class="error-msg">{{ error }}</p>
@@ -102,17 +101,17 @@ async function resendVerificationEmail() {
 
                 <p v-if="resend_mail" class="text-md text-center">
                     Verification email not received?
-                    <a @click="resendVerificationEmail" :disabled="loading" class="link text-green-400 font-medium hover:text-green-500">
+                    <a @click="resendVerificationEmail" :disabled="loading" class="link text-indigo-400 font-medium hover:text-indigo-500">
                         Resend verification email
                     </a>
                 </p>
             </form>
 
-            <hr class="w-[85%] border-t border-green-300">
+            <hr class="w-[85%] border-t border-indigo-300">
 
             <p class="text-md">
                 Don't have an account?
-                <NuxtLink to="/register" class="link text-green-400 font-medium hover:text-green-500">Register here</NuxtLink>
+                <NuxtLink to="/register" class="link text-indigo-400 font-medium hover:text-indigo-500">Register here</NuxtLink>
             </p>
         </div>
     </section>

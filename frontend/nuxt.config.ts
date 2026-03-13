@@ -8,7 +8,11 @@ export default defineNuxtConfig({
 	},
 	runtimeConfig: {
 		public: {
-			apiBase: import.meta.env.BACKEND_LOCAL_URL
+			apiBase: import.meta.env.BACKEND_URL,
+			wsBase: import.meta.env.WS_URL
 		}
+	},
+	routeRules: {
+		'/verify-mail': { ssr: false }
 	}
 })

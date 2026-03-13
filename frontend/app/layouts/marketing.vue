@@ -4,7 +4,7 @@
 
         <slot />
 
-        <footer class="w-full sm:min-h-70 sm:py-8 pt-16 pb-6 bg-green-400 flex flex-col-reverse sm:flex-row justify-evenly items-center gap-10 text-white">
+        <footer class="w-full sm:min-h-70 sm:py-8 pt-16 pb-6 bg-indigo-400 flex flex-col-reverse sm:flex-row justify-evenly items-center gap-10 text-white">
             <NuxtLink to="/" class="text-8xl font-[Anton]">RTPoll</NuxtLink>
 
             <nav class="flex flex-col justify-center items-center gap-3">

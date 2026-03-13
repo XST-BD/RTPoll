@@ -32,7 +32,7 @@ const series = ref([
 
 const options = ref({
     chart: { type: "area", toolbar: { show: false } },
-    colors: ['#4ade80'],
+    colors: ['#818CF8'],
     stroke: { curve: "smooth" },
     xaxis: {
         type: "datetime",
