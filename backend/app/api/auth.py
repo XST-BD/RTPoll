@@ -17,6 +17,7 @@ from app.services.auth import create_access_token, decode_token, get_current_use
 from app.services.email import send_mail_verification, prepare_verification_link
 from app.setup.vars import router
 from app.setup.limiter import limiter
+from app.deps import hash_password
 
 router = APIRouter()
 
@@ -87,16 +88,11 @@ def change_email(
 
     if not verify_password(password, user.password): 
         raise HTTPException(400, "Wrong password")
-    
-    user.email = new_email
-    db.commit()
-    db.refresh(user)
 
-    response = {
-        "message": "Email changed successfully",
-        "new_email": user.email,
-    }
-    return response
+    link = prepare_verification_link(db=db, email=new_email)
+    send_mail_verification(new_email, link)
+    return {"message": "Check your mail box to verify email"}
+
 
 @router.patch("/manage", description="Password recovery endpoint")
 def recover_password(
@@ -116,7 +112,6 @@ def recover_password(
     return {"message": "Mail verification sent"}
     
 class ChangePasswordRequest(BaseModel):
-    recovery: bool
     old_password: Optional[str]
     new_password: str
 
@@ -129,8 +124,8 @@ def change_password(
     if not user.is_verified:
         raise HTTPException(400, "Unverified user")
     
-    if not payload.recovery and payload.old_password:
-        if not verify_password(payload.old_password, user.password): 
+    if payload.old_password:
+        if not verify_password(payload.old_password, user.password):
             raise HTTPException(400, "Wrong old password")
 
     hashed_password = hash_password(payload.new_password)
@@ -173,6 +168,8 @@ def delete_account(
 class MailVerifyRequest(BaseModel):
     type: str
     token: str
+    new_password: Optional[str]
+    new_email: Optional[str]
 
 @router.post("/verify", description="Mail verification endpoint")
 def verify_mail(
@@ -182,28 +179,36 @@ def verify_mail(
 ):
     # token setup
     record = None
-    if payload.type == "registration":
-        token_hash = hashlib.sha256(payload.token.encode()).hexdigest()
-        record = db.query(EmailVerification).filter(EmailVerification.token_hash==token_hash).first()
-    else:
-        return {"error": "Unknown type"}
+    token_hash = hashlib.sha256(payload.token.encode()).hexdigest()
+    record = db.query(EmailVerification).filter(EmailVerification.token_hash==token_hash).first()
 
     if not record:
         return {"error": "Invalid link"}
-    
     if record.used: 
         return {"message": "Link is already used and expired"}
     
     user = (db.query(UserModel).filter(UserModel.email==record.email).first())
-    if user is None:
+    if user is None or not user.is_active:
         return {"error": "User not found"}
 
-    user.is_verified = True
-    record.used = True
+    response = None
 
+    if payload.type == "registration":
+        user.is_verified = True
+        record.used = True
+        response = "User is verified"
+    elif payload.type == "forgot_pass" and payload.new_password: 
+        user.password = hash_password(payload.new_password)
+        response = "New password"
+    elif payload.type == "email_change" and payload.new_email:
+        user.email = payload.new_email
+        response = "New email"
+    else:
+        return {"error": "Unknown type"}
+    
     db.commit()
 
-    return {"message": "User is verified"}
+    return {"message": response}
 
 
 class ResendMailRequest(BaseModel):
@@ -218,7 +223,7 @@ def resend_mail(
 ):
     user = db.query(UserModel).filter(UserModel.email==payload.email).first()
 
-    if not user: 
+    if not user or not user.is_active: 
         return {"error": "User not found during mail validation"}
     
     if user.is_verified: 

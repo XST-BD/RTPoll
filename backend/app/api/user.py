@@ -38,6 +38,7 @@ def register_user(
         
         # Resurrection
         user.is_active = True
+        user.password = hash_password(password)
         db.commit()
         link = prepare_verification_link(db=db, email=email)
         send_mail_verification(email, link)
