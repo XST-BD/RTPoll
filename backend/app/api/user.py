@@ -87,23 +87,23 @@ def login_user(
 
     response = JSONResponse(content={"access_token": access_token, "token_type": "bearer"})
     # Set refresh token in HttpOnly cookie
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        secure=False,
-        samesite="lax",
-        max_age=7*24*60*60  # 7 days
-    )
-
     # response.set_cookie(
     #     key="refresh_token",
     #     value=refresh_token,
     #     httponly=True,
-    #     secure=True,       # must be True for HTTPS cross-origin
-    #     samesite="none",   # allow cross-origin
-    #     max_age=7*24*60*60
+    #     secure=False,
+    #     samesite="lax",
+    #     max_age=7*24*60*60  # 7 days
     # )
+
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,       # must be True for HTTPS cross-origin
+        samesite="none",   # allow cross-origin
+        max_age=7*24*60*60
+    )
 
     return response
 
@@ -112,19 +112,19 @@ def login_user(
 def logout_user(
     response: Response,
 ):
-    response.delete_cookie(
-        key="refresh_token",
-        httponly=True,
-        secure=False,
-        samesite="lax",
-        path='/',
-    )
     # response.delete_cookie(
     #     key="refresh_token",
     #     httponly=True,
-    #     secure=True,
-    #     samesite="none",
+    #     secure=False,
+    #     samesite="lax",
     #     path='/',
     # )
+    response.delete_cookie(
+        key="refresh_token",
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path='/',
+    )
     return {"message": "Logged out successfully"}
 

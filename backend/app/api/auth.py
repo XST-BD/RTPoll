@@ -168,28 +168,33 @@ def delete_account(
 class MailVerifyRequest(BaseModel):
     type: str
     token: str
-    new_password: Optional[str]
-    new_email: Optional[str]
+    new_password: Optional[str] = None
+    new_email: Optional[str] = None
 
 @router.post("/verify", description="Mail verification endpoint")
-def verify_mail(
+async def verify_mail(
     request: Request,
     payload: MailVerifyRequest, 
     db: Session = Depends(get_db),
 ):
+    
+    raw = await request.body()
+    print("Content-Type:", request.headers.get("content-type"))
+    print("Raw body:", raw)
+
     # token setup
     record = None
     token_hash = hashlib.sha256(payload.token.encode()).hexdigest()
     record = db.query(EmailVerification).filter(EmailVerification.token_hash==token_hash).first()
 
     if not record:
-        return {"error": "Invalid link"}
+        return JSONResponse(status_code=400, content={"detail": "Invalid link"})
     if record.used: 
-        return {"message": "Link is already used and expired"}
+        return JSONResponse(status_code=400, content= {"detail": "Link is already used and expired"})
     
     user = (db.query(UserModel).filter(UserModel.email==record.email).first())
     if user is None or not user.is_active:
-        return {"error": "User not found"}
+        return JSONResponse(status_code=400, content= {"detail": "User not found"})
 
     response = None
 
@@ -197,18 +202,29 @@ def verify_mail(
         user.is_verified = True
         record.used = True
         response = "User is verified"
-    elif payload.type == "forgot_pass" and payload.new_password: 
+
+    elif payload.type == "forgot_pass": 
+        if not payload.new_password: 
+            return JSONResponse(status_code=400, content= {"detail": "New password required"})
+
         user.password = hash_password(payload.new_password)
+        record.used = True
         response = "New password"
-    elif payload.type == "email_change" and payload.new_email:
+
+    elif payload.type == "email_change": 
+        if not payload.new_email:
+            return JSONResponse(status_code=400, content= {"detail": "New email required"})
+
         user.email = payload.new_email
+        record.used = True
         response = "New email"
+        
     else:
-        return {"error": "Unknown type"}
+        return JSONResponse(status_code=400, content= {"detail": "Unknown type"})
     
     db.commit()
 
-    return {"message": response}
+    return JSONResponse(status_code=200, content= {"detail": response})
 
 
 class ResendMailRequest(BaseModel):
