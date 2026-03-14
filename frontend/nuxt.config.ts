@@ -8,7 +8,7 @@ export default defineNuxtConfig({
 	},
 	runtimeConfig: {
 		public: {
-			apiBase: import.meta.env.BACKEND_URL,
+			apiBase: import.meta.env.API_URL,
 			wsBase: import.meta.env.WS_URL
 		}
 	},

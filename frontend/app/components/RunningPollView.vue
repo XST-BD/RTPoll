@@ -21,8 +21,6 @@ async function fetchRunningPolls() {
             }
         })
 
-        console.log(res)
-
         running_polls.value = res.items
         running_pages.value = res.pages
         running_page.value = res.page

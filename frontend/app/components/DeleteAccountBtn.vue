@@ -20,7 +20,8 @@ async function deleteAccount() {
         await logout()
         await navigateTo('/login')
     } catch (err) {
-        error.value = 'Failed to delete account'
+        alert('Failed to delete account')
+        console.error(err)
     } finally {
         password.value = ''
         showConfirm.value = false

@@ -52,23 +52,20 @@ async function resendVerificationEmail() {
     try {
         const res = await $fetch(`${apiBase}/auth/resend`, {
             method: 'POST',
-            body: { email: email.value }
+            body: {
+                type: 'registration',
+                email: email.value
+            }
         })
 
         alert(res.message)
         email.value = ''
     } catch (err) {
-        const data = err?.data
+        const detail = err?.data?.detail
 
-        if (Array.isArray(data?.detail)) {
-            error.value = data.detail[0]?.msg ?? 'Validation error'
-        }
-        else if (typeof data?.detail === 'string') {
-            error.value = data.detail
-        }
-        else {
-            error.value = 'Something went wrong'
-        }
+        error.value = Array.isArray(detail)
+            ? (detail[0]?.msg || 'Validation error')
+            : (detail || err?.message || 'Something went wrong')
     } finally {
         loading.value = false
     }

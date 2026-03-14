@@ -13,17 +13,11 @@ async function handleLogout() {
 
         await navigateTo('/login')
     } catch (err) {
-        const data = err?.data
+        const detail = err?.data?.detail
 
-        if (Array.isArray(data?.detail)) {
-            console.log(data.detail[0]?.msg)
-        }
-        else if (typeof data?.detail === 'string') {
-            console.log(data.detail)
-        }
-        else {
-            console.log('Something went wrong')
-        }
+        error.value = Array.isArray(detail)
+            ? (detail[0]?.msg || 'Validation error')
+            : (detail || err?.message || 'Something went wrong')
     } finally {
         loading.value = false
     }

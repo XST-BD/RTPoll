@@ -1,6 +1,4 @@
 <script setup>
-import { m } from 'vue-router/dist/router-CWoNjPRp.mjs'
-
 definePageMeta({
     ssr: false
 })
@@ -31,15 +29,18 @@ onMounted(async () => {
         })
 
         error.value = null
-        massage.value = data.message
+        massage.value = data.detail || "Verification successful"
         loading.value = false
 
-        setTimeout(() => {
-            navigateTo("/login")
-        }, 1500)
+        console.log(data)
+
+        // setTimeout(() => {
+        //     navigateTo("/login")
+        // }, 1500)
     } catch (err) {
-        error.value = err
+        error.value = err?.data?.detail || err?.message || "Verification failed. Please try again."
         loading.value = false
+        console.error(err)
     }
 })
 </script>
@@ -70,7 +71,6 @@ onMounted(async () => {
 
                 <p class="text-gray-500 mt-4">Redirecting to login...</p>
             </div>
-
         </div>
     </div>
 </template>

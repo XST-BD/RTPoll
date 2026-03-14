@@ -75,7 +75,6 @@ async function createPoll() {
         })
 
         navigateTo(`/dashboard/poll/${res.id}`)
-
     } catch (err) {
         error.value = 'Failed to create poll'
     } finally {

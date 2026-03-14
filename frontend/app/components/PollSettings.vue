@@ -31,9 +31,12 @@ async function deletePoll() {
             method: 'DELETE'
         })
 
+        alert('Poll deleted successfully')
+
         navigateTo('/dashboard')
     } catch (err) {
-        console.log(err)
+        alert('Failed to delete poll')
+        console.error(err)
     }
 }
 
