@@ -16,7 +16,8 @@ async function deleteClosedPolls() {
             }
         })
     } catch (err) {
-        error.value = 'Failed to delete all polls'
+        alert('Failed to delete all polls')
+        console.error(err)
     } finally {
         showConfirm.value = false
     }

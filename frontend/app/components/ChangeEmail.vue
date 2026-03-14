@@ -23,7 +23,8 @@ async function handleChangeEmail() {
 
         alert('Email changed successfully')
     } catch (err) {
-        console.log(err)
+        alert('Failed to change email')
+        console.error(err)
     } finally {
         loading.value = false
     }

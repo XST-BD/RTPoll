@@ -28,7 +28,8 @@ async function handleChangePassword() {
 
         alert('Password changed successfully')
     } catch (err) {
-        console.log(err)
+        alert('Failed to change password')
+        console.error(err)
     } finally {
         loading.value = false
     }
