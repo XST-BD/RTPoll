@@ -63,7 +63,7 @@ select {
 }
 
 .error-msg {
-    @apply text-red-500 text-sm text-center capitalize;
+    @apply text-red-500 text-sm text-center;
 }
 
 .dashboard-body {

@@ -30,6 +30,8 @@ onMounted(async () => {
         </header>
 
         <main class="flex-1 flex flex-row pb-20">
+            <PopupMessage />
+            
             <FloatingNavPanel />
 
             <section class="w-full flex flex-col items-center">

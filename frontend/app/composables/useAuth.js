@@ -53,7 +53,7 @@ export const useAuth = () => {
     }
 
     async function login(email, password) {
-        const data = await $fetch(`${apiBase}/user/login`, {
+        const data = await $fetch(`${apiBase}/auth/login`, {
             method: 'POST',
             credentials: 'include',
             body: { email, password }
@@ -82,7 +82,7 @@ export const useAuth = () => {
     }
 
     async function logout() {
-        await $fetch(`${apiBase}/user/logout`, {
+        await $fetch(`${apiBase}/auth/logout`, {
             method: 'POST',
             credentials: 'include'
         })

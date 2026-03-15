@@ -8,42 +8,32 @@ definePageMeta({
 })
 
 const { public: { apiBase } } = useRuntimeConfig()
+const { showPopup } = usePopup()
 
 const email = ref('')
 const password = ref('')
 const confirm_password = ref('')
 const loading = ref(false)
-const error = ref(null)
 
 async function handleRegister() {
-    error.value = null
     loading.value = true
 
-    if (password.value !== confirm_password.value) {
-        error.value = 'Passwords do not match'
-        loading.value = false
-        return
-    }
-
     try {
-        const res = await $fetch(`${apiBase}/user/register`, {
+        const data = await $fetch(`${apiBase}/auth/register`, {
             method: 'POST',
             credentials: 'include',
             body: {
                 email: email.value,
                 password: password.value,
+                confirm_password: confirm_password.value
             }
         })
 
-        alert(res.message)
+        showPopup(data.detail)
 
         navigateTo('/login')
     } catch (err) {
-        const detail = err?.data?.detail
-
-        error.value = Array.isArray(detail)
-            ? (detail[0]?.msg || 'Validation error')
-            : (detail || err?.message || 'Something went wrong')
+        showPopup(err?.data?.detail || "Something went wrong", "error")
     } finally {
         loading.value = false
     }
@@ -52,10 +42,10 @@ async function handleRegister() {
 
 <template>
     <section class="w-full min-h-screen px-5 py-10 bg-grid flex flex-col justify-center items-center gap-12">
+        <PopupMessage />
+
         <div class="w-full max-w-xl flex flex-col justify-center items-center gap-12 bg-white backdrop-blur-[100px] rounded-xl sm:px-10 px-5 py-10 shadow-md border border-indigo-300">
             <h2 class="">Register an Account</h2>
-
-            <p v-if="error" class="error-msg">{{ error }}</p>
 
             <form class="w-full flex flex-col gap-10" @submit.prevent="handleRegister">
                 <div class="flex flex-col gap-4">

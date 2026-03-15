@@ -1,6 +1,7 @@
 <script setup>
-const { authFetch, logout } = useAuth()
 const { public: { apiBase } } = useRuntimeConfig()
+const { authFetch, logout } = useAuth()
+const { showPopup } = usePopup()
 
 const password = ref('')
 const error = ref(null)
@@ -10,18 +11,19 @@ async function deleteAccount() {
     error.value = null
 
     try {
-        await authFetch(`${apiBase}/auth/manage`, {
+        await authFetch(`${apiBase}/user`, {
             method: 'DELETE',
             body: {
                 password: password.value
             }
         })
+
+        showPopup('Account deleted successfully', 'success')
         
         await logout()
         await navigateTo('/login')
     } catch (err) {
-        alert('Failed to delete account')
-        console.error(err)
+        showPopup(err?.data?.detail || 'Failed to delete account', 'error')
     } finally {
         password.value = ''
         showConfirm.value = false

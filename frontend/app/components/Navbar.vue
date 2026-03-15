@@ -9,11 +9,15 @@ function toggleMenu() {
 <template>
     <header class="self-center w-full py-2 px-5 flex sm:flex-row justify-between flex-col gap-4">
         <section class="flex justify-between items-center">
-            <NuxtLink to="/">
-                <svg width="105" height="50">
-                    <text x="50%" y="45" text-anchor="middle" font-size="45" font-family="Anton" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400">RTPoll</text>
-                </svg>
-            </NuxtLink>
+            <div class="flex justify-center items-center gap-2">
+                <img src="/rtpoll-icon.svg" alt="RTPoll Logo" class="w-12 h-12" />
+
+                <NuxtLink to="/">
+                    <svg width="105" height="50">
+                        <text x="50%" y="45" text-anchor="middle" font-size="45" font-family="Anton" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400">RTPoll</text>
+                    </svg>
+                </NuxtLink>
+            </div>
 
             <div class="cursor-pointer flex flex-col gap-[5px] sm:hidden" @click="toggleMenu">
                 <span class="block bg-indigo-400 w-6 h-[2px] rounded"></span>

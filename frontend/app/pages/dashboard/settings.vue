@@ -19,7 +19,7 @@ useHead({
             <ChangePassword />
         </div>
 
-        <h2 class="w-full text-center text-red-500 border-t border-b border-red-500 pt-5 pb-5">Danger Zone</h2>
+        <h2 class="w-full text-center text-red-500 border-t border-b border-red-500 pt-3 pb-3">Danger Zone</h2>
 
         <div class="w-full max-w-xl flex flex-col gap-5">
             <div class="flex justify-center items-center gap-3 flex-wrap">

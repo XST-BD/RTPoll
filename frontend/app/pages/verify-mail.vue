@@ -3,8 +3,8 @@ definePageMeta({
     ssr: false
 })
 
-const route = useRoute()
 const { public: { apiBase } } = useRuntimeConfig()
+const route = useRoute()
 
 const loading = ref(true)
 const error = ref(null)
@@ -20,7 +20,7 @@ onMounted(async () => {
     }
 
     try {
-        const data = await $fetch(`${apiBase}/auth/verify`, {
+        const data = await $fetch(`${apiBase}/auth/email/verify`, {
             method: "POST",
             body: {
                 type: "registration",
@@ -28,19 +28,16 @@ onMounted(async () => {
             }
         })
 
+        loading.value = false
         error.value = null
         massage.value = data.detail || "Verification successful"
-        loading.value = false
 
-        console.log(data)
-
-        // setTimeout(() => {
-        //     navigateTo("/login")
-        // }, 1500)
+        setTimeout(() => {
+            navigateTo("/login")
+        }, 2000)
     } catch (err) {
-        error.value = err?.data?.detail || err?.message || "Verification failed. Please try again."
         loading.value = false
-        console.error(err)
+        error.value = err?.data?.detail || "Verification failed. Please try again."
     }
 })
 </script>

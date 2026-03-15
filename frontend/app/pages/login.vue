@@ -7,38 +7,30 @@ useHead({
     title: 'Login'
 })
 
-const { login } = useAuth()
 const { public: { apiBase } } = useRuntimeConfig()
+const { login } = useAuth()
+const { showPopup } = usePopup()
 
 const email = ref('')
 const password = ref('')
 const resend_mail = ref(false)
 const loading = ref(false)
-const error = ref(null)
 
 async function handleLogin() {
-    error.value = null
     loading.value = true
     resend_mail.value = false
 
     try {
         await login(email.value, password.value)
+
+        showPopup("Login successful", "success")
+
         await navigateTo('/dashboard')
     } catch (err) {
-        const data = err?.data
+        showPopup(err?.data?.detail || "Something went wrong", "error")
 
-        if (Array.isArray(data?.detail)) {
-            error.value = data.detail[0]?.msg ?? 'Validation error'
-        }
-        else if (typeof data?.detail === 'string') {
-            error.value = data.detail
-
-            if (data.detail.includes('User is not verified')) {
-                resend_mail.value = true
-            }
-        }
-        else {
-            error.value = 'Something went wrong'
+        if (err.data.detail === 'User is not verified') {
+            resend_mail.value = true
         }
     } finally {
         loading.value = false
@@ -46,11 +38,10 @@ async function handleLogin() {
 }
 
 async function resendVerificationEmail() {
-    error.value = null
     loading.value = true
 
     try {
-        const res = await $fetch(`${apiBase}/auth/resend`, {
+        const data = await $fetch(`${apiBase}/auth/email/resend`, {
             method: 'POST',
             body: {
                 type: 'registration',
@@ -58,14 +49,9 @@ async function resendVerificationEmail() {
             }
         })
 
-        alert(res.message)
-        email.value = ''
+        showPopup(data.detail, "success")
     } catch (err) {
-        const detail = err?.data?.detail
-
-        error.value = Array.isArray(detail)
-            ? (detail[0]?.msg || 'Validation error')
-            : (detail || err?.message || 'Something went wrong')
+        showPopup(err?.data?.detail || "Something went wrong", "error")
     } finally {
         loading.value = false
     }
@@ -74,10 +60,10 @@ async function resendVerificationEmail() {
 
 <template>
     <section class="w-full min-h-screen px-5 py-10 bg-grid flex flex-col justify-center items-center gap-12">
+        <PopupMessage />
+
         <div class="w-full max-w-xl flex flex-col justify-center items-center gap-12 bg-white backdrop-blur-[100px] rounded-xl sm:px-10 px-5 py-10 shadow-md border border-indigo-300">
             <h2 class="text-3xl">Login to Your Account</h2>
-
-            <p v-if="error" class="error-msg">{{ error }}</p>
 
             <form class="w-full flex flex-col gap-10" @submit.prevent="handleLogin">
                 <div class="flex flex-col gap-4">

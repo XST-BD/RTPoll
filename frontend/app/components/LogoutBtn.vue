@@ -2,6 +2,7 @@
 import { Icon } from "@iconify/vue";
 
 const { logout } = useAuth()
+const { showPopup } = usePopup()
 
 const loading = ref(false)
 
@@ -11,13 +12,11 @@ async function handleLogout() {
     try {
         await logout()
 
+        showPopup("Logged out successfully", "success")
+
         await navigateTo('/login')
     } catch (err) {
-        const detail = err?.data?.detail
-
-        error.value = Array.isArray(detail)
-            ? (detail[0]?.msg || 'Validation error')
-            : (detail || err?.message || 'Something went wrong')
+        showPopup(err?.data?.detail || "Something went wrong", "error")
     } finally {
         loading.value = false
     }

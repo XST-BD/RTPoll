@@ -1,6 +1,7 @@
 <script setup>
-const { authFetch } = useAuth()
 const { public: { apiBase } } = useRuntimeConfig()
+const { authFetch } = useAuth()
+const { showPopup } = usePopup()
 
 const old_password = ref('')
 const new_password = ref('')
@@ -17,7 +18,7 @@ async function handleChangePassword() {
     }
 
     try {
-        await authFetch(`${apiBase}/auth/manage`, {
+        await authFetch(`${apiBase}/user`, {
             method: 'PUT',
             body: {
                 recovery: true,
@@ -26,10 +27,9 @@ async function handleChangePassword() {
             }
         })
 
-        alert('Password changed successfully')
+        showPopup('Password changed successfully', 'success')
     } catch (err) {
-        alert('Failed to change password')
-        console.error(err)
+        showPopup(err?.data?.detail || 'Failed to change password', 'error')
     } finally {
         loading.value = false
     }
