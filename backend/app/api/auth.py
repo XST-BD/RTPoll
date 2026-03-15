@@ -1,23 +1,19 @@
-import hashlib
-
-from fastapi import APIRouter, Request, Depends, Body, Cookie
+from fastapi import APIRouter, Depends, Body, Cookie, Response
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse
 
-from pydantic import BaseModel
 from typing import Optional
 
-from sqlalchemy import select,func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.db.model.user import UserModel, EmailVerification
-from app.db.model.poll import PollModel
-from app.deps import get_db, verify_password, hash_password, SessionLocal
-from app.services.auth import create_access_token, decode_token, get_current_user
+from app.db.model.user import UserModel
+from app.deps import get_db, verify_password, hash_password
+from app.services.auth import create_access_token, decode_token, create_refresh_token
 from app.services.email import send_mail_verification, prepare_verification_link
-from app.setup.vars import router
-from app.setup.limiter import limiter
-from app.deps import hash_password
+from app.setup.vars import ENV
+from app.utils import validate_email
+
 
 router = APIRouter()
 
@@ -41,212 +37,112 @@ async def refresh_token(
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
     new_access_token = create_access_token({"sub": email})
-    return {"access_token": new_access_token, "token_type": "bearer"}
+    return JSONResponse(status_code=200, content={"access_token": new_access_token, "token_type": "bearer"})
 
 
-@router.get("/manage", description="Account details endpoint")
-def view_account(
-    db: Session = Depends(get_db),
-    user: UserModel = Depends(get_current_user),
-):
-    if not user.is_verified:
-       raise HTTPException(400, "Unverified user")
-    
-    polls_created = db.query(PollModel).filter(PollModel.creator_id==user.user_id).count()
-
-    with SessionLocal() as session:
-        polls_expired =  session.scalar(
-            select(func.count(PollModel.id))
-                .where(
-                    PollModel.creator_id == user.user_id,
-                    PollModel.expires_at.is_not(None),
-                    PollModel.expires_at < func.now()
-                )
-            )
-    
-    response = {
-        "email": user.email, 
-        "created_at": user.creation_date,
-        "polls_created": polls_created,
-        "polls_expired": polls_expired,
-    }
-    return response
-
-@router.post("/manage", description="Email change endpoint")
-def change_email(
-    new_email: str = Body(...),
-    old_email: str = Body(...),
-    password: str = Body(...),
-    db: Session = Depends(get_db),
-    user: UserModel = Depends(get_current_user),
-):
-    if not user.is_verified:
-       raise HTTPException(400, "Unverified user")
-     
-    if user.email != old_email: 
-        raise HTTPException(400, "Wrong email")
-
-    if not verify_password(password, user.password): 
-        raise HTTPException(400, "Wrong password")
-
-    link = prepare_verification_link(db=db, email=new_email)
-    send_mail_verification(new_email, link)
-    return {"message": "Check your mail box to verify email"}
-
-
-@router.patch("/manage", description="Password recovery endpoint")
-def recover_password(
+@router.post('/register')
+def register_user(
     email: str = Body(...),
+    password: str = Body(...),
+    confirm_password: str = Body(...),
     db: Session = Depends(get_db),
 ):
+    # Step 1: validate input
+    if not validate_email(email):
+        raise HTTPException(status_code=400, detail="Wrong mail format")
+
+    # Step 2: check if email exists
+    user = db.query(UserModel).filter(UserModel.email == email).first()
+
+    if user:
+        print(f"Active: ", user.is_active)
+        if user.is_active:
+            raise HTTPException(409, detail="Email already registered")
+        
+        # Password validation
+        if len(password) < 8 or len(confirm_password) < 8:
+            raise HTTPException(400, detail="Password must be 8 characters long")
+        if password != confirm_password:
+            raise HTTPException(status_code=400, detail="Passwords don't match")
+
+        # Resurrection
+        user.password = hash_password(password)
+        user.is_active = True
+        db.commit()
+
+        link = prepare_verification_link(db=db, email=email, token_type="registration")
+        send_mail_verification(email, link)
+        
+        return JSONResponse(status_code=200, content={"detail": "Check your mail box to verify your account"})
+    
+    
+    # Password validation
+    if len(password) < 8 or len(confirm_password) < 8:
+        raise HTTPException(400, detail="Password must be 8 characters long")
+    if password != confirm_password:
+        raise HTTPException(status_code=400, detail="Passwords don't match")
+
+    # Step 4: insert user into SQLite
+    new_user = UserModel(email=email, password=hash_password(password))
+    new_user.is_verified = False
+    new_user.is_active = True
+
+    db.add(new_user)
+    try:
+        db.commit()
+        db.refresh(new_user)
+    except IntegrityError as e:
+        db.rollback()
+        db.expunge_all()  # remove all objects from session cache
+
+    link = prepare_verification_link(db=db, email=email, token_type="registration")
+    send_mail_verification(email, link)
+    return JSONResponse(status_code=200, content={"detail": "Check your mail box to verify your account"})
+
+
+@router.post('/login')
+def login_user(
+    email: str = Body(...), 
+    password: str = Body(...),
+    db: Session = Depends(get_db)
+):
+    
     user = db.query(UserModel).filter(UserModel.email==email).first()
 
-    if user is None: 
-        raise HTTPException(400, "Unregistered user")
+    if user is None or not user.is_active: 
+        raise HTTPException(status_code=404, detail="User not found")
     
     if not user.is_verified:
-        raise HTTPException(400, "Unverified user")
+        raise HTTPException(status_code=403, detail="User is not verified")
     
-    link = prepare_verification_link(db=db, email=email)
-    send_mail_verification(email, link)
-    return {"message": "Mail verification sent"}
+    if not verify_password(password, user.password): 
+        raise HTTPException(status_code=400, detail="Wrong password")
     
-class ChangePasswordRequest(BaseModel):
-    old_password: Optional[str]
-    new_password: str
+    access_token = create_access_token({'sub': email})
+    refresh_token = create_refresh_token({'sub': email})
+    response = JSONResponse(status_code=200, content={"access_token": access_token, "token_type": "bearer"})
 
-@router.put("/manage", description="Password change endpoint")
-def change_password(
-    payload: ChangePasswordRequest,
-    db: Session = Depends(get_db),
-    user: UserModel = Depends(get_current_user),
+    # Set refresh token in HttpOnly cookie
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=False,
+        max_age=7*24*60*60  # 7 days
+    )
+    return response
+
+
+@router.post('/logout')
+def logout_user(
+    response: Response,
 ):
-    if not user.is_verified:
-        raise HTTPException(400, "Unverified user")
+    response.delete_cookie(
+        key="refresh_token",
+        httponly=True,
+        secure=False,
+        path='/',
+    )
     
-    if payload.old_password:
-        if not verify_password(payload.old_password, user.password):
-            raise HTTPException(400, "Wrong old password")
-
-    hashed_password = hash_password(payload.new_password)
-    user.password = hashed_password
-    db.commit()
-    db.refresh(user)
-
-    return {"message": "Password changed successfully"}
-
-class DeleteAccRequest(BaseModel):
-    password: str
-
-@router.delete("/manage", description="Account deletion endpoint", status_code=204)
-def delete_account(
-    payload: DeleteAccRequest,
-    db: Session = Depends(get_db),
-    user: UserModel = Depends(get_current_user),
-):
-    if not user.is_verified:
-        raise HTTPException(400, "Unverified user")
-
-    if not verify_password(payload.password, user.password): 
-        raise HTTPException(400, "Wrong password")
-    
-    db_user = db.query(UserModel).filter(UserModel.user_id == user.user_id).first()
-    
-    if db_user:
-        db_user.is_active = False
-        db_user.is_verified = False
-
-        polls = db.query(PollModel).filter(PollModel.creator_id==db_user.user_id).all()
-
-        for poll in polls: 
-            db.delete(poll)
-
-        db.commit()
-        print(f"Active:", db_user.is_active)
-
-
-class MailVerifyRequest(BaseModel):
-    type: str
-    token: str
-    new_password: Optional[str] = None
-    new_email: Optional[str] = None
-
-@router.post("/verify", description="Mail verification endpoint")
-async def verify_mail(
-    request: Request,
-    payload: MailVerifyRequest, 
-    db: Session = Depends(get_db),
-):
-    
-    raw = await request.body()
-    print("Content-Type:", request.headers.get("content-type"))
-    print("Raw body:", raw)
-
-    # token setup
-    record = None
-    token_hash = hashlib.sha256(payload.token.encode()).hexdigest()
-    record = db.query(EmailVerification).filter(EmailVerification.token_hash==token_hash).first()
-
-    if not record:
-        return JSONResponse(status_code=400, content={"detail": "Invalid link"})
-    if record.used: 
-        return JSONResponse(status_code=400, content= {"detail": "Link is already used and expired"})
-    
-    user = (db.query(UserModel).filter(UserModel.email==record.email).first())
-    if user is None or not user.is_active:
-        return JSONResponse(status_code=400, content= {"detail": "User not found"})
-
-    response = None
-
-    if payload.type == "registration":
-        user.is_verified = True
-        record.used = True
-        response = "User is verified"
-
-    elif payload.type == "forgot_pass": 
-        if not payload.new_password: 
-            return JSONResponse(status_code=400, content= {"detail": "New password required"})
-
-        user.password = hash_password(payload.new_password)
-        record.used = True
-        response = "New password"
-
-    elif payload.type == "email_change": 
-        if not payload.new_email:
-            return JSONResponse(status_code=400, content= {"detail": "New email required"})
-
-        user.email = payload.new_email
-        record.used = True
-        response = "New email"
-        
-    else:
-        return JSONResponse(status_code=400, content= {"detail": "Unknown type"})
-    
-    db.commit()
-
-    return JSONResponse(status_code=200, content= {"detail": response})
-
-
-class ResendMailRequest(BaseModel):
-    email: str
-
-@router.post("/resend", description="Mail resend endpoint")
-@limiter.limit('5/minute')   # allow max 5 requests per minute per IP
-def resend_mail(
-    request: Request,
-    payload: ResendMailRequest,
-    db: Session = Depends(get_db),
-):
-    user = db.query(UserModel).filter(UserModel.email==payload.email).first()
-
-    if not user or not user.is_active: 
-        return {"error": "User not found during mail validation"}
-    
-    if user.is_verified: 
-        return {"message": "User already verified"}
-
-    link = prepare_verification_link(db=db, email=payload.email)
-    send_mail_verification(payload.email, link)
-    return {"message": "Mail verification sent"}
-
+    return JSONResponse(status_code=200, content= {"detail": "Logged out successfully"})
 

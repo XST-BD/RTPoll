@@ -9,6 +9,7 @@ from app.setup.lifespan import lifespan
 
 load_dotenv()
 
+ENV = os.getenv("ENVIRONMENT", "development")
 BACKEND_URL1 = os.getenv('BACKEND_URL1')
 FRONTEND_URL_LOCAL = os.getenv('FRONTEND_URL_LOCAL')
 SENDER_MAIL = os.getenv('MAIL_USERNAME', 'MAIL_USERNAME')

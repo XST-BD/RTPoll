@@ -20,7 +20,6 @@ from app.utils import poll_timer
 
 router = APIRouter()
 
-
 class CreatePollRequest(BaseModel):
     question: str = Field(min_length=1, max_length=1024)
     options: List[str] = Field(min_length=1, max_length=256)
@@ -28,7 +27,7 @@ class CreatePollRequest(BaseModel):
     result_public: bool = False
 
 
-@router.post('/poll')
+@router.post('/')
 async def poll_create(
     payload: CreatePollRequest, 
     bgtasks: BackgroundTasks,
@@ -72,7 +71,7 @@ class PollResponseModel(BaseModel):
     class Config:
         from_attributes = True
 
-@router.get('/poll/{poll_id}', response_model=PollResponseModel)
+@router.get('/{poll_id}', response_model=PollResponseModel)
 async def poll_view(
     poll_id: int,
     db: Session = Depends(get_db),
@@ -98,7 +97,7 @@ async def poll_view(
     )
 
 
-@router.delete('/poll/{poll_id}')
+@router.delete('/{poll_id}')
 async def poll_delete(
     poll_id: int,
     db: Session = Depends(get_db),
@@ -115,7 +114,6 @@ async def poll_delete(
     return {"message": f"Poll: {poll_id} deleted successfully"}
 
 
-
 class PollResponseAllModel(BaseModel):
     id: int
     question: str
@@ -126,8 +124,7 @@ class PollResponseAllModel(BaseModel):
     class Config:
         from_attributes = True
 
-
-@router.get('/poll', response_model=Page[PollResponseAllModel])
+@router.get('/', response_model=Page[PollResponseAllModel])
 async def poll_view_all(
     expired: bool = False,
     params: CustomParams = Depends(),
@@ -194,7 +191,7 @@ async def poll_view_all(
 
     return paginate(items, params)
 
-@router.delete('/poll')
+@router.delete('/')
 async def poll_delete_all(
     expired: bool = False,
     db: Session = Depends(get_db),
@@ -222,7 +219,7 @@ async def poll_delete_all(
 
 
 # TODO: Add pagination
-@router.get('/poll/result/{poll_id}')
+@router.get('/{poll_id}/result')
 @limiter.limit('5/Minute')  # Max 5 request per minute per IP
 def poll_result(
     request: Request,

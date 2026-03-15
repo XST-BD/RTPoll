@@ -3,20 +3,14 @@ import ssl
 import secrets
 import hashlib
 
-
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-
-from fastapi import Request, Depends, status
-from fastapi.exceptions import HTTPException
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
-from app.db.model.user import EmailVerification, UserModel
-from app.db.model.poll import PollHistoryEntry, PollModel
-from app.deps import get_db
+from app.db.model.user import EmailVerification
 
 
 from app.setup.vars import (
@@ -27,23 +21,26 @@ from app.setup.vars import (
 
 def generate_login_url_token() -> tuple[str, str]:
     token = secrets.token_urlsafe(32)
-    token_hash = hashlib.sha256(token.encode()).hexdigest
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    return token, token_hash
 
-    return token, token_hash()
 
-
-def prepare_verification_link(db: Session, email: str):
+def prepare_verification_link(db: Session, email: str, token_type: str):
     # token setup
     token, token_hash = generate_login_url_token()
 
-    verification = EmailVerification(email=email, token_hash=token_hash)
-    db.add(verification)
+    verification = db.query(EmailVerification).filter(
+        EmailVerification.email==email, EmailVerification.token_type==token_type
+    ).first()
 
-    try:
-        db.commit()
-        db.refresh(verification)
-    except IntegrityError as e:
-        db.rollback()
+    if verification:
+        verification.token_hash = token_hash
+        verification.used = False
+    else:
+        verification = EmailVerification(email=email, token_type=token_type, token_hash=token_hash)
+        db.add(verification)
+
+    db.commit()
 
     link = f"{FRONTEND_URL_LOCAL}/verify-mail?t={token}"
     return link

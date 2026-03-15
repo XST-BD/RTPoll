@@ -1,4 +1,4 @@
-from app.api import auth, poll, user, ws
+from app.api import auth, user, verify, poll, ws
 from app.db.base import Base, dbengine
 from app.setup.vars import app, router
 from app.setup.cors import cors_permit
@@ -15,10 +15,11 @@ Base.metadata.create_all(bind=dbengine)
 async def response_root():
     return {"status": "ok"}
 
-router.include_router(auth.router, prefix='/api/v0/auth', tags=['Authentication endpoint'])
-router.include_router(poll.router, prefix='/api/v0', tags=['Dashboard endpoint'])
-router.include_router(user.router, prefix='/api/v0/user', tags=['User management endpoint'])
-router.include_router(ws.router, prefix='/ws', tags=['Websocket endpoint'])
+router.include_router(auth.router, prefix='/api/v0/auth', tags=['Authentication endpoints'])
+router.include_router(verify.router, prefix='/api/v0/auth/email', tags=['Mail verification endpoints'])
+router.include_router(user.router, prefix='/api/v0/user', tags=['User state management endpoints'])
+router.include_router(poll.router, prefix='/api/v0/poll', tags=['Poll state management endpoints'])
+router.include_router(ws.router, prefix='/ws', tags=['Websocket endpoints'])
 
 app.include_router(router)
 

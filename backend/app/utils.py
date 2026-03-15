@@ -28,20 +28,6 @@ def validate_email(email_addr: str):
     except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.exception.Timeout):
         return False
 
-
-def validate_user_input(email: str, password: str):
-    
-    # Email: simple regex check
-    if not validate_email(email):
-        return "Invalid email format"
-
-    # Password: min len 8
-    if len(password) < 8:
-        return "Password must be at least 8 characters long"
-
-    return None
-
-
 def vote_percentages(
     votes: dict[int, int],
     option_ids: list[int],

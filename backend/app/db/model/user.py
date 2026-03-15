@@ -1,12 +1,14 @@
-from datetime import date
+from datetime import datetime, date, timedelta, timezone
 import uuid
 
 from sqlalchemy import (
-    Column, Integer, String, Date
+    Column, Integer, String, Date, DateTime, func, UniqueConstraint
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+VERIFICATION_TOKEN_LIFETIME = 3600
 
 class UserModel(Base):
 
@@ -31,10 +33,20 @@ class UserModel(Base):
 class EmailVerification(Base):
 
     __tablename__ = "email_verifications"
+    __table_args__ = (
+        UniqueConstraint('email', 'token_type', name='uq_email_token_type'),
+    )
 
     id = Column(Integer, primary_key=True)
-    email = Column(String, nullable=False, unique=True)
-    token_hash = Column(String, index=True)
+    email = Column(String, nullable=False)
+    
+    token_type: Mapped[str] = mapped_column(String, nullable=False)
+    token_hash: Mapped[str] = mapped_column(String, index=True, nullable=False)
     used: Mapped[bool] = mapped_column(default=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    expires_at: Mapped[datetime] = mapped_column(DateTime, 
+        default=lambda: datetime.now(timezone.utc) + timedelta(seconds=VERIFICATION_TOKEN_LIFETIME)
+    )
 
     
