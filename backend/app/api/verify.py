@@ -24,7 +24,7 @@ class MailVerifyRequest(BaseModel):
     new_password: Optional[str] = None
     new_email: Optional[str] = None
 
-@router.post("/verify", description="Mail verification endpoint")
+@router.post("/verify", description="[FROZEN] Mail verification endpoint")
 def verify_mail(
     payload: MailVerifyRequest,
     db: Session = Depends(get_db),
@@ -39,27 +39,27 @@ def verify_mail(
     if not verification:
         raise HTTPException(
             status_code=404, 
-            detail="Invalid link!\nPlease resend the email to receive a new one."
+            detail="This verification link is invalid!\nPlease request a new verification email."
         )
     if verification.used: 
         raise HTTPException(
             status_code=410, 
-            detail="Link is already used!\nPlease resend the email to receive a new one."
+            detail="This verification link has already been used."
         )
     
     user = (db.query(UserModel).filter(UserModel.email==verification.email).first())
     if user is None or not user.is_active:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Account not found.")
 
     if verification.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
-        raise HTTPException(status_code=410, detail="Link has expired")
+        raise HTTPException(status_code=410, detail="This verification link has expired!\nPlease request a new verification email.")
 
     response = None
 
     if payload.type == "registration":
         user.is_verified = True
         verification.used = True
-        response = "Verification successful"
+        response = "Email verified successfully."
 
     elif payload.type == "forgot_pass":
         if payload.new_password:
@@ -67,18 +67,18 @@ def verify_mail(
             verification.used = True
             response = "Password reset"
         else:
-            raise HTTPException(status_code=400, detail="No new password provided")
+            raise HTTPException(status_code=400, detail="Please provide a new password.")
 
     elif payload.type == "email_change":
         if payload.new_email:
             user.email = payload.new_email
             verification.used = True
-            response = "Email reset"
+            response = "Your email address has been updated successfully."
         else:
-            raise HTTPException(status_code=400, detail="No new email provided")
+            raise HTTPException(status_code=400, detail="Please provide a new email address.")
         
     else:
-        raise HTTPException(status_code=400, detail="Unknown type")
+        raise HTTPException(status_code=400, detail="Invalid verification request.")
     
     db.commit()
 
@@ -89,7 +89,7 @@ def verify_mail(
 class ResendMailRequest(BaseModel):
     email: str
 
-@router.post("/resend", description="Mail resend endpoint")
+@router.post("/resend", description="[FROZEN] Mail resend endpoint")
 @limiter.limit('5/minute')   # allow max 5 requests per minute per IP
 def resend_mail(
     request: Request,
@@ -99,12 +99,12 @@ def resend_mail(
     user = db.query(UserModel).filter(UserModel.email==payload.email).first()
 
     if not user or not user.is_active: 
-        raise HTTPException(status_code=404, detail="User not found during mail validation")
+        raise HTTPException(status_code=404, detail="Account not found.")
     
     if user.is_verified: 
-        raise HTTPException(status_code=409, detail="User already verified")
+        raise HTTPException(status_code=409, detail="This email is already verified.")
 
     link = prepare_verification_link(db=db, email=payload.email, token_type="registration")
     send_mail_verification(payload.email, link)
-    return JSONResponse(status_code=200, content= {"detail": "Mail verification sent"})
+    return JSONResponse(status_code=200, content= {"detail": "Verification email sent. Please check your inbox."})
 
