@@ -6,13 +6,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from .vars import app, SECRET_KEY
 
 FRONTEND_URL_LOCAL = os.getenv("FRONTEND_URL_LOCAL")
-FRONTEND_URL_NETWORK = os.getenv("FRONTEND_URL_NETWORK")
+FRONTEND_URL_NETWORK1 = os.getenv("FRONTEND_URL_NETWORK1")
+FRONTEND_URL_NETWORK2 = os.getenv("FRONTEND_URL_NETWORK2")
 
 def cors_permit():
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[str(FRONTEND_URL_LOCAL), str(FRONTEND_URL_NETWORK)],
+        allow_origins=[str(FRONTEND_URL_LOCAL), str(FRONTEND_URL_NETWORK1), str(FRONTEND_URL_NETWORK2)],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

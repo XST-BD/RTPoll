@@ -15,7 +15,7 @@ from app.db.model.user import EmailVerification
 
 
 from app.setup.vars import (
-    SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, FRONTEND_URL_LOCAL
+    SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, FRONTEND_URL
 )
 
 VERIFICATION_TOKEN_LIFETIME = 300
@@ -28,7 +28,7 @@ def generate_login_url_token() -> tuple[str, str]:
     return token, token_hash
 
 
-def prepare_verification_link(db: Session, email: str, token_type: str):
+def prepare_verification_link(db: Session, email: str, token_type: str, extra: str | None = None):
     # token setup
     token, token_hash = generate_login_url_token()
 
@@ -37,6 +37,7 @@ def prepare_verification_link(db: Session, email: str, token_type: str):
     ).first()
 
     if verification:
+        verification.token_type = token_type
         verification.token_hash = token_hash
         verification.used = False
         # verification.expires_at = datetime.now(timezone.utc) + timedelta(VERIFICATION_TOKEN_LIFETIME)
@@ -50,9 +51,12 @@ def prepare_verification_link(db: Session, email: str, token_type: str):
         db.add(verification)
 
     if verification.token_type == "forgot_pass":
-        link = f"{FRONTEND_URL_LOCAL}/recover-pass?t={token}"
+        link = f"{FRONTEND_URL}/recover-pass?t={token}"
+    elif verification.token_type == "email_change" and extra:
+        verification.extra_data = extra
+        link = f"{FRONTEND_URL}/verify-mail?t={token}"
     else:
-        link = f"{FRONTEND_URL_LOCAL}/verify-mail?t={token}"
+        link = f"{FRONTEND_URL}/verify-mail?t={token}"
 
     db.commit()
 
