@@ -72,7 +72,7 @@ def change_email(
     if not verify_password(payload.password, user.password): 
         raise HTTPException(400, "Wrong password")
 
-    link = prepare_verification_link(db=db, email=payload.new_email, token_type="email_change")
+    link = prepare_verification_link(db=db, email=payload.new_email, token_type="email_change", extra=user.email)
     send_mail_verification(payload.new_email, link)
     
     return JSONResponse(status_code=200, content={"detail": "Verification email sent. Please check your inbox."})
@@ -110,11 +110,11 @@ def recover_password(
 ):
     user = db.query(UserModel).filter(UserModel.email==payload.email).first()
 
-    if user is None: 
-        raise HTTPException(404, "Account not found.")
+    if user is None or not user.is_active: 
+        raise HTTPException(404, "Invalid credentials.")
     
     if not user.is_verified:
-        raise HTTPException(400, "Unverified user")
+        raise HTTPException(403, "Your email address is not verified yet. Please verify your email first.")
     
     link = prepare_verification_link(db, payload.email, token_type="forgot_pass")
     send_mail_verification(payload.email, link)

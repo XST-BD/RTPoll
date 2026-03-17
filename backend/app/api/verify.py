@@ -14,6 +14,8 @@ from app.db.model.user import UserModel, EmailVerification
 from app.deps import get_db, hash_password
 from app.services.email import prepare_verification_link, send_mail_verification
 from app.setup.limiter import limiter
+from app.setup.vars import ENV
+
 
 router = APIRouter()
 
@@ -43,33 +45,45 @@ def verify_mail(
             detail="This verification link has already been used."
         )
     
-    user = (db.query(UserModel).filter(UserModel.email==verification.email).first())
-    if user is None or not user.is_active:
-        raise HTTPException(status_code=404, detail="Account not found.")
+    if verification.extra_data: 
+        user = (db.query(UserModel).filter(UserModel.email==verification.extra_data).first())
+    else: 
+        user = (db.query(UserModel).filter(UserModel.email==verification.email).first())
+        if user is None or not user.is_active:
+            raise HTTPException(status_code=404, detail="Account not found.")
 
     # if verification.expires_at < datetime.now(timezone.utc):
     #     raise HTTPException(status_code=410, detail="This verification link has expired!\nPlease request a new verification email.")
 
     response = None
 
-    if verification.token_type == "registration":
+    if user and verification.token_type == "registration":
         user.is_verified = True
         verification.used = True
-        response = "Email verified successfully."
+        response = JSONResponse(
+                status_code=200, 
+                content= {"detail": "Email verified successfully."}
+            )
 
-    elif verification.token_type == "forgot_pass":
+    elif user and verification.token_type == "forgot_pass":
         if payload.new_password:
-            user.password = payload.new_password
+            user.password = hash_password(payload.new_password)
             verification.used = True
-            response = "Password updated successfully."
+            response = JSONResponse(
+                status_code=200, 
+                content= {"detail": "Password updated successfully."}
+            )
         else:
             raise HTTPException(status_code=400, detail="Please provide a new password.")
 
-    elif verification.token_type == "email_change":
+    elif user and verification.token_type == "email_change":
         if verification.email:
             user.email = verification.email
             verification.used = True
-            response = "Your email address has been updated successfully."
+            response = JSONResponse(
+                status_code=200, 
+                content= {"detail": "Your email address has been updated successfully."}
+            )
         else:
             raise HTTPException(status_code=400, detail="Please provide a new email address.")
         
@@ -79,7 +93,17 @@ def verify_mail(
     db.commit()
 
     print(f"[VERIFY] email={verification.email} type={verification.token_type} used={verification.used}")
-    return JSONResponse(status_code=200, content= {"detail": response})
+
+    secure = True if ENV == "PROD" else False
+    samesite = "none" if ENV == "PROD" else "lax"
+    response.delete_cookie(
+        key="refresh_token",
+        httponly=True,
+        secure=secure,
+        samesite=samesite,
+        path='/',
+    )
+    return response
 
 
 class ResendMailRequest(BaseModel):
@@ -95,7 +119,7 @@ def resend_mail(
     user = db.query(UserModel).filter(UserModel.email==payload.email).first()
 
     if not user or not user.is_active: 
-        raise HTTPException(status_code=404, detail="Account not found.")
+        raise HTTPException(status_code=404, detail="Invalid credentials.")
     
     if user.is_verified: 
         raise HTTPException(status_code=409, detail="This email is already verified.")
