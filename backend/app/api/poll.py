@@ -27,7 +27,7 @@ class CreatePollRequest(BaseModel):
     result_public: bool = False
 
 
-@router.post('/')
+@router.post('', description="[FROZEN] Poll creation endpoint")
 async def poll_create(
     payload: CreatePollRequest, 
     bgtasks: BackgroundTasks,
@@ -109,6 +109,8 @@ async def poll_delete(
         raise HTTPException(404, "Poll not found")
     
     db.delete(poll)
+    # Clean Redis cache of the poll
+    await redis_client.delete(f'poll:{poll_id}:votes')
     db.commit()
     
     return {"message": f"Poll: {poll_id} deleted successfully"}
@@ -124,7 +126,7 @@ class PollResponseAllModel(BaseModel):
     class Config:
         from_attributes = True
 
-@router.get('/', response_model=Page[PollResponseAllModel])
+@router.get('', response_model=Page[PollResponseAllModel], description="[FROZEN] Endpoint to get all associated poll of user")
 async def poll_view_all(
     expired: bool = False,
     params: CustomParams = Depends(),
@@ -191,7 +193,7 @@ async def poll_view_all(
 
     return paginate(items, params)
 
-@router.delete('/')
+@router.delete('')
 async def poll_delete_all(
     expired: bool = False,
     db: Session = Depends(get_db),
@@ -208,10 +210,14 @@ async def poll_delete_all(
 
         for poll in polls_query: 
             db.delete(poll)
+            # Clean Redis for each poll
+            await redis_client.delete(f'poll:{poll.id}:votes')
 
     else:
         for poll in polls: 
             db.delete(poll)
+            # Clean Redis for each poll
+            await redis_client.delete(f'poll:{poll.id}:votes')
 
     db.commit()
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Body, Cookie, Response
+from fastapi import APIRouter, Depends, Body, Cookie, Request
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse
 
@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.db.model.user import UserModel
 from app.deps import get_db, verify_password, hash_password
+from app.setup.limiter import limiter
 from app.services.auth import create_access_token, decode_token, create_refresh_token
 from app.services.email import send_mail_verification, prepare_verification_link
 from app.setup.vars import ENV
@@ -18,7 +19,9 @@ from app.utils import validate_email
 router = APIRouter()
 
 @router.post("/refresh", description="[FROZEN] Refresh token endpoint")
+@limiter.limit('10/Minute')
 async def refresh_token(
+    request: Request,
     refresh_token: Optional[str] = Cookie(None),
     db: Session = Depends(get_db)
 ):
@@ -109,7 +112,7 @@ def login_user(
         raise HTTPException(status_code=400, detail="Invalid credentials.")
     
     if not user.is_verified:
-        raise HTTPException(status_code=403, detail="Your email address is not verified yet. Please verify your email before logging in.")
+        raise HTTPException(status_code=428, detail="Your email address is not verified yet. Please verify your email before logging in.")
     
     access_token = create_access_token({'sub': email})
     refresh_token = create_refresh_token({'sub': email})
@@ -138,7 +141,7 @@ def logout_user():
 
     response = JSONResponse(
         status_code=200,
-        content={"detail": "Logged out successfully"}
+        content={"detail": "Logged out successfully."}
     )
     response.delete_cookie(
         key="refresh_token",

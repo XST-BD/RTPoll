@@ -1,4 +1,6 @@
-from fastapi import Depends, Body, APIRouter
+from datetime import date
+
+from fastapi import Depends, Body, APIRouter, Request
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse
 
@@ -12,18 +14,26 @@ from app.db.model.poll import PollModel
 from app.deps import get_db, verify_password, hash_password, SessionLocal
 from app.services.auth import get_current_user
 from app.services.email import prepare_verification_link, send_mail_verification
+from app.setup.limiter import limiter
 from app.deps import hash_password
 
 router = APIRouter()
 
-@router.get("/", description="Account details endpoint")
+
+class UserStatsResponse(BaseModel):
+    email: str
+    created_at: date
+    total_polls: int
+    expired_polls: int
+    running_polls: int
+
+@router.get("", description="[FROZEN] Account details endpoint", response_model=UserStatsResponse)
+@limiter.limit('25/Minute')
 def view_account(
+    request: Request,
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
-):
-    if not user.is_verified:
-       raise HTTPException(403, "Unverified user")
-    
+):    
     polls_created = db.query(PollModel).filter(PollModel.creator_id==user.user_id).count()
 
     with SessionLocal() as session:
@@ -36,92 +46,94 @@ def view_account(
                 )
             )
     
-    response = {
-        "email": user.email, 
-        "created_at": user.creation_date,
-        "polls_created": polls_created,
-        "polls_expired": polls_expired,
-    }
-    return JSONResponse(status_code=200, content={"detail": response})
+    response = UserStatsResponse(
+        email=user.email,
+        created_at=user.creation_date,
+        total_polls=polls_created,
+        expired_polls=polls_expired if polls_expired else 0,
+        running_polls= (polls_created - (polls_expired if polls_expired else 0)),
+    )
+    return response 
 
 
-@router.post("/", description="Email change endpoint")
+class ChangeEmailSchema(BaseModel):
+    new_email: str
+    password: str
+
+@router.post("", description="Email change endpoint")
 def change_email(
-    new_email: str = Body(...),
-    old_email: str = Body(...),
-    password: str = Body(...),
+    payload: ChangeEmailSchema,
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
 ):
     if not user.is_verified:
        raise HTTPException(403, "Unverified user")
-     
-    if user.email != old_email: 
-        raise HTTPException(400, "Wrong email")
 
-    if not verify_password(password, user.password): 
+    if not verify_password(payload.password, user.password): 
         raise HTTPException(400, "Wrong password")
 
-    link = prepare_verification_link(db=db, email=new_email, token_type="email_change")
-    send_mail_verification(new_email, link)
+    link = prepare_verification_link(db=db, email=payload.new_email, token_type="email_change")
+    send_mail_verification(payload.new_email, link)
     
-    return JSONResponse(status_code=200, content={"detail": "Check your mail box to verify your account"})
+    return JSONResponse(status_code=200, content={"detail": "Verification email sent. Please check your inbox."})
 
 
-@router.put("/", description="Password change endpoint")
+class ChangePasswordSchema(BaseModel):
+    old_password: str
+    new_password: str
+
+@router.put("", description="[FROZEN] Password change endpoint")
 def change_password(
-    old_password: str,
-    new_password: str,
+    payload: ChangePasswordSchema,
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
-):
-    if not user.is_verified:
-        raise HTTPException(403, "Unverified user")
-    
-    if old_password:
-        if not verify_password(old_password, user.password):
-            raise HTTPException(400, "Wrong old password")
+):    
+    if payload.old_password:
+        if not verify_password(payload.old_password, user.password):
+            raise HTTPException(400, "Incorrect password.")
 
-    hashed_password = hash_password(new_password)
+    hashed_password = hash_password(payload.new_password)
     user.password = hashed_password
     db.commit()
     db.refresh(user)
 
-    return JSONResponse(status_code=200, content={"detail": "Password changed successfully"})
+    return JSONResponse(status_code=200, content={"detail": "Password updated successfully."})
 
 
-@router.patch("/", description="Password recovery endpoint")
+class ForgotPasswordSchema(BaseModel):
+    email: str
+
+@router.patch("", description="Password recovery endpoint")
 def recover_password(
-    email: str = Body(...),
+    payload: ForgotPasswordSchema,
     db: Session = Depends(get_db),
 ):
-    user = db.query(UserModel).filter(UserModel.email==email).first()
+    user = db.query(UserModel).filter(UserModel.email==payload.email).first()
 
     if user is None: 
-        raise HTTPException(403, "Unregistered user")
+        raise HTTPException(404, "Account not found.")
     
     if not user.is_verified:
-        raise HTTPException(403, "Unverified user")
+        raise HTTPException(400, "Unverified user")
     
-    link = prepare_verification_link(db=db, email=email, token_type="forgot_pass")
-    send_mail_verification(email, link)
-    return JSONResponse(status_code=200, content={"detail": "Mail verification sent"})
+    link = prepare_verification_link(db, payload.email, token_type="forgot_pass")
+    send_mail_verification(payload.email, link)
+    return JSONResponse(status_code=200, content={"detail": "Verification email sent. Please check your inbox."})
 
 
 class DeleteAccRequest(BaseModel):
     password: str
 
-@router.delete("/", description="Account deletion endpoint", status_code=204)
+@router.delete("", description="[FROZEN] Account deletion endpoint", status_code=204)
 def delete_account(
     payload: DeleteAccRequest,
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
 ):
-    if not user.is_verified:
-        raise HTTPException(403, "Unverified user")
-
     if not verify_password(payload.password, user.password): 
-        raise HTTPException(400, "Wrong password")
+        raise HTTPException(
+            status_code=400, detail="Incorrect password."
+        )
     
     db_user = db.query(UserModel).filter(UserModel.user_id == user.user_id).first()
     
