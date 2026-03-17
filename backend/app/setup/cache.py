@@ -1,6 +1,9 @@
 import asyncio
 from contextlib import asynccontextmanager
 
+import os 
+from dotenv import load_dotenv
+
 from fastapi import FastAPI
 
 from sqlalchemy.orm import Session
@@ -10,9 +13,12 @@ from redis.asyncio import Redis
 from app.db.session import SessionLocal
 from app.db.model.poll import PollModel
 
+load_dotenv()
+REDIS_URL = os.getenv('REDIS_URL', 'REDIS_URL')
+
 # Caching
 redis_client: Redis = redis.from_url(
-    'redis://rtpoll-redis:6379',
+    REDIS_URL,
     decode_responses=True,
 )
 

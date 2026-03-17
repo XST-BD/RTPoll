@@ -2,13 +2,12 @@ from datetime import datetime, date, timedelta, timezone
 import uuid
 
 from sqlalchemy import (
-    Column, Integer, String, Date, DateTime, func, UniqueConstraint
+    Column, Integer, String, Date, DateTime, func, UniqueConstraint,JSON
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
-VERIFICATION_TOKEN_LIFETIME = 3600
 
 class UserModel(Base):
 
@@ -24,7 +23,7 @@ class UserModel(Base):
     password: Mapped[str] = mapped_column(nullable=False)
     is_verified: Mapped[bool] = mapped_column(default=False)
     is_active: Mapped[bool] = mapped_column(default=False)
-    creation_date = Column(Date, nullable=False, default=date.today)
+    creation_date: Mapped[datetime] = mapped_column(Date, nullable=False, default=date.today)
 
     # relationship to PollModel (polls get deleted with user if user is deleted)
     polls = relationship('PollModel', back_populates="creator", cascade="all, delete-orphan")
@@ -38,15 +37,14 @@ class EmailVerification(Base):
     )
 
     id = Column(Integer, primary_key=True)
-    email = Column(String, nullable=False)
+    email: Mapped[str] = mapped_column(String, nullable=False, index=True)
     
-    token_type: Mapped[str] = mapped_column(String, nullable=False)
+    token_type: Mapped[str] = mapped_column(String, nullable=False, index=True)
     token_hash: Mapped[str] = mapped_column(String, index=True, nullable=False)
+    extra_data: Mapped[str] = mapped_column(JSON, nullable=True)
     used: Mapped[bool] = mapped_column(default=False)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
-    expires_at: Mapped[datetime] = mapped_column(DateTime, 
-        default=lambda: datetime.now(timezone.utc) + timedelta(seconds=VERIFICATION_TOKEN_LIFETIME)
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    # expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     

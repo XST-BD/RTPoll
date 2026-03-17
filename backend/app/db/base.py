@@ -7,10 +7,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv('DATABASE_URL')
-
+DATABASE_URL = os.getenv('DATABASE_URL', 'DATABASE_URL')
 dbengine =  create_engine(
-    url=str(DATABASE_URL), 
+    url=DATABASE_URL,
     connect_args={"check_same_thread": False}   # sqlite only
 )
 

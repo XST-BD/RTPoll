@@ -19,10 +19,8 @@ router = APIRouter()
 
 
 class MailVerifyRequest(BaseModel):
-    type: Literal["registration", "forgot_pass", "email_change"]
     token: str
     new_password: Optional[str] = None
-    new_email: Optional[str] = None
 
 @router.post("/verify", description="[FROZEN] Mail verification endpoint")
 def verify_mail(
@@ -32,9 +30,7 @@ def verify_mail(
     # token setup
     verification = None
     token_hash = hashlib.sha256(payload.token.encode()).hexdigest()
-    verification = db.query(EmailVerification).filter(
-        EmailVerification.token_hash==token_hash, EmailVerification.token_type==payload.type
-    ).first()
+    verification = db.query(EmailVerification).filter(EmailVerification.token_hash==token_hash).first()
 
     if not verification:
         raise HTTPException(
@@ -51,27 +47,27 @@ def verify_mail(
     if user is None or not user.is_active:
         raise HTTPException(status_code=404, detail="Account not found.")
 
-    if verification.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
-        raise HTTPException(status_code=410, detail="This verification link has expired!\nPlease request a new verification email.")
+    # if verification.expires_at < datetime.now(timezone.utc):
+    #     raise HTTPException(status_code=410, detail="This verification link has expired!\nPlease request a new verification email.")
 
     response = None
 
-    if payload.type == "registration":
+    if verification.token_type == "registration":
         user.is_verified = True
         verification.used = True
         response = "Email verified successfully."
 
-    elif payload.type == "forgot_pass":
+    elif verification.token_type == "forgot_pass":
         if payload.new_password:
-            user.password = hash_password(payload.new_password)
+            user.password = payload.new_password
             verification.used = True
-            response = "Password reset"
+            response = "Password updated successfully."
         else:
             raise HTTPException(status_code=400, detail="Please provide a new password.")
 
-    elif payload.type == "email_change":
-        if payload.new_email:
-            user.email = payload.new_email
+    elif verification.token_type == "email_change":
+        if verification.email:
+            user.email = verification.email
             verification.used = True
             response = "Your email address has been updated successfully."
         else:
@@ -82,7 +78,7 @@ def verify_mail(
     
     db.commit()
 
-    print(f"[VERIFY] email={verification.email} type={payload.type} used={verification.used}")
+    print(f"[VERIFY] email={verification.email} type={verification.token_type} used={verification.used}")
     return JSONResponse(status_code=200, content= {"detail": response})
 
 

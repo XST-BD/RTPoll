@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 import smtplib
 import ssl 
 import secrets
@@ -17,6 +18,8 @@ from app.setup.vars import (
     SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, FRONTEND_URL_LOCAL
 )
 
+VERIFICATION_TOKEN_LIFETIME = 300
+
 # ====================== MAIL SERVICE CODES ====================== #
 
 def generate_login_url_token() -> tuple[str, str]:
@@ -30,19 +33,29 @@ def prepare_verification_link(db: Session, email: str, token_type: str):
     token, token_hash = generate_login_url_token()
 
     verification = db.query(EmailVerification).filter(
-        EmailVerification.email==email, EmailVerification.token_type==token_type
+        EmailVerification.token_type==token_type, EmailVerification.email==email
     ).first()
 
     if verification:
         verification.token_hash = token_hash
         verification.used = False
+        # verification.expires_at = datetime.now(timezone.utc) + timedelta(VERIFICATION_TOKEN_LIFETIME)
     else:
-        verification = EmailVerification(email=email, token_type=token_type, token_hash=token_hash)
+        verification = EmailVerification(
+            email=email, 
+            token_type=token_type, 
+            token_hash=token_hash,
+            # expires_at = datetime.now() + timedelta(VERIFICATION_TOKEN_LIFETIME)
+        )
         db.add(verification)
+
+    if verification.token_type == "forgot_pass":
+        link = f"{FRONTEND_URL_LOCAL}/recover-pass?t={token}"
+    else:
+        link = f"{FRONTEND_URL_LOCAL}/verify-mail?t={token}"
 
     db.commit()
 
-    link = f"{FRONTEND_URL_LOCAL}/verify-mail?t={token}"
     return link
 
 

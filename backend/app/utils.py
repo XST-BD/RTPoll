@@ -32,13 +32,13 @@ def vote_percentages(
     votes: dict[int, int],
     option_ids: list[int],
     poll_creator: bool
-) -> list[int] | list[float]:
+) -> list[float]:
 
     total = sum(votes.values())
 
     if total == 0:
         if poll_creator:
-            return [0] * len(option_ids)
+            return [0.0] * len(option_ids)
         else:
             return [0.0] * len(option_ids)
 
@@ -49,7 +49,7 @@ def vote_percentages(
         ]
     else:
         return [
-            round(votes.get(opt_id, 0) / total * 100, 1)
+            round(votes.get(opt_id, 0) / total * 100)
             for opt_id in option_ids
         ]
 
