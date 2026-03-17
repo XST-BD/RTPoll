@@ -1,7 +1,7 @@
 <script setup>
 const { public: { apiBase } } = useRuntimeConfig()
 const { authFetch } = useAuth()
-const { showPopup } = usePopup()
+const { showPopup, showError } = usePopup()
 
 const old_password = ref('')
 const new_password = ref('')
@@ -18,18 +18,17 @@ async function handleChangePassword() {
     }
 
     try {
-        await authFetch(`${apiBase}/user`, {
+        const data = await authFetch(`${apiBase}/user`, {
             method: 'PUT',
             body: {
-                recovery: true,
                 old_password: old_password.value,
                 new_password: new_password.value
             }
         })
 
-        showPopup('Password changed successfully', 'success')
+        showPopup(data?.detail || 'Password updated successfully.', 'success')
     } catch (err) {
-        showPopup(err?.data?.detail || 'Failed to change password', 'error')
+        showError(err, 'Failed to update password.')
     } finally {
         loading.value = false
     }
@@ -37,8 +36,8 @@ async function handleChangePassword() {
 </script>
 
 <template>
-    <div class="flex-1 flex flex-col justify-center gap-5">
-        <h3>Change Password</h3>
+    <div class="w-full flex flex-col justify-center gap-5">
+        <h3 class="w-full md:border-0 border-t border-b border-indigo-500 pt-3 pb-3">Change Password</h3>
 
         <form @submit.prevent="handleChangePassword" class="flex flex-col justify-center gap-3 text-nowrap">
             <div class="flex flex-col gap-1">

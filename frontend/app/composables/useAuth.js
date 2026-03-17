@@ -11,7 +11,7 @@ export const useAuth = () => {
             const base64 = token.split('.')[1]
             const json = atob(base64.replace(/-/g, '+').replace(/_/g, '/'))
             const payload = JSON.parse(json)
-            
+
             if (!payload?.exp) return 0
 
             return payload.exp - Math.floor(Date.now() / 1000)
@@ -119,6 +119,17 @@ export const useAuth = () => {
             throw err
         }
     }
+
+    // watch(
+    //     accessToken,
+    //     (token) => {
+    //         if (!token) {
+    //             stopTimer()
+    //             navigateTo('/login')
+    //         }
+    //     },
+    //     { immediate: true }
+    // )
 
     return {
         isLoggedIn,

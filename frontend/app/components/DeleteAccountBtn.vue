@@ -1,7 +1,7 @@
 <script setup>
 const { public: { apiBase } } = useRuntimeConfig()
 const { authFetch, logout } = useAuth()
-const { showPopup } = usePopup()
+const { showPopup, showError } = usePopup()
 
 const password = ref('')
 const error = ref(null)
@@ -18,12 +18,12 @@ async function deleteAccount() {
             }
         })
 
-        showPopup('Account deleted successfully', 'success')
+        showPopup('Account deleted successfully.', 'success')
         
         await logout()
         await navigateTo('/login')
     } catch (err) {
-        showPopup(err?.data?.detail || 'Failed to delete account', 'error')
+        showError(err, "Failed to delete account.")
     } finally {
         password.value = ''
         showConfirm.value = false
@@ -38,7 +38,7 @@ async function deleteAccount() {
         </button>
 
         <div v-if="showConfirm" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-10">
-            <div class="bg-white py-10 px-5 m-3 rounded-lg text-center flex flex-col justify-center items-center gap-4">
+            <div class="w-[400px] bg-white py-10 px-5 m-3 rounded-lg text-center flex flex-col justify-center items-center gap-4">
                 <p class="font-['Anton'] text-xl text-red-500">
                     Delete Account Permanently?
                 </p>
@@ -48,7 +48,7 @@ async function deleteAccount() {
                 </p>
 
                 <p class="w-full text-sm text-gray-500">
-                    <input type="password" v-model="password" placeholder="Enter your password to confirm" class="w-full  p-2 border rounded-md border-red-300 transition duration-300 focus:outline-none focus:border-red-400 focus:ring-4 focus:ring-red-400 focus:ring-opacity-30" />
+                    <input type="password" v-model="password" placeholder="Enter your password to confirm" class="w-full  p-2 border rounded-md border-red-300 transition duration-300 focus:outline-none focus:border-red-400 focus:ring-4 focus:ring-red-400 focus:ring-opacity-30" required />
                 </p>
 
                 <div class="flex justify-center items-center gap-3">

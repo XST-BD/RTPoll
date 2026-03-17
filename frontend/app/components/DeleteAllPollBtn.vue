@@ -1,6 +1,7 @@
 <script setup>
-const { authFetch } = useAuth()
 const { public: { apiBase } } = useRuntimeConfig()
+const { authFetch } = useAuth()
+const { showPopup, showError } = usePopup()
 
 const error = ref(null)
 const showConfirm = ref(false)
@@ -9,12 +10,13 @@ async function deleteAllPolls() {
     error.value = null
 
     try {
-        await authFetch(`${apiBase}/poll`, {
+        const data = await authFetch(`${apiBase}/poll`, {
             method: 'DELETE'
         })
+
+        showPopup(data?.detail || 'All polls deleted successfully.', 'success')
     } catch (err) {
-        alert('Failed to delete all polls')
-        console.error(err)
+        showError(err, 'Failed to delete all polls.')
     } finally {
         showConfirm.value = false
     }
@@ -28,7 +30,7 @@ async function deleteAllPolls() {
         </button>
 
         <div v-if="showConfirm" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-10">
-            <div class="bg-white py-10 px-5 m-3 rounded-lg text-center flex flex-col justify-center items-center gap-4">
+            <div class="w-[400px] bg-white py-10 px-5 m-3 rounded-lg text-center flex flex-col justify-center items-center gap-4">
                 <p class="font-['Anton'] text-xl text-red-500">
                     Delete All Polls?
                 </p>

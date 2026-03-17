@@ -9,12 +9,14 @@ useHead({
 
 const { public: { apiBase } } = useRuntimeConfig()
 const { login } = useAuth()
-const { showPopup } = usePopup()
+const { showPopup, showError } = usePopup()
 
 const email = ref('')
 const password = ref('')
 const resend_mail = ref(false)
 const loading = ref(false)
+const showForgotWindow = ref(false)
+const resend_loading = ref(false)
 
 async function handleLogin() {
     loading.value = true
@@ -27,9 +29,9 @@ async function handleLogin() {
 
         await navigateTo('/dashboard')
     } catch (err) {
-        showPopup(err?.data?.detail || "Something went wrong", "error")
+        showError(err, "Failed to login. Please try again.")
 
-        if (err.data.detail === 'User is not verified') {
+        if (err?.response?.status === 428) {
             resend_mail.value = true
         }
     } finally {
@@ -38,7 +40,7 @@ async function handleLogin() {
 }
 
 async function resendVerificationEmail() {
-    loading.value = true
+    resend_loading.value = true
 
     try {
         const data = await $fetch(`${apiBase}/auth/email/resend`, {
@@ -49,11 +51,11 @@ async function resendVerificationEmail() {
             }
         })
 
-        showPopup(data.detail, "success")
+        showPopup(data?.detail || "Verification email sent successfully", "success")
     } catch (err) {
         showPopup(err?.data?.detail || "Something went wrong", "error")
     } finally {
-        loading.value = false
+        resend_loading.value = false
     }
 }
 </script>
@@ -62,19 +64,25 @@ async function resendVerificationEmail() {
     <section class="w-full min-h-screen px-5 py-10 bg-grid flex flex-col justify-center items-center gap-12">
         <PopupMessage />
 
-        <div class="w-full max-w-xl flex flex-col justify-center items-center gap-12 bg-white backdrop-blur-[100px] rounded-xl sm:px-10 px-5 py-10 shadow-md border border-indigo-300">
+        <div class="w-full max-w-2xl flex flex-col justify-center items-center gap-12 bg-white backdrop-blur-[100px] rounded-xl sm:px-10 px-5 py-10 shadow-md border border-indigo-300">
             <h2 class="text-3xl">Login to Your Account</h2>
 
             <form class="w-full flex flex-col gap-10" @submit.prevent="handleLogin">
                 <div class="flex flex-col gap-4">
                     <div class="flex flex-col gap-1">
-                        <label for="email">Email</label>
+                        <label for="email">Enter Your Email</label>
                         <input id="email" v-model="email" class="ipt" required>
                     </div>
 
                     <div class="flex flex-col gap-1">
-                        <label for="password">Password</label>
+                        <label for="password">Enter Your Password</label>
                         <input id="password" v-model="password" type="password" class="ipt" required>
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <a @click="showForgotWindow = true" class="link text-sm text-indigo-400 hover:text-indigo-500 self-end transition-all duration-300 ease-in-out">
+                            Forgot password?
+                        </a>
                     </div>
                 </div>
 
@@ -84,7 +92,7 @@ async function resendVerificationEmail() {
 
                 <p v-if="resend_mail" class="text-md text-center">
                     Verification email not received?
-                    <a @click="resendVerificationEmail" :disabled="loading" class="link text-indigo-400 font-medium hover:text-indigo-500">
+                    <a @click="resendVerificationEmail" :disabled="resend_loading" class="link text-indigo-400 font-medium hover:text-indigo-500">
                         Resend verification email
                     </a>
                 </p>
@@ -97,5 +105,7 @@ async function resendVerificationEmail() {
                 <NuxtLink to="/register" class="link text-indigo-400 font-medium hover:text-indigo-500">Register here</NuxtLink>
             </p>
         </div>
+
+        <ForgotPasswordWindow :open="showForgotWindow" @close="showForgotWindow = false" />
     </section>
 </template>

@@ -125,7 +125,7 @@ watch(() => accessToken.value, (newToken) => {
     }
 })
 
-function sharePoll(id) {
+function sharePoll() {
     if (navigator.share) {
         navigator.share({
             title: 'Vote on this poll',
@@ -148,7 +148,7 @@ const getBackground = (percentage) => {
 </script>
 
 <template>
-    <div class="dashboard-body max-w-xl flex-col items-center gap-10">
+    <div class="dashboard-body max-w-2xl flex-col items-center gap-10">
         <Loading v-if="loading" />
 
         <p v-else-if="error" class="error-msg">{{ error }}</p>

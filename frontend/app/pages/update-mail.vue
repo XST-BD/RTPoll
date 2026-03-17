@@ -23,12 +23,10 @@ onMounted(async () => {
         const data = await $fetch(`${apiBase}/auth/email/verify`, {
             method: "POST",
             body: {
-                token: token,
-                new_password: null
+                token: token
             }
         })
 
-        loading.value = false
         error.value = null
         massage.value = data?.detail || "Email verification successful."
 
@@ -36,8 +34,9 @@ onMounted(async () => {
             navigateTo("/login")
         }, 2000)
     } catch (err) {
-        loading.value = false
         error.value = err?.data?.detail || "Verification failed. Please try again."
+    } finally {
+        loading.value = false
     }
 })
 </script>
@@ -45,6 +44,7 @@ onMounted(async () => {
 <template>
     <div class="min-h-screen flex flex-col items-center justify-center px-4">
         <div class="flex-1 max-w-md w-full text-center flex items-center justify-center">
+
             <div v-if="loading">
                 <p class="text-indigo-400 notice">Verifying your email</p>
                 <p class="text-gray-500 mt-4">Please wait...</p>

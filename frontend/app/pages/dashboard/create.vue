@@ -84,7 +84,7 @@ async function createPoll() {
 </script>
 
 <template>
-    <div class="dashboard-body max-w-xl flex-col items-center gap-10">
+    <div class="dashboard-body max-w-2xl flex-col items-center gap-10">
         <h2>Create A Poll</h2>
 
         <p v-if="error" class="error-msg">{{ error }}</p>

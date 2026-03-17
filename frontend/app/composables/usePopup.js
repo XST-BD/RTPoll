@@ -11,5 +11,17 @@ export const usePopup = () => {
         }, 4000)
     }
 
-    return { popups, showPopup }
+    function showError(err, fallback) {
+        const message = Array.isArray(err?.data?.detail)
+            ? err.data.detail.map(e => e.msg).join(', ')
+            : err?.data?.detail || fallback || "Something went wrong"
+
+        showPopup(message, "error")
+    }
+
+    function removePopup(id) {
+        popups.value = popups.value.filter(p => p.id !== id)
+    }
+
+    return { popups, showPopup, removePopup, showError }
 }

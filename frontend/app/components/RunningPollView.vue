@@ -25,7 +25,7 @@ async function fetchRunningPolls() {
         running_pages.value = res.pages
         running_page.value = res.page
     } catch (err) {
-        running_error.value = 'Failed to load running polls'
+        running_error.value = 'Failed to load running polls.'
     } finally {
         running_loading.value = false
     }

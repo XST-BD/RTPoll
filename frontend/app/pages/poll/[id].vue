@@ -122,7 +122,7 @@ onBeforeUnmount(() => {
 
 <template>
     <main class="w-full min-h-screen flex flex-col justify-center items-center">
-        <section class="grow w-full max-w-xl px-1.5 py-4 flex flex-col justify-center items-center">
+        <section class="grow w-full max-w-2xl px-1.5 py-4 flex flex-col justify-center items-center">
             <Loading v-if="loading" />
 
             <p v-else-if="error" class="notice text-red-500 text-center border-4 border-double border-red-500 px-4 py-2">
@@ -166,9 +166,6 @@ onBeforeUnmount(() => {
             </div>
         </section>
 
-        <footer class="w-full p-3 flex justify-center items-center">
-            <p class="text-sm text-gray-400">Powered by <NuxtLink to="/" class="text-indigo-400">RTPoll</NuxtLink>
-            </p>
-        </footer>
+        <PoweredByFooter />
     </main>
 </template>

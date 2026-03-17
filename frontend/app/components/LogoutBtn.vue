@@ -2,7 +2,7 @@
 import { Icon } from "@iconify/vue";
 
 const { logout } = useAuth()
-const { showPopup } = usePopup()
+const { showPopup, showError } = usePopup()
 
 const loading = ref(false)
 
@@ -16,7 +16,7 @@ async function handleLogout() {
 
         await navigateTo('/login')
     } catch (err) {
-        showPopup(err?.data?.detail || "Something went wrong", "error")
+        showError(err, "Failed to logout.")
     } finally {
         loading.value = false
     }
