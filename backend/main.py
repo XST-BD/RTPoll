@@ -9,7 +9,7 @@ from app.db.model.poll import PollModel
 
 cors_permit()
 
-Base.metadata.create_all(bind=dbengine)
+# Base.metadata.create_all(bind=dbengine)
 
 @router.get('/')
 async def response_root():
