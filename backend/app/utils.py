@@ -122,7 +122,7 @@ async def poll_timer(poll_id:int, expires_at: datetime):
     db = SessionLocal()
     key = f'poll:{poll_id}:votes'
     poll_vote = await run_in_threadpool(db.get, PollModel, poll_id)
-    creator_payload = create_payload("poll_view", key, poll_vote)
+    creator_payload = await create_payload("poll_view", key, poll_vote)
 
     await wsmanager.broadcast(
         poll_id,
