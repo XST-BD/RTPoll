@@ -1,5 +1,6 @@
 <script setup>
 definePageMeta({
+    layout: 'mail-redirect',
     ssr: false
 })
 
@@ -23,13 +24,11 @@ onMounted(async () => {
         const data = await $fetch(`${apiBase}/auth/email/verify`, {
             method: "POST",
             body: {
-                token: token,
-                new_password: null
+                token: token
             }
         })
 
         loading.value = false
-        error.value = null
         massage.value = data?.detail || "Email verification successful."
 
         setTimeout(() => {
@@ -37,38 +36,36 @@ onMounted(async () => {
         }, 2000)
     } catch (err) {
         loading.value = false
-        error.value = err?.data?.detail || "Verification failed. Please try again."
+        error.value = Array.isArray(err?.data?.detail)
+            ? err.data.detail.map(e => e.msg).join(', ')
+            : err?.data?.detail || "Verification failed. Please try again."
     }
 })
 </script>
 
 <template>
-    <div class="min-h-screen flex flex-col items-center justify-center px-4">
-        <div class="flex-1 max-w-md w-full text-center flex items-center justify-center">
-            <div v-if="loading">
-                <p class="text-indigo-400 notice">Verifying your email</p>
-                <p class="text-gray-500 mt-4">Please wait...</p>
-            </div>
-
-            <div v-else-if="error">
-                <p class="text-red-500 notice">
-                    {{ error }}
-                </p>
-
-                <NuxtLink to="/login" class="link text-indigo-400 font-semibold mt-4 inline-block">
-                    Go to Login
-                </NuxtLink>
-            </div>
-
-            <div v-else>
-                <p class="text-indigo-400 notice">
-                    {{ massage }}
-                </p>
-
-                <p class="text-gray-500 mt-4">Redirecting to login...</p>
-            </div>
+    <div class="w-full">
+        <div v-if="loading">
+            <p class="text-indigo-400 notice">Verifying your email.</p>
+            <p class="text-gray-500 mt-4">Please wait...</p>
         </div>
 
-        <PoweredByFooter />
+        <div v-else-if="error">
+            <p class="text-red-500 notice">
+                {{ error }}
+            </p>
+
+            <NuxtLink to="/login" class="link text-indigo-400 font-semibold mt-4 inline-block">
+                Go to Login
+            </NuxtLink>
+        </div>
+
+        <div v-else>
+            <p class="text-indigo-400 notice">
+                {{ massage }}
+            </p>
+
+            <p class="text-gray-500 mt-4">Redirecting to login...</p>
+        </div>
     </div>
 </template>

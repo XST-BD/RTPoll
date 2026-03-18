@@ -18,6 +18,36 @@ const loading = ref(false)
 async function handleRegister() {
     loading.value = true
 
+    if (!email.value) {
+        showPopup("Please enter your email first", "error")
+        loading.value = false
+        return
+    }
+
+    if (!password.value) {
+        showPopup("Please enter your password first", "error")
+        loading.value = false
+        return
+    }
+
+    if (!confirm_password.value) {
+        showPopup("Please confirm your password first", "error")
+        loading.value = false
+        return
+    }
+
+    if (password.value.length < 8 || confirm_password.value.length < 8) {
+        showPopup("Password must contain at least 8 characters.", "error")
+        loading.value = false
+        return
+    }
+
+    if (password.value !== confirm_password.value) {
+        showPopup("Passwords do not match.", "error")
+        loading.value = false
+        return
+    }
+
     try {
         const data = await $fetch(`${apiBase}/auth/register`, {
             method: 'POST',
@@ -51,21 +81,21 @@ async function handleRegister() {
                 <div class="flex flex-col gap-4">
                     <div class="flex flex-col gap-1">
                         <label for="email">Enter Your Email</label>
-                        <input id="email" v-model="email" class="ipt" required>
+                        <input id="email" type="email" v-model="email" :disabled="loading" class="ipt" required>
                     </div>
 
                     <div class="flex flex-col gap-1">
                         <label for="password">Enter Your Password</label>
-                        <input id="password" v-model="password" type="password" class="ipt" required>
+                        <input id="password" type="password" v-model="password" :disabled="loading" class="ipt" required>
                     </div>
 
                     <div class="flex flex-col gap-1">
                         <label for="confirm_password">Confirm Your Password</label>
-                        <input id="confirm_password" v-model="confirm_password" type="password" class="ipt" required>
+                        <input id="confirm_password" type="password" v-model="confirm_password" :disabled="loading" class="ipt" required>
                     </div>
                 </div>
 
-                <button type="submit" :disabled="loading" class="btn">
+                <button type="submit" :disabled="loading" :class="loading ? 'btn-disabled' : 'btn'">
                     {{ loading ? 'Registering...' : 'Register' }}
                 </button>
             </form>

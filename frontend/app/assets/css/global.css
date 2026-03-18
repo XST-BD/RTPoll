@@ -38,8 +38,16 @@ a {
     @apply py-2 px-4 bg-indigo-400 text-white font-medium rounded-md transition-all duration-300 hover:bg-indigo-500 hover:ring-4 hover:ring-indigo-400 hover:ring-opacity-30 focus:outline-none focus:bg-indigo-500 active:scale-95 cursor-pointer;
 }
 
+.btn-disabled {
+    @apply py-2 px-4 bg-indigo-400 text-white font-medium rounded-md cursor-wait opacity-75;
+}
+
 .link {
     @apply transition-all duration-300 ease-in-out hover:underline underline-offset-8 decoration-wavy cursor-pointer;
+}
+
+.link-disabled {
+    @apply cursor-wait opacity-75;
 }
 
 .link-icon {

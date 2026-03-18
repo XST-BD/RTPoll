@@ -15,23 +15,41 @@ const email = ref('')
 const password = ref('')
 const resend_mail = ref(false)
 const loading = ref(false)
-const showForgotWindow = ref(false)
 const resend_loading = ref(false)
+const showForgotWindow = ref(false)
 
 async function handleLogin() {
     loading.value = true
     resend_mail.value = false
 
+    if (!email.value) {
+        showPopup("Please enter your email first", "error")
+        loading.value = false
+        return
+    }
+
+    if (!password.value) {
+        showPopup("Please enter your password first", "error")
+        loading.value = false
+        return
+    }
+
+    if (password.value.length < 8) {
+        showPopup("Password must contain at least 8 characters.", "error")
+        loading.value = false
+        return
+    }
+
     try {
         await login(email.value, password.value)
 
-        showPopup("Login successful", "success")
+        showPopup("Logged in successfully.", "success")
 
         await navigateTo('/dashboard')
     } catch (err) {
         showError(err, "Failed to login. Please try again.")
 
-        if (err?.response?.status === 428) {
+        if (err?.status === 428) {
             resend_mail.value = true
         }
     } finally {
@@ -51,9 +69,9 @@ async function resendVerificationEmail() {
             }
         })
 
-        showPopup(data?.detail || "Verification email sent successfully", "success")
+        showPopup(data?.detail || "Verification email sent successfully.", "success")
     } catch (err) {
-        showPopup(err?.data?.detail || "Something went wrong", "error")
+        showError(err, "Failed to resend verification email. Please try again.")
     } finally {
         resend_loading.value = false
     }
@@ -71,32 +89,32 @@ async function resendVerificationEmail() {
                 <div class="flex flex-col gap-4">
                     <div class="flex flex-col gap-1">
                         <label for="email">Enter Your Email</label>
-                        <input id="email" v-model="email" class="ipt" required>
+                        <input id="email" type="email" v-model="email" :disabled="loading || resend_loading" class="ipt" required>
                     </div>
 
                     <div class="flex flex-col gap-1">
                         <label for="password">Enter Your Password</label>
-                        <input id="password" v-model="password" type="password" class="ipt" required>
+                        <input id="password" type="password" v-model="password" :disabled="loading || resend_loading" class="ipt" required>
                     </div>
 
                     <div class="flex flex-col gap-1">
-                        <a @click="showForgotWindow = true" class="link text-sm text-indigo-400 hover:text-indigo-500 self-end transition-all duration-300 ease-in-out">
+                        <button type="button" @click="showForgotWindow = true" :disabled="loading || resend_loading" class="link text-sm text-indigo-400 hover:text-indigo-500 self-end transition-all duration-300 ease-in-out">
                             Forgot password?
-                        </a>
+                        </button>
                     </div>
                 </div>
 
-                <button type="submit" :disabled="loading" class="btn">
+                <button type="submit" :disabled="loading || resend_loading" :class="loading ? 'btn-disabled' : 'btn'">
                     {{ loading ? 'Logging in...' : 'Login' }}
                 </button>
-
-                <p v-if="resend_mail" class="text-md text-center">
-                    Verification email not received?
-                    <a @click="resendVerificationEmail" :disabled="resend_loading" class="link text-indigo-400 font-medium hover:text-indigo-500">
-                        Resend verification email
-                    </a>
-                </p>
             </form>
+
+            <p v-if="resend_mail" class="text-md text-center">
+                Verification email not received?
+                <button type="button" @click="resendVerificationEmail" :disabled="loading || resend_loading" class="font-medium text-indigo-400 hover:text-indigo-500" :class="resend_loading ? 'link-disabled' : 'link'">
+                    {{ resend_loading ? 'Resending...' : 'Resend verification email' }}
+                </button>
+            </p>
 
             <hr class="w-[85%] border-t border-indigo-300">
 

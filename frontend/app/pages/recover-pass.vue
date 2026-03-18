@@ -1,5 +1,6 @@
 <script setup>
 definePageMeta({
+    layout: 'mail-redirect',
     ssr: false
 })
 
@@ -11,67 +12,83 @@ const password = ref('')
 const loading = ref(false)
 const error = ref(null)
 
-onMounted(() => {
-    const token = route.query.t
+const token = computed(() => route.query.t)
 
-    if (!token) {
+onMounted(() => {
+    if (!token.value) {
         error.value = "Invalid verification link.\nPlease request a new password reset email."
     }
 })
 
 async function handlePasswordReset() {
     loading.value = true
+    error.value = null
+
+    if (!token.value) {
+        error.value = "Invalid verification link.\nPlease request a new password reset email."
+        loading.value = false
+        return
+    }
+
+    if (password.value.length < 8) {
+        showPopup("Password must contain at least 8 characters.", "error")
+        loading.value = false
+        return
+    }
 
     try {
         const data = await $fetch(`${apiBase}/auth/email/verify`, {
             method: "POST",
             body: {
-                token: token,
+                token: token.value,
                 new_password: password.value
             }
         })
 
-        error.value = null
+        loading.value = false
         showPopup(data?.detail || "Password updated successfully.", "success")
 
         setTimeout(() => {
             navigateTo("/login")
         }, 2000)
-
     } catch (err) {
-        error.value = null
-        showError(err, "Failed to update password. Please try again.")
-    } finally {
         loading.value = false
+
+        if (err?.status === 406) {
+            showError(err, "Password must contain at least 8 characters.")
+        }
+        else {
+            error.value = Array.isArray(err?.data?.detail)
+                ? err.data.detail.map(e => e.msg).join(', ')
+                : err?.data?.detail || "Failed to update password. Please try again."
+        }
     }
 }
 </script>
 
 <template>
-    <div class="min-h-screen flex flex-col items-center justify-center px-4">
-        <div class="flex-1 max-w-md w-full text-center flex items-center justify-center">
-            <div v-if="error">
-                <p class="text-red-500 notice">
-                    {{ error }}
-                </p>
+    <div class="w-full">
+        <PopupMessage />
 
-                <NuxtLink to="/login" class="link text-indigo-400 font-semibold mt-4 inline-block">
-                    Go to Login
-                </NuxtLink>
-            </div>
+        <div v-if="error">
+            <p class="text-red-500 notice">
+                {{ error }}
+            </p>
 
-            <div v-else class="flex flex-col justify-center items-center gap-5">
-                <div class="flex flex-col justify-center items-center gap-4">
-                    <label for="password" class="text-indigo-400 notice">Enter your new password</label>
-                    <input id="password" v-model="password" type="password" class="ipt w-full" required>
-                </div>
-
-                <button type="submit" @click="handlePasswordReset" :disabled="loading" class="btn">
-                    {{ loading ? 'Updating...' : 'Update' }}
-                </button>
-            </div>
+            <NuxtLink to="/login" class="link text-indigo-400 font-semibold mt-4 inline-block">
+                Go to Login
+            </NuxtLink>
         </div>
 
-        <PoweredByFooter />
+        <form v-else @submit.prevent="handlePasswordReset" class="flex flex-col justify-center items-center gap-5">
+            <div class="flex flex-col justify-center items-center gap-4">
+                <label for="password" class="text-indigo-400 notice">Enter your new password</label>
+                <input id="password" v-model="password" type="password" class="ipt w-full" required>
+            </div>
+
+            <button type="submit" :disabled="loading" :class="loading ? 'btn-disabled' : 'btn'">
+                {{ loading ? 'Updating...' : 'Update' }}
+            </button>
+        </form>
     </div>
 </template>
