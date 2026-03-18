@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks, WebSocket
+from fastapi.responses import JSONResponse
 
 from fastapi_pagination import paginate, Page
 from pydantic import BaseModel, Field
@@ -14,8 +15,9 @@ from app.db.model.poll import PollModel, PollHistoryEntry, PollOption
 from app.deps import get_db
 from app.services.auth import get_current_user
 from app.setup.paginator import CustomParams
-from app.setup.limiter import limiter
 from app.setup.cache import redis_client
+from app.setup.limiter import limiter
+from app.setup.ws import wsmanager
 from app.utils import poll_timer
 
 router = APIRouter()
@@ -111,6 +113,12 @@ async def poll_delete(
     db.delete(poll)
     # Clean Redis cache of the poll
     await redis_client.delete(f'poll:{poll_id}:votes')
+    # Broadcast poll deletion message
+    await wsmanager.broadcast(
+        poll_id=poll.id,
+        voter_payload={"type": "error", "message": "Poll not found or deleted"},
+        creator_payload={"type": "error", "message": "Poll not found or deleted"},
+    )
     db.commit()
     
     return {"message": f"Poll: {poll_id} deleted successfully"}
@@ -127,7 +135,9 @@ class PollResponseAllModel(BaseModel):
         from_attributes = True
 
 @router.get('', response_model=Page[PollResponseAllModel], description="[FROZEN] Endpoint to get all associated poll of user")
+@limiter.limit('60/Minute')
 async def poll_view_all(
+    request: Request,
     expired: bool = False,
     params: CustomParams = Depends(),
     db: Session = Depends(get_db),
@@ -201,6 +211,7 @@ async def poll_delete_all(
 ):
     polls = db.query(PollModel).filter(PollModel.creator_id==user.user_id)
     now = datetime.now(timezone.utc)
+    ws = WebSocket
 
     if expired: 
         polls_query = polls.filter(
@@ -212,24 +223,40 @@ async def poll_delete_all(
             db.delete(poll)
             # Clean Redis for each poll
             await redis_client.delete(f'poll:{poll.id}:votes')
+            # Broadcast poll deletion message
+            await wsmanager.broadcast(
+                poll_id=poll.id,
+                voter_payload={"type": "error", "message": "Poll not found or deleted"},
+                creator_payload={"type": "error", "message": "Poll not found or deleted"},
+            )
 
     else:
         for poll in polls: 
             db.delete(poll)
             # Clean Redis for each poll
             await redis_client.delete(f'poll:{poll.id}:votes')
+            # Broadcast poll deletion message
+            await wsmanager.broadcast(
+                poll_id=poll.id,
+                voter_payload={"type": "error", "message": "Poll not found or deleted"},
+                creator_payload={"type": "error", "message": "Poll not found or deleted"},
+            )
 
     db.commit()
 
     return {"message": "All polls deleted"}
 
 
-# TODO: Add pagination
-@router.get('/{poll_id}/result')
-@limiter.limit('5/Minute')  # Max 5 request per minute per IP
+class PollResultResponse(BaseModel):
+    x: str
+    y: int
+
+@router.get('/{poll_id}/result', response_model=Page[PollResultResponse])
+@limiter.limit('15/Minute')  # Max 15 request per minute per IP
 def poll_result(
     request: Request,
     poll_id: int,
+    params: CustomParams = Depends(),
     db: Session = Depends(get_db),
 ):
     
@@ -238,8 +265,14 @@ def poll_result(
         .order_by(PollHistoryEntry.timestamp).all()
     
     if not entries:
-        return {"message": "Poll history is empty"}
+        return JSONResponse(status_code=200, content={"detail": "Poll history is empty"})
 
-    # To JSON format
-    result = [{'x':  entry.timestamp.isoformat(), 'y': entry.value} for entry in entries]
-    return result
+    items = []
+
+    for entry in entries:
+        x_coordinate = entry.timestamp.isoformat()
+        y_coordinate = entry.value
+
+        items.append(PollResultResponse(x=x_coordinate, y=y_coordinate))
+
+    return paginate(items, params)

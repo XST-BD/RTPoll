@@ -75,7 +75,7 @@ def change_email(
     link = prepare_verification_link(db=db, email=payload.new_email, token_type="email_change", extra=user.email)
     send_mail_verification(payload.new_email, link)
     
-    return JSONResponse(status_code=200, content={"detail": "Verification email sent. Please check your inbox."})
+    return JSONResponse(status_code=202, content={"detail": "Verification email sent. Please check your inbox."})
 
 
 class ChangePasswordSchema(BaseModel):
@@ -88,9 +88,12 @@ def change_password(
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
 ):    
+    if len(payload.new_password) < 8:
+        raise HTTPException(status_code=406, detail="Password must contain at least 8 characters.")
+
     if payload.old_password:
         if not verify_password(payload.old_password, user.password):
-            raise HTTPException(400, "Incorrect password.")
+            raise HTTPException(400, "Incorrect old password.")
 
     hashed_password = hash_password(payload.new_password)
     user.password = hashed_password
@@ -118,7 +121,7 @@ def recover_password(
     
     link = prepare_verification_link(db, payload.email, token_type="forgot_pass")
     send_mail_verification(payload.email, link)
-    return JSONResponse(status_code=200, content={"detail": "Verification email sent. Please check your inbox."})
+    return JSONResponse(status_code=202, content={"detail": "Password reset email sent successfully. Please check your inbox."})
 
 
 class DeleteAccRequest(BaseModel):

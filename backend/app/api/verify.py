@@ -15,7 +15,7 @@ from app.deps import get_db, hash_password
 from app.services.email import prepare_verification_link, send_mail_verification
 from app.setup.limiter import limiter
 from app.setup.vars import ENV
-
+from app.utils import validate_email
 
 router = APIRouter()
 
@@ -67,6 +67,10 @@ def verify_mail(
 
     elif user and verification.token_type == "forgot_pass":
         if payload.new_password:
+
+            if len(payload.new_password) < 8:
+                raise HTTPException(status_code=406, detail="Password must contain at least 8 characters.")
+
             user.password = hash_password(payload.new_password)
             verification.used = True
             response = JSONResponse(
@@ -78,6 +82,10 @@ def verify_mail(
 
     elif user and verification.token_type == "email_change":
         if verification.email:
+
+            if not validate_email(verification.email):
+                raise HTTPException(status_code=406, detail="Please enter a valid email address.")
+
             user.email = verification.email
             verification.used = True
             response = JSONResponse(
