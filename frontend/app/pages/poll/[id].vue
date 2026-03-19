@@ -1,9 +1,6 @@
 <script setup>
 import { Icon } from "@iconify/vue"
 import FingerprintJS from '@fingerprintjs/fingerprintjs'
-const Vue3FlipCountdown = defineAsyncComponent(() =>
-    import('vue3-flip-countdown').then(m => m.Countdown)
-)
 
 definePageMeta({
     ssr: false
@@ -14,11 +11,16 @@ useHead({
 })
 
 const { public: { wsBase } } = useRuntimeConfig()
+const { showPopup } = usePopup()
 
 let socket = null
 
 const route = useRoute()
 const id = route.params.id
+
+const Vue3FlipCountdown = defineAsyncComponent(() =>
+    import('vue3-flip-countdown').then(m => m.Countdown)
+)
 
 const poll = ref(null)
 const notice = ref(null)
@@ -43,7 +45,6 @@ async function getVisitorId() {
 
 async function vote(id) {
     selectedOption.value = id
-    const visitorId = await getVisitorId()
 
     if (socket && socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({
@@ -51,22 +52,17 @@ async function vote(id) {
             option_id: id
         }))
 
-        console.log('Vote sent:', id)
+        showPopup('Vote submitted successfully.', 'success')
     }
 }
 
 async function connectWS(pollId) {
     closeWS()
 
-    loading.value = true
-    error.value = null
-    poll.value = null
-
-    socket = new WebSocket(`${wsBase}/vote/${pollId}`)
+    const visitorId = await getVisitorId()
+    socket = new WebSocket(`${wsBase}/vote/${pollId}?f=${visitorId}`)
 
     socket.onopen = () => {
-        console.log('WS Connected')
-
         socket.send(JSON.stringify({
             type: "get_vote"
         }))
@@ -75,18 +71,18 @@ async function connectWS(pollId) {
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data)
 
-        console.log('Received data:', data)
-
         if (data.type === 'error') {
-            error.value = data.message
+            error.value = data?.message || 'Failed to load poll. Please reload the page and try again.'
             notice.value = null
+            poll.value = null
             loading.value = false
             return
         }
 
         if (data.type === 'notice') {
             error.value = null
-            notice.value = data.message
+            notice.value = data?.message
+            poll.value = null
             loading.value = false
             return
         }
@@ -98,22 +94,23 @@ async function connectWS(pollId) {
     }
 
     socket.onerror = () => {
-        error.value = 'Failed to load poll'
+        error.value = 'Failed to load poll. Please reload the page and try again.'
+        notice.value = null
+        poll.value = null
         loading.value = false
     }
 
     socket.onclose = () => {
-        console.log('WS Disconnected')
+        error.value = 'Failed to load poll. Please reload the page and try again.'
+        notice.value = null
+        poll.value = null
+        loading.value = false
     }
 }
 
-watch(
-    () => id,
-    (newId) => {
-        if (newId) connectWS(newId)
-    },
-    { immediate: true }
-)
+onMounted(() => {
+    connectWS(id)
+})
 
 onBeforeUnmount(() => {
     closeWS()
@@ -122,6 +119,8 @@ onBeforeUnmount(() => {
 
 <template>
     <main class="w-full min-h-screen flex flex-col justify-center items-center">
+        <PopupMessage />
+
         <section class="grow w-full max-w-2xl px-1.5 py-4 flex flex-col justify-center items-center">
             <Loading v-if="loading" />
 
@@ -159,7 +158,7 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
 
-                <p v-if="poll.total_votes >= 0" class="w-full mr-5 text-center text-indigo-400 flex items-center justify-end">
+                <p title="Total Votes" v-if="poll.total_votes >= 0" class="w-full mr-5 text-center text-indigo-400 flex items-center justify-end">
                     <Icon icon="lets-icons:fire-fill" class="text-indigo-400 text-xl" />
                     <span class="text-sm">{{ formatNumber(poll.total_votes) }}</span>
                 </p>

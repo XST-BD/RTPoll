@@ -14,9 +14,9 @@ defineProps({
         <div class="p-9 pb-6 flex flex-col gap-3">
             <h2 class="text-center">{{ name }}</h2>
 
-            <h4 class="text-center">
+            <h5 class="text-center">
                 {{ role }}
-            </h4>
+            </h5>
         </div>
 
         <div class="flex justify-center items-center border-t-2 border-indigo-400">

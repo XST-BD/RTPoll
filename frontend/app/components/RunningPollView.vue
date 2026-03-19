@@ -13,7 +13,7 @@ async function fetchRunningPolls() {
     running_error.value = null
 
     try {
-        const res = await authFetch(`${apiBase}/poll`, {
+        const data = await authFetch(`${apiBase}/poll`, {
             method: 'GET',
             query: {
                 expired: false,
@@ -21,11 +21,11 @@ async function fetchRunningPolls() {
             }
         })
 
-        running_polls.value = res.items
-        running_pages.value = res.pages
-        running_page.value = res.page
+        running_polls.value = data.items
+        running_pages.value = data.pages
+        running_page.value = data.page
     } catch (err) {
-        running_error.value = 'Failed to load running polls.'
+        running_error.value = 'Failed to load running polls. Please reload the page and try again.'
     } finally {
         running_loading.value = false
     }

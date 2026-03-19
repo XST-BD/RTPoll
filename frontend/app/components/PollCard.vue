@@ -11,9 +11,9 @@ defineProps({
 
 <template>
     <div class="grow w-full max-w-[400px] h-[180px] border border-indigo-300 hover:border-indigo-400 rounded-lg py-3 px-5 flex flex-col gap-4 bg-indigo-50 hover:bg-gradient-to-br from-indigo-50 via-indigo-100 to-indigo-50 transition-all duration-300 cursor-pointer active:scale-90">
-        <h4 class="grow text-2xl font-black line-clamp-2">
+        <h5 class="grow text-2xl font-black line-clamp-2">
             {{ question }}
-        </h4>
+        </h5>
 
         <p class="text-lg truncate">
             <span class="font-bold text-indigo-400">Top Pick: </span>

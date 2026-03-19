@@ -13,7 +13,7 @@ async function fetchClosedPolls() {
     closed_error.value = null
 
     try {
-        const res = await authFetch(`${apiBase}/poll`, {
+        const data = await authFetch(`${apiBase}/poll`, {
             method: 'GET',
             query: {
                 expired: true,
@@ -21,11 +21,11 @@ async function fetchClosedPolls() {
             }
         })
 
-        closed_polls.value = res.items
-        closed_pages.value = res.pages
-        closed_page.value = res.page
+        closed_polls.value = data.items
+        closed_pages.value = data.pages
+        closed_page.value = data.page
     } catch (err) {
-        closed_error.value = 'Failed to load closed polls'
+        closed_error.value = 'Failed to load closed polls. Please reload the page and try again.'
     } finally {
         closed_loading.value = false
     }

@@ -18,26 +18,26 @@ const loading = ref(false)
 async function handleRegister() {
     loading.value = true
 
-    if (!email.value) {
-        showPopup("Please enter your email first", "error")
+    if (!email.value.trim()) {
+        showPopup("Please enter your email first.", "error")
         loading.value = false
         return
     }
 
     if (!password.value) {
-        showPopup("Please enter your password first", "error")
+        showPopup("Please enter your password first.", "error")
         loading.value = false
         return
     }
 
     if (!confirm_password.value) {
-        showPopup("Please confirm your password first", "error")
+        showPopup("Please confirm your password first.", "error")
         loading.value = false
         return
     }
 
     if (password.value.length < 8 || confirm_password.value.length < 8) {
-        showPopup("Password must contain at least 8 characters.", "error")
+        showPopup("Passwords must be at least 8 characters long.", "error")
         loading.value = false
         return
     }
@@ -53,7 +53,7 @@ async function handleRegister() {
             method: 'POST',
             credentials: 'include',
             body: {
-                email: email.value,
+                email: email.value.trim(),
                 password: password.value,
                 confirm_password: confirm_password.value
             }
@@ -80,17 +80,17 @@ async function handleRegister() {
             <form class="w-full flex flex-col gap-10" @submit.prevent="handleRegister">
                 <div class="flex flex-col gap-4">
                     <div class="flex flex-col gap-1">
-                        <label for="email">Enter Your Email</label>
+                        <label for="email">Enter your email</label>
                         <input id="email" type="email" v-model="email" :disabled="loading" class="ipt" required>
                     </div>
 
                     <div class="flex flex-col gap-1">
-                        <label for="password">Enter Your Password</label>
+                        <label for="password">Enter your password</label>
                         <input id="password" type="password" v-model="password" :disabled="loading" class="ipt" required>
                     </div>
 
                     <div class="flex flex-col gap-1">
-                        <label for="confirm_password">Confirm Your Password</label>
+                        <label for="confirm_password">Confirm your password</label>
                         <input id="confirm_password" type="password" v-model="confirm_password" :disabled="loading" class="ipt" required>
                     </div>
                 </div>

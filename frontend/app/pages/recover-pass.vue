@@ -30,6 +30,12 @@ async function handlePasswordReset() {
         return
     }
 
+    if (!password.value) {
+        showPopup("Please enter your password first.", "error")
+        loading.value = false
+        return
+    }
+
     if (password.value.length < 8) {
         showPopup("Password must contain at least 8 characters.", "error")
         loading.value = false
@@ -83,7 +89,7 @@ async function handlePasswordReset() {
         <form v-else @submit.prevent="handlePasswordReset" class="flex flex-col justify-center items-center gap-5">
             <div class="flex flex-col justify-center items-center gap-4">
                 <label for="password" class="text-indigo-400 notice">Enter your new password</label>
-                <input id="password" v-model="password" type="password" class="ipt w-full" required>
+                <input id="password" type="password" v-model="password" :disabled="loading" class="ipt w-full" required>
             </div>
 
             <button type="submit" :disabled="loading" :class="loading ? 'btn-disabled' : 'btn'">

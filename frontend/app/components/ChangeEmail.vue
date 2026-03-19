@@ -15,19 +15,38 @@ const loading = ref(false)
 async function handleChangeEmail() {
     loading.value = true
 
+    if (!email.value.trim()) {
+        showPopup('Please enter your new email first.', 'error')
+        loading.value = false
+        return
+    }
+
+    if (!password.value) {
+        showPopup('Please enter your password first.', 'error')
+        loading.value = false
+        return
+    }
+
+    if (password.value.length < 8) {
+        showPopup('Password must contain at least 8 characters.', 'error')
+        loading.value = false
+        return
+    }
+
     try {
         const data = await authFetch(`${apiBase}/user`, {
             method: 'POST',
             body: {
                 recovery: true,
-                new_email: email.value,
+                new_email: email.value.trim(),
                 password: password.value
             }
         })
 
         showPopup(data?.detail || 'Email updated successfully.', 'success')
+        showConfirm.value = false
     } catch (err) {
-        showError(err, 'Failed to update email.')
+        showError(err, 'Failed to update email. Please try again.')
     } finally {
         loading.value = false
     }
@@ -45,35 +64,31 @@ watch(
 <template>
     <form @submit.prevent="showConfirm = true" class="flex flex-col justify-center gap-3 text-nowrap">
         <div class="flex flex-col gap-1">
-            <label for="email">Account Email</label>
+            <label for="email">Account email</label>
             <input type="email" id="email" v-model="email" class="ipt" required>
         </div>
 
         <button type="submit" :disabled="loading" class="btn">
-            {{ loading ? 'Changing' : 'Change Email' }}
+            Change Email
         </button>
     </form>
 
     <div v-if="showConfirm" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-10">
         <div class="w-[400px] bg-white py-10 px-5 m-3 rounded-lg text-center flex flex-col justify-center items-center gap-4">
-            <p class="font-['Anton'] text-xl text-indigo-400">
-                Change Email?
-            </p>
+            <h4>Change Email?</h4>
 
             <p class="text-sm text-gray-500">
                 A confirmation email will be sent to your new email address. You need to confirm the change within 24 hours, otherwise the request will expire and you will have to try again.
             </p>
 
-            <p class="w-full text-sm text-gray-500">
-                <input type="password" v-model="password" placeholder="Enter your password to confirm" class="w-full ipt" required />
-            </p>
+            <input type="password" placeholder="Enter your password to confirm" v-model="password" :disabled="loading" class="w-full ipt text-sm" />
 
             <div class="flex justify-center items-center gap-3">
-                <button @click="showConfirm = false" class="px-4 py-2 border border-gray-300 hover:border-gray-400 rounded-md transition-all duration-300 ease-in-out">
+                <button @click="showConfirm = false" :disabled="loading" :class="loading ? 'btn-cancel-disabled' : 'btn-cancel'">
                     Cancel
                 </button>
 
-                <button @click="handleChangeEmail" class="px-4 py-2 bg-indigo-400 text-white rounded-md transition-all duration-300 ease-in-out hover:bg-indigo-500">
+                <button @click="handleChangeEmail" :disabled="loading" :class="loading ? 'btn-disabled' : 'btn'">
                     Confirm
                 </button>
             </div>

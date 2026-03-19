@@ -26,6 +26,10 @@ h3 {
 }
 
 h4 {
+    @apply font-['Anton'] text-xl text-indigo-400 text-center;
+}
+
+h5 {
     @apply text-lg text-indigo-400 text-center;
 }
 
@@ -35,11 +39,27 @@ a {
 }
 
 .btn {
-    @apply py-2 px-4 bg-indigo-400 text-white font-medium rounded-md transition-all duration-300 hover:bg-indigo-500 hover:ring-4 hover:ring-indigo-400 hover:ring-opacity-30 focus:outline-none focus:bg-indigo-500 active:scale-95 cursor-pointer;
+    @apply py-2 px-4 bg-indigo-400 text-white font-medium rounded-md transition-all duration-300 hover:bg-indigo-500 hover:ring-4 hover:ring-indigo-400 hover:ring-opacity-30 outline-none focus:bg-indigo-500 active:scale-95 cursor-pointer;
+}
+
+.btn-cancel {
+    @apply py-2 px-4 text-gray-500 bg-white border border-gray-300 font-medium rounded-md transition-all duration-300 hover:border-gray-400 hover:ring-4 hover:ring-gray-400 hover:ring-opacity-30 outline-none focus:border-gray-400 active:scale-95 cursor-pointer;
+}
+
+.btn-alert {
+    @apply py-2 px-4 bg-red-500 text-white font-medium rounded-md transition-all duration-300 hover:bg-red-600 hover:ring-4 hover:ring-red-500 hover:ring-opacity-30 outline-none focus:bg-red-600 active:scale-95 cursor-pointer;
 }
 
 .btn-disabled {
-    @apply py-2 px-4 bg-indigo-400 text-white font-medium rounded-md cursor-wait opacity-75;
+    @apply py-2 px-4 bg-indigo-400 text-white font-medium rounded-md outline-none cursor-wait opacity-75;
+}
+
+.btn-cancel-disabled {
+    @apply py-2 px-4 text-gray-500 bg-white border border-gray-300 font-medium rounded-md outline-none cursor-wait opacity-75;
+}
+
+.btn-alert-disabled {
+    @apply py-2 px-4 bg-red-500 text-white font-medium rounded-md outline-none cursor-wait opacity-75;
 }
 
 .link {
@@ -57,7 +77,7 @@ a {
 }
 
 label {
-    @apply font-medium;
+    @apply font-medium capitalize;
 }
 
 input {

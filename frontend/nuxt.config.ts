@@ -14,5 +14,10 @@ export default defineNuxtConfig({
 	},
 	routeRules: {
 		'/verify-mail': { ssr: false }
+	},
+	vite: {
+		optimizeDeps: {
+			include: ['vue3-apexcharts', 'apexcharts']
+		}
 	}
 })

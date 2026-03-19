@@ -22,14 +22,14 @@ async function handleLogin() {
     loading.value = true
     resend_mail.value = false
 
-    if (!email.value) {
-        showPopup("Please enter your email first", "error")
+    if (!email.value.trim()) {
+        showPopup("Please enter your email first.", "error")
         loading.value = false
         return
     }
 
     if (!password.value) {
-        showPopup("Please enter your password first", "error")
+        showPopup("Please enter your password first.", "error")
         loading.value = false
         return
     }
@@ -41,7 +41,7 @@ async function handleLogin() {
     }
 
     try {
-        await login(email.value, password.value)
+        await login(email.value.trim(), password.value)
 
         showPopup("Logged in successfully.", "success")
 
@@ -88,12 +88,12 @@ async function resendVerificationEmail() {
             <form class="w-full flex flex-col gap-10" @submit.prevent="handleLogin">
                 <div class="flex flex-col gap-4">
                     <div class="flex flex-col gap-1">
-                        <label for="email">Enter Your Email</label>
+                        <label for="email">Enter your email</label>
                         <input id="email" type="email" v-model="email" :disabled="loading || resend_loading" class="ipt" required>
                     </div>
 
                     <div class="flex flex-col gap-1">
-                        <label for="password">Enter Your Password</label>
+                        <label for="password">Enter your password</label>
                         <input id="password" type="password" v-model="password" :disabled="loading || resend_loading" class="ipt" required>
                     </div>
 

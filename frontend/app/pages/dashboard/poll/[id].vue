@@ -1,8 +1,5 @@
 <script setup>
 import { Icon } from "@iconify/vue"
-const Vue3FlipCountdown = defineAsyncComponent(() =>
-    import('vue3-flip-countdown').then(m => m.Countdown)
-)
 
 definePageMeta({
     middleware: 'auth',
@@ -16,11 +13,16 @@ useHead({
 
 const { public: { wsBase } } = useRuntimeConfig()
 const { accessToken, refresh } = useAuth()
+const { showPopup } = usePopup()
 
 let socket = null
 
 const route = useRoute()
 const id = route.params.id
+
+const Vue3FlipCountdown = defineAsyncComponent(() =>
+    import('vue3-flip-countdown').then(m => m.Countdown)
+)
 
 const poll = ref(null)
 const created_at = ref(null)
@@ -47,7 +49,10 @@ async function connectWS(pollId) {
     if (!accessToken.value) {
         const ok = await refresh()
         if (!ok) {
-            error.value = 'Authentication failed'
+            error.value = 'Authentication failed. Please log in again and try again.'
+            poll.value = null
+            created_at.value = null
+            expires_at.value = null
             loading.value = false
             return
         }
@@ -56,8 +61,6 @@ async function connectWS(pollId) {
     socket = new WebSocket(`${wsBase}/poll/${pollId}`)
 
     socket.onopen = () => {
-        console.log('WS Connected')
-
         socket.send(JSON.stringify({
             type: "poll_view",
             token: accessToken.value
@@ -65,13 +68,14 @@ async function connectWS(pollId) {
     }
 
     socket.onmessage = (event) => {
-        loading.value = false
         const data = JSON.parse(event.data)
 
-        console.log('Received data:', data)
-
         if (data.type === 'error') {
-            error.value = data.message
+            error.value = data?.message || 'Failed to load poll information. Please reload the page and try again.'
+            poll.value = null
+            created_at.value = null
+            expires_at.value = null
+            loading.value = false
             return
         }
 
@@ -99,15 +103,24 @@ async function connectWS(pollId) {
                 hour12: true
             })
         }
+
+        loading.value = false
     }
 
     socket.onerror = () => {
-        error.value = 'Failed to load poll'
+        error.value = 'Failed to load poll information. Please reload the page and try again.'
+        poll.value = null
+        created_at.value = null
+        expires_at.value = null
         loading.value = false
     }
 
     socket.onclose = () => {
-        console.log('WS Disconnected')
+        error.value = 'Failed to load poll information. Please reload the page and try again.'
+        poll.value = null
+        created_at.value = null
+        expires_at.value = null
+        loading.value = false
     }
 }
 
@@ -129,17 +142,17 @@ function sharePoll() {
     if (navigator.share) {
         navigator.share({
             title: 'Vote on this poll',
-            text: 'Check out this poll and vote!',
+            text: 'Have a look at this poll and cast your vote.',
             url: url.value
         })
     } else {
         navigator.clipboard.writeText(url.value)
-        alert('Link copied to clipboard!')
+        showPopup('Link copied successfully. Share it with others.', 'success')
     }
 }
 
 const getBackground = (percentage) => {
-    if (percentage < 0) return {}
+    if (percentage < 0) return
 
     return {
         background: `linear-gradient(to right, #E0E7FF ${percentage}%, white ${percentage}%)`
@@ -153,7 +166,7 @@ const getBackground = (percentage) => {
 
         <p v-else-if="error" class="error-msg">{{ error }}</p>
 
-        <p v-else-if="!poll" class="error-msg">Poll not found</p>
+        <p v-else-if="!poll" class="error-msg">Poll not found.</p>
 
         <div v-else class="w-full flex flex-col items-center gap-4">
             <div class="w-full flex justify-center items-center gap-2">
@@ -186,8 +199,8 @@ const getBackground = (percentage) => {
             </div>
 
             <ClientOnly>
-                <vue3-flip-countdown v-if="poll.expiry !== 'Never' && new Date(poll.expiry) > new Date()" :deadlineISO="poll.expiry" mainColor="#ffffffff" secondFlipColor="#ffffffff" mainFlipBackgroundColor="#6366F1" secondFlipBackgroundColor="#818CF8" labelColor="#818CF8"
-                    countdownSize="clamp(0px, 8vw, 3.5em)" labelSize="clamp(0px, 4vw, 1.5em)" />
+                <Vue3FlipCountdown v-if="poll.expiry !== 'Never' && new Date(poll.expiry) > new Date()" :deadlineISO="poll.expiry" mainColor="#ffffffff" secondFlipColor="#ffffffff" mainFlipBackgroundColor="#6366F1" secondFlipBackgroundColor="#818CF8" labelColor="#818CF8"
+                    countdownSize="clamp(0px, 10vw, 4.2em)" labelSize="clamp(0px, 4vw, 1.5em)" />
             </ClientOnly>
 
             <div v-if="poll.expiry !== 'Never' && new Date(poll.expiry) <= new Date()" class="w-full flex flex-col justify-center items-center border-4 border-double border-gray-300 text-gray-400 p-4 rounded-lg">
@@ -235,6 +248,8 @@ const getBackground = (percentage) => {
                     </tr>
                 </table>
             </div>
+
+            <GraphView :pollId="id" class="w-full" />
         </div>
     </div>
 </template>
