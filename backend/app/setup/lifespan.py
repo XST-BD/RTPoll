@@ -7,14 +7,12 @@ from fastapi import FastAPI
 from app.db.model.poll import PollModel
 from app.deps import SessionLocal
 from app.services.history import sync_poll_history
-from app.setup.cache import sync_votes_db
-from app.utils import poll_timer
+from app.utils.poll import poll_timer
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
     # Startup
-    db_sync_task = asyncio.create_task(sync_votes_db())
     history_sync_task = asyncio.create_task(sync_poll_history())
 
     # Start poll timers for unexpired polls
@@ -38,10 +36,8 @@ async def lifespan(app: FastAPI):
     yield  # FastAPI app is now running
 
     # Shutdown
-    db_sync_task.cancel()
     history_sync_task.cancel()
     await asyncio.gather(
-        db_sync_task,
         history_sync_task,
         return_exceptions=True
     )

@@ -3,7 +3,7 @@ services:
   backend: 
     build:
       context: ./
-      dockerfile: docker/backend/DockerFile
+      dockerfile: docker/DockerFile
     container_name: rtpoll-backend
     privileged: true
     ports:
@@ -29,6 +29,34 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+
+  celery-worker:
+    build:
+      context: ./
+      dockerfile: docker/DockerFile
+    container_name: rtpoll-celery-worker
+    environment:
+    - PYTHONPATH=/app
+    command: celery -A app.setup.worker:celery_app worker -l info
+    depends_on:
+      - redis
+      - backend
+    volumes:
+      - ./backend/data:/app/data
+
+  celery-beat:
+    build:
+      context: ./
+      dockerfile: docker/DockerFile
+    container_name: rtpoll-celery-beat
+    environment:
+    - PYTHONPATH=/app
+    command: celery -A app.setup.worker:celery_app beat -l info
+    depends_on:
+      - redis
+      - backend
+    volumes:
+      - ./backend/data:/app/data
 
 volumes:
   redis_data:
