@@ -1,13 +1,11 @@
 import hashlib
 
-from datetime import datetime, timezone
-
 from fastapi import APIRouter, Depends, Request
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse
 
 from pydantic import BaseModel
-from typing import Optional, Literal
+from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.db.model.user import UserModel, EmailVerification
@@ -15,7 +13,8 @@ from app.deps import get_db, hash_password
 from app.services.email import prepare_verification_link, send_mail_verification
 from app.setup.limiter import limiter
 from app.setup.vars import ENV
-from app.utils import validate_email
+from app.utils.db import delete_hard
+from app.utils.email import validate_email
 
 router = APIRouter()
 
@@ -85,6 +84,9 @@ def verify_mail(
 
             if not validate_email(verification.email):
                 raise HTTPException(status_code=406, detail="Please enter a valid email address.")
+            
+            # Hard deletion if new mail was previously used
+            delete_hard("users", "email=?", (verification.email,))
 
             user.email = verification.email
             verification.used = True
