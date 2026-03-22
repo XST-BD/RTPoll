@@ -1,5 +1,5 @@
 def vote_percentages(
-    votes: dict[int, int], option_ids: list[int],
+    votes: dict[str, int], option_ids: list[str],
 ) -> list[float]:
 
     total = sum(votes.values())

@@ -1,4 +1,3 @@
-import aio_pika
 import asyncio
 
 from datetime import datetime, timezone
@@ -6,8 +5,6 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
 from app.db.model.poll import PollHistoryEntry, PollModel
-from app.deps import get_db
-from app.setup.cache import redis_client
 from app.deps import SessionLocal
 
 HISTORY_RECORD_INTERVAL = 300

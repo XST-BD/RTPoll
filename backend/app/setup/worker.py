@@ -52,11 +52,11 @@ def sync_votes_db():
             cursor, keys = redis_client.scan(cursor, match="poll:*:votes", count=100)   # type: ignore
             
             for key in keys:
-                poll_id = int(key.split(":")[1])
+                poll_id = str(key.split(":")[1])
                 votes = redis_client.hgetall(key)  # type: ignore
                 if not votes:
                     continue
-                votes = {int(k): int(v) for k, v in votes.items()}  # type: ignore
+                votes = {str(k): int(v) for k, v in votes.items()}  # type: ignore
                 poll = db.query(PollModel).filter(PollModel.id == poll_id).first()
                 if not poll:
                     continue
