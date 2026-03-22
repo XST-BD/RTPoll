@@ -9,7 +9,8 @@ from app.db.model.poll import PollModel, PollOption
 from app.deps import SessionLocal
 from app.setup.ws import wsmanager
 from app.setup.cache import redis_client 
-from app.utils import vote_percentages, create_payload, fetch_poll
+from app.utils.ws import transform_for_creator, transform_for_voter
+from app.utils.poll import fetch_poll
 
 router = APIRouter()
 
@@ -27,7 +28,7 @@ class PollResponseModel(BaseModel):
 @router.websocket('/vote/{poll_id}')
 async def vote_ws(
     ws: WebSocket, 
-    poll_id: int,
+    poll_id: str,
 ):
     await ws.accept()
     await wsmanager.connect(poll_id, ws, False)
@@ -66,7 +67,7 @@ async def vote_ws(
                         continue
 
                     try:
-                        option_id = int(data.get("option_id"))
+                        option_id = str(data.get("option_id"))
                     except (TypeError, ValueError):
                         await ws.send_json({"type": "error", "message": "Invalid option"})
                         continue
@@ -81,53 +82,17 @@ async def vote_ws(
                     # Atomic increment
                     await redis_client.hincrby(key, str(option_id), 1) # type: ignore
 
-                    # Broadcast update
-
                     # Read live votes from Redis
                     redis_votes = await redis_client.hgetall(key) # type: ignore
-                    redis_votes = {int(k): int(v) for k, v in redis_votes.items()} # Convert to {option_id: count}
-                    total_votes = sum(redis_votes.values())
-                    option_ids = [opt.id for opt in poll_vote.options]
-                    votes_perc = vote_percentages(redis_votes, option_ids)
-                    votes_data = [
-                        {
-                            "id": opt.id,
-                            "text": opt.text,
-                            "votes": redis_votes.get(opt.id, 0),
-                            "votes_perc": votes_perc[i]
-                        }
-                        for i, opt in enumerate(poll_vote.options)
-                    ]
+                    redis_votes = {str(k): int(v) for k, v in redis_votes.items()} # Convert to {option_id: count}
 
-                    expiry = "Never"
-                    if poll_vote.expires_at: 
-                       expiry = poll_vote.expires_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
-
-                    creation = poll.created_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4]+"Z"
-
-
+                    voter_payload = await transform_for_voter("vote_update", key, poll_vote)
+                    creator_payload = await transform_for_creator("vote_update", key, poll_vote)
+                   
                     await wsmanager.broadcast(
                         poll_id,
-                        voter_payload= {
-                            "type": "vote_update",
-                            "result_public": poll_vote.is_public,
-                            "question": poll_vote.question,
-                            "options": [
-                                {"id": o["id"], "text": o["text"], "votes_perc": o["votes_perc"] if poll_vote.is_public else -1}
-                                for o in votes_data
-                            ],
-                            "total_votes": total_votes  if poll_vote.is_public else -1,
-                            "expiry": expiry,
-                        },
-                        creator_payload= {
-                            "type": "vote_update",
-                            "result_public": poll_vote.is_public,
-                            "question": poll_vote.question,
-                            "options": votes_data,
-                            "total_votes": total_votes,
-                            "creation": creation,
-                            "expiry": expiry,
-                        },
+                        voter_payload=voter_payload,
+                        creator_payload=creator_payload,
                     )
                 finally: 
                     db.close()
@@ -148,7 +113,7 @@ async def vote_ws(
                         
                     # Read live votes from Redis
                     key = f'poll:{poll_id}:votes'
-                    payload = await create_payload("vote_data", key, poll_vote)
+                    payload = await transform_for_voter("vote_data", key, poll_vote)
                     await ws.send_json(payload)
                 except Exception as e:
                     # Catch everything so the WS doesn’t disconnect

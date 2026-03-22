@@ -18,7 +18,7 @@ from app.setup.paginator import CustomParams
 from app.setup.cache import redis_client
 from app.setup.limiter import limiter
 from app.setup.ws import wsmanager
-from app.utils import poll_timer
+from app.utils.poll import poll_timer
 
 router = APIRouter()
 
@@ -101,7 +101,7 @@ async def poll_view(
 
 @router.delete('/{poll_id}')
 async def poll_delete(
-    poll_id: int,
+    poll_id: str,
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
 ):
@@ -125,7 +125,7 @@ async def poll_delete(
 
 
 class PollResponseAllModel(BaseModel):
-    id: int
+    id: str
     question: str
     expires_at: datetime | str
     top_option: str
@@ -176,7 +176,7 @@ async def poll_view_all(
         # Redis live votes
         key = f'poll:{poll.id}:votes'
         redis_votes = await redis_client.hgetall(key)  # type: ignore
-        redis_votes = {int(k): int(v) for k, v in redis_votes.items()}
+        redis_votes = {str(k): int(v) for k, v in redis_votes.items()}
 
         if redis_votes: 
             top_option_id = max(redis_votes, key=lambda k: redis_votes[k])
