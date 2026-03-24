@@ -58,7 +58,35 @@ services:
     volumes:
       - ./backend/data:/app/data
 
+  database:
+    container_name: rtpoll-psql
+    image: postgres:16
+    restart: unless-stopped
+    env_file:
+    - ./backend/.env
+    volumes:
+    - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    container_name: rtpoll-nginx
+    image: nginx:stable
+    ports:
+      - "80:80"      # HTTP
+      - "443:443"    # HTTPS
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - backend
+
+
 volumes:
+  postgres_data:
   redis_data:
   nginx_certs:
 
