@@ -21,4 +21,5 @@
 
 ### Notes
 This is a self-signed certificate, not for deployment
+For more details check docs/
 
