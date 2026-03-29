@@ -13,7 +13,7 @@ from app.setup.limiter import limiter
 from app.services.auth import create_access_token, decode_token, create_refresh_token
 from app.services.email import send_mail_verification, prepare_verification_link
 from app.setup.vars import ENV
-from app.utils import validate_email
+from app.utils.email import validate_email
 
 
 router = APIRouter()

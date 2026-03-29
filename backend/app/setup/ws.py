@@ -4,15 +4,15 @@ from fastapi import WebSocket
 class WSConnectionManager: 
 
     def __init__(self):
-        self.rooms: Dict[int, List[tuple[WebSocket, bool]]] = {}
+        self.rooms: Dict[str, List[tuple[WebSocket, bool]]] = {}
     
-    async def connect(self, poll_id: int, ws: WebSocket, is_creator: bool):
+    async def connect(self, poll_id: str, ws: WebSocket, is_creator: bool):
         if poll_id not in self.rooms: 
             self.rooms[poll_id] = []
 
         self.rooms[poll_id].append((ws, is_creator))
 
-    def disconnect(self, poll_id: int, ws: WebSocket):
+    def disconnect(self, poll_id: str, ws: WebSocket):
         if poll_id not in self.rooms: 
             return
         
@@ -21,12 +21,7 @@ class WSConnectionManager:
         if not self.rooms[poll_id]:
             del self.rooms[poll_id] 
 
-    async def broadcast(
-        self, 
-        poll_id: int, 
-        voter_payload,
-        creator_payload,
-    ):
+    async def broadcast(self, poll_id: str, voter_payload, creator_payload):
         if poll_id not in self.rooms: 
             return 
 
@@ -38,7 +33,7 @@ class WSConnectionManager:
 
             try: 
                 await ws.send_json(payload)
-            except: 
+            except Exception as e: 
                 self.disconnect(poll_id, ws)
 
 wsmanager = WSConnectionManager()

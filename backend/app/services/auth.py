@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from fastapi import Depends
+from fastapi import Depends, WebSocket
 from fastapi.exceptions import HTTPException
 from fastapi.security import OAuth2PasswordBearer
 
@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.db.model.user import UserModel
 from app.deps import hash_password, verify_password, get_db
 from app.setup.vars import SECRET_KEY
+from app.setup.ws import wsmanager
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 1
@@ -52,3 +53,45 @@ def get_current_user(
 
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+async def validate_ws_user(
+    db: Session,
+    user: UserModel | None, 
+    poll_id: str,
+    token, ws: WebSocket
+):
+    if not user:
+        if not token:
+            await ws.send_json({
+                "type": "error",
+                "message": "Missing access token"
+            })
+            await ws.close(code=1008)
+            return
+
+        try:
+            payload = decode_token(token)
+            email = payload.get("sub")
+
+            user = (
+                db.query(UserModel)
+                .filter(UserModel.email == email)
+                .first()
+            )
+
+            if not user:
+                await ws.send_json({
+                    "type": "error",
+                    "message": "Unauthorized"
+                })
+                await ws.close(code=1008)
+                return
+            await wsmanager.connect(poll_id, ws, True)
+
+        except JWTError:
+            await ws.send_json({
+                "type": "error",
+                "message": "Invalid token"
+            })
+            await ws.close(code=1008)
+            return

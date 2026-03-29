@@ -12,7 +12,12 @@ class PollOption(Base):
     __tablename__ = "poll_options"
     __table_args__ = (UniqueConstraint("poll_id", "position"),)
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    # id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[str] = mapped_column(
+        String(18), 
+        primary_key=True, index=True, unique=True,
+        default= lambda: str(uuid.uuid4()))
+
     poll_id: Mapped[int] = mapped_column(ForeignKey('polls.id', ondelete="CASCADE"), index=True, nullable=False)
     position: Mapped[int] = mapped_column(Integer)
     text: Mapped[str] = mapped_column(String, nullable=False)
@@ -23,7 +28,13 @@ class PollOption(Base):
 class PollModel(Base):
     __tablename__ = "polls"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    # id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[str] = mapped_column(
+        String(18),
+        primary_key=True, index=True, unique=True,
+        default= lambda: str(uuid.uuid4())
+    )
+
     question: Mapped[str] = mapped_column(String, nullable=False)
     options: Mapped[list['PollOption']] = relationship(
         back_populates='related_poll',

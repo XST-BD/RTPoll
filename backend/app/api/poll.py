@@ -18,7 +18,7 @@ from app.setup.paginator import CustomParams
 from app.setup.cache import redis_client
 from app.setup.limiter import limiter
 from app.setup.ws import wsmanager
-from app.utils import poll_timer
+from app.utils.poll import poll_timer
 
 router = APIRouter()
 
@@ -101,7 +101,7 @@ async def poll_view(
 
 @router.delete('/{poll_id}')
 async def poll_delete(
-    poll_id: int,
+    poll_id: str,
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
 ):
@@ -125,7 +125,7 @@ async def poll_delete(
 
 
 class PollResponseAllModel(BaseModel):
-    id: int
+    id: str
     question: str
     expires_at: datetime | str
     top_option: str
@@ -176,7 +176,7 @@ async def poll_view_all(
         # Redis live votes
         key = f'poll:{poll.id}:votes'
         redis_votes = await redis_client.hgetall(key)  # type: ignore
-        redis_votes = {int(k): int(v) for k, v in redis_votes.items()}
+        redis_votes = {str(k): int(v) for k, v in redis_votes.items()}
 
         if redis_votes: 
             top_option_id = max(redis_votes, key=lambda k: redis_votes[k])
@@ -247,32 +247,73 @@ async def poll_delete_all(
     return {"message": "All polls deleted"}
 
 
-class PollResultResponse(BaseModel):
-    x: str
-    y: int
 
-@router.get('/{poll_id}/result', response_model=Page[PollResultResponse])
-@limiter.limit('15/Minute')  # Max 15 request per minute per IP
-def poll_result(
-    request: Request,
-    poll_id: int,
-    params: CustomParams = Depends(),
+# class PollResultResponse(BaseModel):
+#     x: str
+#     y: int
+
+# @router.get('/{poll_id}/result')
+# @limiter.limit('5/Minute')  # Max 15 request per minute per User/IP
+# def poll_result(
+#     request: Request,
+#     poll_id: int,
+#     db: Session = Depends(get_db),
+#     user: UserModel = Depends(get_current_user),
+# ):
+    
+#     entries = db.query(PollHistoryEntry)\
+#         .filter(PollHistoryEntry.poll_id == poll_id)\
+#         .order_by(PollHistoryEntry.timestamp).all()
+    
+#     if not entries:
+#         return JSONResponse(status_code=200, content={"detail": "Poll history is empty"})
+
+#     items: list[PollResultResponse] = []
+
+#     for entry in entries:
+#         x_coordinate = entry.timestamp.isoformat()
+#         y_coordinate = entry.value
+
+#         items.append(PollResultResponse(x=x_coordinate, y=y_coordinate))
+
+#     return JSONResponse(status_code=200, content={"detail": items})
+
+
+# endpoint for poll search
+ps_router = APIRouter()
+
+class PollSearchModel(BaseModel):
+    search_query: str
+
+@ps_router.post('/poll_search', response_model=Page[PollResponseModel])
+async def search_poll(
+    payload: PollSearchModel,
     db: Session = Depends(get_db),
+    user: UserModel = Depends(get_current_user),
+    params: CustomParams = Depends(),
 ):
-    
-    entries = db.query(PollHistoryEntry)\
-        .filter(PollHistoryEntry.poll_id == poll_id)\
-        .order_by(PollHistoryEntry.timestamp).all()
-    
-    if not entries:
-        return JSONResponse(status_code=200, content={"detail": "Poll history is empty"})
+    polls_query = db.query(PollModel).filter(PollModel.creator_id==user.id)
 
     items = []
 
-    for entry in entries:
-        x_coordinate = entry.timestamp.isoformat()
-        y_coordinate = entry.value
+    for poll in polls_query:
 
-        items.append(PollResultResponse(x=x_coordinate, y=y_coordinate))
+        if payload.search_query in poll.question:
+
+            # Redis live votes
+            key = f'poll:{poll.id}:votes'
+            redis_votes = await redis_client.hgetall(key)  # type: ignore
+            redis_votes = {int(k): int(v) for k, v in redis_votes.items()}
+
+            poll_expires_at = "Never" if poll.expires_at is None else poll.expires_at.replace(tzinfo=timezone.utc)
+            total_votes = sum(redis_votes.values())
+
+            items.append(
+                PollResponseModel(
+                    question=poll.question,
+                    expires_at=poll_expires_at,
+                    total_votes=total_votes,
+                )
+            )
 
     return paginate(items, params)
