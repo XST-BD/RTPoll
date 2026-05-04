@@ -171,9 +171,11 @@ const getBackground = (percentage) => {
         <div v-else class="w-full flex flex-col items-center gap-4">
             <div class="w-full flex justify-center items-center gap-2">
                 <div class="w-full flex justify-center">
-                    <input class="flex-1 px-3 py-1 flex font-mono border-2 border-r-0 border-indigo-400 rounded-l-full" :value="url" readonly @click="$event.target.select()">
+                    <input class="flex-1 px-3 py-1 flex font-mono border-2 border-r-0 border-indigo-400 rounded-l-full"
+                        :value="url" readonly @click="$event.target.select()">
 
-                    <button @click="sharePoll(id)" class="bg-indigo-400 rounded-r-full py-1 px-4 hover:bg-indigo-500 transition-all duration-300 ease-in-out">
+                    <button @click="sharePoll(id)"
+                        class="bg-indigo-400 rounded-r-full py-1 px-4 hover:bg-indigo-500 transition-all duration-500 ease-in-out">
                         <Icon icon="fluent:share-16-regular" class="text-white text-2xl shrink-0" />
                     </button>
                 </div>
@@ -187,7 +189,9 @@ const getBackground = (percentage) => {
                 </div>
 
                 <ul class="border-2 border-indigo-400 rounded-b-xl overflow-hidden">
-                    <li v-for="(option, index) in poll.options" :key="index" class="flex justify-between gap-3 items-center border-t-2 border-indigo-400 p-4 text-xl" :style="getBackground(option.votes_perc)">
+                    <li v-for="(option, index) in poll.options" :key="index"
+                        class="flex justify-between gap-3 items-center border-t-2 border-indigo-400 p-4 text-xl"
+                        :style="getBackground(option.votes_perc)">
                         <div class="text-indigo-400 flex items-start gap-3">
                             <span class="font-[Anton] text-md">{{ index + 1 }}.</span>
                             <span>{{ option.text }}</span>
@@ -199,11 +203,14 @@ const getBackground = (percentage) => {
             </div>
 
             <ClientOnly>
-                <Vue3FlipCountdown v-if="poll.expiry !== 'Never' && new Date(poll.expiry) > new Date()" :deadlineISO="poll.expiry" mainColor="#ffffffff" secondFlipColor="#ffffffff" mainFlipBackgroundColor="#6366F1" secondFlipBackgroundColor="#818CF8" labelColor="#818CF8"
+                <Vue3FlipCountdown v-if="poll.expiry !== 'Never' && new Date(poll.expiry) > new Date()"
+                    :deadlineISO="poll.expiry" mainColor="#ffffffff" secondFlipColor="#ffffffff"
+                    mainFlipBackgroundColor="#6366F1" secondFlipBackgroundColor="#818CF8" labelColor="#818CF8"
                     countdownSize="clamp(0px, 10vw, 4.2em)" labelSize="clamp(0px, 4vw, 1.5em)" />
             </ClientOnly>
 
-            <div v-if="poll.expiry !== 'Never' && new Date(poll.expiry) <= new Date()" class="w-full flex flex-col justify-center items-center border-4 border-double border-gray-300 text-gray-400 p-4 rounded-lg">
+            <div v-if="poll.expiry !== 'Never' && new Date(poll.expiry) <= new Date()"
+                class="w-full flex flex-col justify-center items-center border-4 border-double border-gray-300 text-gray-400 p-4 rounded-lg">
                 Poll is expired
             </div>
 

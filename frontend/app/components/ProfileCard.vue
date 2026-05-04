@@ -20,11 +20,13 @@ defineProps({
         </div>
 
         <div class="flex justify-center items-center border-t-2 border-indigo-400">
-            <a :href="github" target="_blank" class="w-full bg-indigo-400 hover:bg-indigo-500 p-3 flex justify-center transition-all duration-300 ease-in-out">
+            <a :href="github" target="_blank"
+                class="w-full bg-indigo-400 hover:bg-indigo-500 p-3 flex justify-center transition-all duration-500 ease-in-out">
                 <Icon icon="mdi:github" class="text-3xl text-white" />
             </a>
 
-            <a :href="linkedin" target="_blank" class="w-full bg-indigo-400 hover:bg-indigo-500 p-3 flex justify-center transition-colors duration-300 ease-in-out">
+            <a :href="linkedin" target="_blank"
+                class="w-full bg-indigo-400 hover:bg-indigo-500 p-3 flex justify-center transition-colors duration-500 ease-in-out">
                 <Icon icon="mdi:linkedin" class="text-3xl text-white" />
             </a>
         </div>

@@ -94,20 +94,25 @@ onMounted(() => {
 
         <div v-else class="w-full flex flex-col justify-center items-center gap-5">
             <div class="w-full flex flex-wrap justify-center items-center gap-3">
-                <PollCard v-for="poll in running_polls" :key="poll.id" @click="navigateTo(`/dashboard/poll/${poll.id}`)" :question="poll.question" :top_option="poll.top_option" :total_votes="poll.total_votes" :expires_at="poll.expires_at.split('T')[0].split('-').reverse().join('-')" />
+                <PollCard v-for="poll in running_polls" :key="poll.id" @click="navigateTo(`/dashboard/poll/${poll.id}`)"
+                    :question="poll.question" :top_option="poll.top_option" :total_votes="poll.total_votes"
+                    :expires_at="poll.expires_at.split('T')[0].split('-').reverse().join('-')" />
             </div>
 
             <div v-if="running_pages > 1" class="flex justify-center items-center gap-2 text-xs">
-                <button @click="prevRunningPage" :disabled="running_page === 1" class="px-3 py-1 rounded-lg border border-indigo-400 text-indigo-400 hover:bg-indigo-100 hover:border-indigo-500 hover:text-indigo-500 active:scale-90  disabled:opacity-35 transition-all duration-300 ease-in-out">
+                <button @click="prevRunningPage" :disabled="running_page === 1"
+                    class="px-3 py-1 rounded-lg border border-indigo-400 text-indigo-400 hover:bg-indigo-100 hover:border-indigo-500 hover:text-indigo-500 active:scale-90  disabled:opacity-35 transition-all duration-500 ease-in-out">
                     &#10229;
                 </button>
 
-                <button v-for="page in runningVisiblePages" :key="page" :disabled="page === '...'" @click="page !== '...' && goRunningPage(page)" class="px-3 py-1 rounded-lg border active:scale-90"
-                    :class="page === running_page ? 'bg-indigo-400 text-white border-indigo-400' : 'border-gray-400 text-gray-400 hover:bg-indigo-100 hover:border-indigo-500 hover:text-indigo-500 transition-all duration-300 ease-in-out'">
+                <button v-for="page in runningVisiblePages" :key="page" :disabled="page === '...'"
+                    @click="page !== '...' && goRunningPage(page)" class="px-3 py-1 rounded-lg border active:scale-90"
+                    :class="page === running_page ? 'bg-indigo-400 text-white border-indigo-400' : 'border-gray-400 text-gray-400 hover:bg-indigo-100 hover:border-indigo-500 hover:text-indigo-500 transition-all duration-500 ease-in-out'">
                     {{ page }}
                 </button>
 
-                <button @click="nextRunningPage" :disabled="running_page === running_pages" class="px-3 py-1 rounded-lg border border-indigo-400 text-indigo-400 hover:bg-indigo-100 hover:border-indigo-500 hover:text-indigo-500 active:scale-90 disabled:opacity-35 transition-all duration-300 ease-in-out">
+                <button @click="nextRunningPage" :disabled="running_page === running_pages"
+                    class="px-3 py-1 rounded-lg border border-indigo-400 text-indigo-400 hover:bg-indigo-100 hover:border-indigo-500 hover:text-indigo-500 active:scale-90 disabled:opacity-35 transition-all duration-500 ease-in-out">
                     &#10230;
                 </button>
             </div>

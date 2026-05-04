@@ -11,7 +11,7 @@ useHead({
 
 const { public: { apiBase } } = useRuntimeConfig()
 const { authFetch } = useAuth()
-const { showPopup, showError } = usePopup() 
+const { showPopup, showError } = usePopup()
 
 const duration = ref('infinite')
 const showResults = ref('no')
@@ -109,7 +109,8 @@ async function createPoll() {
 
                 <div v-if="duration === 'custom'" class="flex flex-col gap-1">
                     <label for="custom_duration">Enter custom poll duration</label>
-                    <input type="datetime-local" :min="now" v-model="customDuration" :disabled="loading" class="ipt" required />
+                    <input type="datetime-local" :min="now" v-model="customDuration" :disabled="loading" class="ipt"
+                        required />
                 </div>
 
                 <div class="flex flex-col gap-1">
@@ -123,23 +124,29 @@ async function createPoll() {
 
                 <div class="flex flex-col gap-1">
                     <label for="question">Enter your question or opinion</label>
-                    <textarea id="question" v-model="question" :disabled="loading" class="ipt h-20 resize-none" required />
+                    <textarea id="question" v-model="question" :disabled="loading" class="ipt h-20 resize-none"
+                        required />
                 </div>
 
                 <div class="flex flex-col gap-2">
                     <div class="flex items-center justify-between">
                         <label>Add options</label>
 
-                        <button type="button" @click="addOption" :disabled="loading" class="text-sm text-indigo-400 hover:text-indigo-500 font-semibold transition-all duration-300 ease-in-out">
+                        <button type="button" @click="addOption" :disabled="loading"
+                            class="text-sm text-indigo-400 hover:text-indigo-500 font-semibold transition-all duration-500 ease-in-out">
                             + Add Option
                         </button>
                     </div>
 
                     <div class="flex flex-col gap-2">
                         <div v-for="(option, idx) in options" :key="idx" class="flex items-center gap-2">
-                            <input type="text" :placeholder="`Option ${idx + 1}`" v-model="options[idx]" :disabled="loading" class="ipt flex-1" required>
+                            <input type="text" :placeholder="`Option ${idx + 1}`" v-model="options[idx]"
+                                :disabled="loading" class="ipt flex-1" required>
 
-                            <button type="button" class="p-2 text-sm text-red-500 hover:text-red-600 font-bold transition-all duration-300 ease-in-out" :class="{ 'opacity-50 cursor-not-allowed': options.length === 2 }" :disabled="options.length === 2 || loading" title="Remove option"
+                            <button type="button"
+                                class="p-2 text-sm text-red-500 hover:text-red-600 font-bold transition-all duration-500 ease-in-out"
+                                :class="{ 'opacity-50 cursor-not-allowed': options.length === 2 }"
+                                :disabled="options.length === 2 || loading" title="Remove option"
                                 @click="removeOption(idx)">
                                 ✕
                             </button>

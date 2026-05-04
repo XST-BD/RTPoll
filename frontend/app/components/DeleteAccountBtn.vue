@@ -47,26 +47,31 @@ async function deleteAccount() {
 
 <template>
     <div class="flex-1">
-        <button @click="showConfirm = true" :disabled="loading" class="w-full text-nowrap p-2 bg-red-500 text-white font-medium rounded-md transition-all duration-300 hover:bg-red-600 hover:ring-4 hover:ring-red-500 hover:ring-opacity-30 focus:outline-none focus:bg-red-600 active:scale-95 cursor-pointer">
+        <button @click="showConfirm = true" :disabled="loading"
+            class="w-full text-nowrap p-2 bg-red-500 text-white font-medium rounded-md transition-all duration-500 hover:bg-red-600 hover:ring-4 hover:ring-red-500 hover:ring-opacity-30 focus:outline-none focus:bg-red-600 active:scale-95 cursor-pointer">
             Delete Account
         </button>
 
         <div v-if="showConfirm" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-10">
-            <div class="w-[400px] bg-white py-10 px-5 m-3 rounded-lg text-center flex flex-col justify-center items-center gap-4">
+            <div
+                class="w-[400px] bg-white py-10 px-5 m-3 rounded-lg text-center flex flex-col justify-center items-center gap-4">
                 <h4 class="text-red-500">Delete Account Permanently?</h4>
 
                 <p class="text-sm text-gray-500">
                     All your polls and data will be lost. This action cannot be undone.
                 </p>
 
-                <input type="password" placeholder="Enter your password to confirm" v-model="password" class="w-full p-2 border rounded-md border-red-300 transition duration-300 focus:outline-none focus:border-red-400 focus:ring-4 focus:ring-red-400 focus:ring-opacity-30" />
+                <input type="password" placeholder="Enter your password to confirm" v-model="password"
+                    class="w-full p-2 border rounded-md border-red-300 transition duration-500 focus:outline-none focus:border-red-400 focus:ring-4 focus:ring-red-400 focus:ring-opacity-30" />
 
                 <div class="flex justify-center items-center gap-3">
-                    <button @click="showConfirm = false" :disabled="loading" :class="loading ? 'btn-cancel-disabled' : 'btn-cancel'">
+                    <button @click="showConfirm = false" :disabled="loading"
+                        :class="loading ? 'btn-cancel-disabled' : 'btn-cancel'">
                         Cancel
                     </button>
 
-                    <button @click="deleteAccount" :disabled="loading" :class="loading ? 'btn-alert-disabled' : 'btn-alert'">
+                    <button @click="deleteAccount" :disabled="loading"
+                        :class="loading ? 'btn-alert-disabled' : 'btn-alert'">
                         Confirm
                     </button>
                 </div>

@@ -1,0 +1,42 @@
+<script setup>
+const menu = ref(false)
+
+function toggleMenu() {
+    menu.value = !menu.value
+}
+</script>
+
+<template>
+    <header class="self-center w-full py-2 px-5 flex sm:flex-row justify-between flex-col gap-4">
+        <section class="flex justify-between items-center">
+            <NuxtLink to="/" class="flex justify-center items-center gap-2">
+                <img src="/rtpoll-icon.svg" alt="RTPoll Logo" class="w-12 h-12" />
+
+                <svg width="105" height="50">
+                    <text x="50%" y="45" text-anchor="middle" font-size="45" font-family="Anton" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="text-indigo-400">RTPoll</text>
+                </svg>
+            </NuxtLink>
+
+            <div class="cursor-pointer flex flex-col gap-[5px] sm:hidden" @click="toggleMenu">
+                <span class="block bg-indigo-400 w-6 h-[2px] rounded"></span>
+                <span class="block bg-indigo-400 w-6 h-[2px] rounded"></span>
+                <span class="block bg-indigo-400 w-6 h-[2px] rounded"></span>
+            </div>
+        </section>
+
+        <nav
+            :class="['self-center bg-indigo-100 sm:bg-white flex-col sm:flex sm:flex-row sm:gap-3 text-center', menu ? 'flex' : 'hidden sm:flex']">
+            <NuxtLink to="/login"
+                class="sm:w-fit w-[97vw] py-2 px-6 sm:ring-2 ring-indigo-400 text-indigo-400 font-medium sm:rounded-lg hover:bg-indigo-200 sm:hover:bg-indigo-500 sm:hover:ring-indigo-500 sm:hover:text-white duration-500 ease-in-out  hover:scale-98 sm:text-shadow-2xs sm:shadow-md">
+                Login
+            </NuxtLink>
+
+            <NuxtLink to="/register"
+                class="sm:w-fit w-[97vw] py-2 px-6 sm:ring-2 ring-indigo-400 sm:bg-indigo-400 sm:text-white text-indigo-400 font-medium sm:rounded-lg sm:hover:text-white hover:bg-indigo-200 sm:hover:bg-indigo-500 sm:hover:ring-indigo-500 duration-500 ease-in-out hover:scale-98 sm:text-shadow-2xs sm:shadow-md">
+                Sign Up
+            </NuxtLink>
+        </nav>
+    </header>
+</template>
