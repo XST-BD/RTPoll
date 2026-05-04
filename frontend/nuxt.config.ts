@@ -19,5 +19,8 @@ export default defineNuxtConfig({
 		optimizeDeps: {
 			include: ['vue3-apexcharts', 'apexcharts']
 		}
-	}
+	},
+	nitro: {
+		preset: 'cloudflare-pages'
+	},
 })
