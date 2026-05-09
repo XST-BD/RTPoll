@@ -2,7 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from datetime import timezone, datetime
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 
 from app.db.model.poll import PollModel
 from app.deps import SessionLocal
@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
 
         for poll in unexpired_polls:
             if poll.expires_at:
-                asyncio.create_task(poll_timer(poll.id, poll.expires_at))
+                asyncio.create_task(poll_timer(poll_id=poll.id, expires_at=poll.expires_at))
     finally:
         db.close()
     

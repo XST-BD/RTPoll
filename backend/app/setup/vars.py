@@ -3,7 +3,7 @@ import os
 from datetime import timedelta, datetime
 from dotenv import load_dotenv
 
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, WebSocket
 
 from app.setup.lifespan import lifespan
 
