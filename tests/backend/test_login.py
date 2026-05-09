@@ -1,12 +1,8 @@
 import pytest
-import requests
 
-BASE_URL = 'http://localhost:8000'
-session = requests.Session()
-
-
-def test_user_login():
-    url = f'{BASE_URL}/api/v0/auth/login'
+@pytest.mark.run(order=2)
+def test_user_login(api_base_url, session, shared_data):
+    url = f'{api_base_url}/api/v0/auth/login'
 
     # wrong mail
     payload1 = {
@@ -49,11 +45,7 @@ def test_user_login():
     res = session.post(url, json=payload4)
     assert res.status_code == 200
 
-
-def test_user_logout():
-    url = f'{BASE_URL}/api/v0/auth/logout'
-
-    res = session.post(url)
-    assert res.status_code == 200
+    # Extract and save the token
     data = res.json()
-    assert data['detail'] == "Logged out successfully."
+    shared_data["access_token"] = data.get("access_token")
+

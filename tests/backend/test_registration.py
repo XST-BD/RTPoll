@@ -4,10 +4,10 @@ import requests
 
 BASE_URL = 'http://localhost:8000'
 
+@pytest.mark.run(order=1)
+def test_user_registration(api_base_url):
 
-def test_user_registration():
-
-    url = f'{BASE_URL}/api/v0/auth/register'
+    url = f'{api_base_url}/api/v0/auth/register'
 
     # password mismatch =========================================================
     random_num = random.randint(101, 999)
