@@ -56,7 +56,7 @@ async def poll_create(
     db.refresh(poll)
 
     if poll.expires_at: 
-        bgtasks.add_task(poll_timer, poll.id, poll.expires_at)
+        bgtasks.add_task(poll_timer, poll.id, poll.expires_at) # type: ignore
 
     return {
         "message": "Poll created",
@@ -78,7 +78,7 @@ class PollResponseModel(BaseModel):
 
 @router.get('/{poll_id}', response_model=PollResponseModel)
 async def poll_view(
-    poll_id: int,
+    poll_id: str,
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
 ):
@@ -100,13 +100,15 @@ async def poll_view(
         for row in db.query(PollOption.id, PollOption.text, PollOption.votes).filter_by(poll_id=poll.id)
     ]
 
-    PollResponseModel(
+    respnose_data = PollResponseModel(
         question=poll.question,
         expires_at=poll_expires_at,
         is_indefinite=poll.is_indefinite,
         total_votes=total_votes,
         options=poll_options,
     )
+
+    return respnose_data
 
 
 @router.delete('/{poll_id}')
@@ -126,8 +128,7 @@ async def poll_delete(
     # Broadcast poll deletion message
     await wsmanager.broadcast(
         poll_id=poll.id,
-        voter_payload={"type": "error", "message": "Poll not found or deleted"},
-        creator_payload={"type": "error", "message": "Poll not found or deleted"},
+        payload={"type": "error", "message": "Poll not found or deleted"},
     )
     db.commit()
     
@@ -236,8 +237,7 @@ async def poll_delete_all(
             # Broadcast poll deletion message
             await wsmanager.broadcast(
                 poll_id=poll.id,
-                voter_payload={"type": "error", "message": "Poll not found or deleted"},
-                creator_payload={"type": "error", "message": "Poll not found or deleted"},
+                payload={"type": "error", "message": "Poll not found or deleted"},
             )
 
     else:
@@ -248,8 +248,7 @@ async def poll_delete_all(
             # Broadcast poll deletion message
             await wsmanager.broadcast(
                 poll_id=poll.id,
-                voter_payload={"type": "error", "message": "Poll not found or deleted"},
-                creator_payload={"type": "error", "message": "Poll not found or deleted"},
+                payload={"type": "error", "message": "Poll not found or deleted"}
             )
 
     db.commit()
