@@ -10,12 +10,15 @@ from alembic import context
 
 from app.db.base import Base
 
+from app.db.model.user import UserModel, EmailVerification
+from app.db.model.poll import PollModel, PollHistoryEntry, PollOption
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 load_dotenv()
 config = context.config
 
-DATABASE_URL = os.getenv("DATABASE_URL", "DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL1", "DATABASE_URL1")
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
 # Interpret the config file for Python logging.

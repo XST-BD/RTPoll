@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-import uuid
+import nanoid
 
 from sqlalchemy import Boolean, String, JSON, Column, Integer, ForeignKey, DateTime, func, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -16,7 +16,7 @@ class PollOption(Base):
     id: Mapped[str] = mapped_column(
         String(18), 
         primary_key=True, index=True, unique=True,
-        default= lambda: str(uuid.uuid4()))
+        default= lambda: str(nanoid.generate(size=12)))
 
     poll_id: Mapped[int] = mapped_column(ForeignKey('polls.id', ondelete="CASCADE"), index=True, nullable=False)
     position: Mapped[int] = mapped_column(Integer)
@@ -32,7 +32,7 @@ class PollModel(Base):
     id: Mapped[str] = mapped_column(
         String(18),
         primary_key=True, index=True, unique=True,
-        default= lambda: str(uuid.uuid4())
+        default= lambda: str(nanoid.generate(size=12))
     )
 
     question: Mapped[str] = mapped_column(String, nullable=False)

@@ -56,7 +56,7 @@ async def poll_create(
     db.refresh(poll)
 
     if poll.expires_at: 
-        bgtasks.add_task(poll_timer, poll.id, poll.expires_at)
+        bgtasks.add_task(poll_timer, poll.id, poll.expires_at) # type: ignore
 
     return {
         "message": "Poll created",
@@ -68,14 +68,17 @@ async def poll_create(
 class PollResponseModel(BaseModel):
     question: str
     expires_at: datetime | str
+    is_indefinite: bool
     total_votes: int
+    options: list[tuple[str, str, int]]
 
     class Config:
         from_attributes = True
 
+
 @router.get('/{poll_id}', response_model=PollResponseModel)
 async def poll_view(
-    poll_id: int,
+    poll_id: str,
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
 ):
@@ -92,11 +95,20 @@ async def poll_view(
     poll_expires_at = "Never" if poll.expires_at is None else poll.expires_at.replace(tzinfo=timezone.utc)
     total_votes = sum(redis_votes.values())
 
-    PollResponseModel(
+    poll_options = [
+        (row.id, row.text, row.votes)
+        for row in db.query(PollOption.id, PollOption.text, PollOption.votes).filter_by(poll_id=poll.id)
+    ]
+
+    respnose_data = PollResponseModel(
         question=poll.question,
         expires_at=poll_expires_at,
+        is_indefinite=poll.is_indefinite,
         total_votes=total_votes,
+        options=poll_options,
     )
+
+    return respnose_data
 
 
 @router.delete('/{poll_id}')
@@ -116,8 +128,7 @@ async def poll_delete(
     # Broadcast poll deletion message
     await wsmanager.broadcast(
         poll_id=poll.id,
-        voter_payload={"type": "error", "message": "Poll not found or deleted"},
-        creator_payload={"type": "error", "message": "Poll not found or deleted"},
+        payload={"type": "error", "message": "Poll not found or deleted"},
     )
     db.commit()
     
@@ -226,8 +237,7 @@ async def poll_delete_all(
             # Broadcast poll deletion message
             await wsmanager.broadcast(
                 poll_id=poll.id,
-                voter_payload={"type": "error", "message": "Poll not found or deleted"},
-                creator_payload={"type": "error", "message": "Poll not found or deleted"},
+                payload={"type": "error", "message": "Poll not found or deleted"},
             )
 
     else:
@@ -238,82 +248,9 @@ async def poll_delete_all(
             # Broadcast poll deletion message
             await wsmanager.broadcast(
                 poll_id=poll.id,
-                voter_payload={"type": "error", "message": "Poll not found or deleted"},
-                creator_payload={"type": "error", "message": "Poll not found or deleted"},
+                payload={"type": "error", "message": "Poll not found or deleted"}
             )
 
     db.commit()
 
     return {"message": "All polls deleted"}
-
-
-
-# class PollResultResponse(BaseModel):
-#     x: str
-#     y: int
-
-# @router.get('/{poll_id}/result')
-# @limiter.limit('5/Minute')  # Max 15 request per minute per User/IP
-# def poll_result(
-#     request: Request,
-#     poll_id: int,
-#     db: Session = Depends(get_db),
-#     user: UserModel = Depends(get_current_user),
-# ):
-    
-#     entries = db.query(PollHistoryEntry)\
-#         .filter(PollHistoryEntry.poll_id == poll_id)\
-#         .order_by(PollHistoryEntry.timestamp).all()
-    
-#     if not entries:
-#         return JSONResponse(status_code=200, content={"detail": "Poll history is empty"})
-
-#     items: list[PollResultResponse] = []
-
-#     for entry in entries:
-#         x_coordinate = entry.timestamp.isoformat()
-#         y_coordinate = entry.value
-
-#         items.append(PollResultResponse(x=x_coordinate, y=y_coordinate))
-
-#     return JSONResponse(status_code=200, content={"detail": items})
-
-
-# endpoint for poll search
-ps_router = APIRouter()
-
-class PollSearchModel(BaseModel):
-    search_query: str
-
-@ps_router.post('/poll_search', response_model=Page[PollResponseModel])
-async def search_poll(
-    payload: PollSearchModel,
-    db: Session = Depends(get_db),
-    user: UserModel = Depends(get_current_user),
-    params: CustomParams = Depends(),
-):
-    polls_query = db.query(PollModel).filter(PollModel.creator_id==user.id)
-
-    items = []
-
-    for poll in polls_query:
-
-        if payload.search_query in poll.question:
-
-            # Redis live votes
-            key = f'poll:{poll.id}:votes'
-            redis_votes = await redis_client.hgetall(key)  # type: ignore
-            redis_votes = {int(k): int(v) for k, v in redis_votes.items()}
-
-            poll_expires_at = "Never" if poll.expires_at is None else poll.expires_at.replace(tzinfo=timezone.utc)
-            total_votes = sum(redis_votes.values())
-
-            items.append(
-                PollResponseModel(
-                    question=poll.question,
-                    expires_at=poll_expires_at,
-                    total_votes=total_votes,
-                )
-            )
-
-    return paginate(items, params)

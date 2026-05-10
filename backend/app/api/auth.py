@@ -78,7 +78,7 @@ def register_user(
         
         return JSONResponse(status_code=201, content={"detail": "Verification email sent. Please check your inbox."})
     
-    # Step 4: insert user into SQLite
+    # Step 4: insert user into db
     new_user = UserModel(email=email, password=hash_password(password))
     new_user.is_verified = False
     new_user.is_active = True

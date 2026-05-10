@@ -1,6 +1,7 @@
 import asyncio
 from datetime import timezone, datetime
 
+from fastapi import WebSocket
 from fastapi.concurrency import run_in_threadpool
 
 from sqlalchemy.orm import selectinload
@@ -8,9 +9,10 @@ from sqlalchemy.orm import selectinload
 from app.db.model.poll import PollModel
 from app.deps import SessionLocal
 from app.setup.ws import wsmanager
-from app.utils.ws import create_payload
 
-async def poll_timer(poll_id:str, expires_at: datetime):
+async def poll_timer(
+    poll_id:str, expires_at: datetime
+):
     now = datetime.now(timezone.utc)
     if expires_at.tzinfo is None:
         expires_at = expires_at.replace(tzinfo=timezone.utc)
@@ -23,12 +25,10 @@ async def poll_timer(poll_id:str, expires_at: datetime):
     db = SessionLocal()
     key = f'poll:{poll_id}:votes'
     poll_vote = await run_in_threadpool(db.get, PollModel, poll_id)
-    creator_payload = await create_payload("poll_view", key, poll_vote)
 
     await wsmanager.broadcast(
-        poll_id,
-        voter_payload={"type": "notice", "message": "This poll has ended"},
-        creator_payload= creator_payload,
+        poll_id=poll_id,
+        payload={"type": "notice", "message": "This poll has ended"}
     )
 
 def fetch_poll(poll_id: str):
