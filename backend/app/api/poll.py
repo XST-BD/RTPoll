@@ -254,35 +254,3 @@ async def poll_delete_all(
     db.commit()
 
     return {"message": "All polls deleted"}
-
-
-
-# class PollResultResponse(BaseModel):
-#     x: str
-#     y: int
-
-# @router.get('/{poll_id}/result')
-# @limiter.limit('5/Minute')  # Max 15 request per minute per User/IP
-# def poll_result(
-#     request: Request,
-#     poll_id: int,
-#     db: Session = Depends(get_db),
-#     user: UserModel = Depends(get_current_user),
-# ):
-    
-#     entries = db.query(PollHistoryEntry)\
-#         .filter(PollHistoryEntry.poll_id == poll_id)\
-#         .order_by(PollHistoryEntry.timestamp).all()
-    
-#     if not entries:
-#         return JSONResponse(status_code=200, content={"detail": "Poll history is empty"})
-
-#     items: list[PollResultResponse] = []
-
-#     for entry in entries:
-#         x_coordinate = entry.timestamp.isoformat()
-#         y_coordinate = entry.value
-
-#         items.append(PollResultResponse(x=x_coordinate, y=y_coordinate))
-
-#     return JSONResponse(status_code=200, content={"detail": items})
