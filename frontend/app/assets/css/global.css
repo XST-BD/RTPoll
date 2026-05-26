@@ -1,108 +1,107 @@
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Nunito:ital,wght@0,500;1,500&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Anton&family=Nunito:ital,wght@0,500;1,500&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 .no-style {
-    all: unset;
+  all: unset;
 }
 
 html {
-    font-family: 'Nunito', sans-serif;
-    @apply text-indigo-900 break-words select-none box-border scroll-smooth;
+  font-family: "Nunito", sans-serif;
+  @apply text-indigo-900 break-words select-none box-border scroll-smooth;
 }
 
 h1 {
-    @apply font-[Anton] text-3xl text-indigo-400 text-center;
+  @apply font-[Anton] text-3xl text-indigo-400 text-center;
 }
 
 h2 {
-    @apply font-[Anton] text-3xl text-indigo-400 text-center;
+  @apply font-[Anton] text-3xl text-indigo-400 text-center;
 }
 
 h3 {
-    @apply font-[Anton] text-2xl text-indigo-400 text-center;
+  @apply font-[Anton] text-2xl text-indigo-400 text-center;
 }
 
 h4 {
-    @apply font-['Anton'] text-xl text-indigo-400 text-center;
+  @apply font-['Anton'] text-xl text-indigo-400 text-center;
 }
 
 h5 {
-    @apply text-lg text-indigo-400 text-center;
+  @apply text-lg text-indigo-400 text-center;
 }
 
 button,
 a {
-    @apply cursor-pointer;
+  @apply cursor-pointer;
 }
 
 .btn {
-    @apply py-2 px-4 bg-indigo-400 text-white font-medium rounded-md transition-all duration-500 hover:bg-indigo-500 hover:ring-4 hover:ring-indigo-400 hover:ring-opacity-30 outline-none focus:bg-indigo-500 active:scale-95 cursor-pointer;
+  @apply py-2 px-4 bg-indigo-400 text-white font-medium rounded-md transition-all duration-500 hover:bg-indigo-500 hover:ring-4 hover:ring-indigo-400 hover:ring-opacity-30 outline-none focus:bg-indigo-500 active:scale-95 cursor-pointer;
 }
 
 .btn-cancel {
-    @apply py-2 px-4 text-gray-500 bg-white border border-gray-300 font-medium rounded-md transition-all duration-500 hover:border-gray-400 hover:ring-4 hover:ring-gray-400 hover:ring-opacity-30 outline-none focus:border-gray-400 active:scale-95 cursor-pointer;
+  @apply py-2 px-4 text-gray-500 bg-white border border-gray-300 font-medium rounded-md transition-all duration-500 hover:border-gray-400 hover:ring-4 hover:ring-gray-400 hover:ring-opacity-30 outline-none focus:border-gray-400 active:scale-95 cursor-pointer;
 }
 
 .btn-alert {
-    @apply py-2 px-4 bg-red-500 text-white font-medium rounded-md transition-all duration-500 hover:bg-red-600 hover:ring-4 hover:ring-red-500 hover:ring-opacity-30 outline-none focus:bg-red-600 active:scale-95 cursor-pointer;
+  @apply py-2 px-4 bg-red-500 text-white font-medium rounded-md transition-all duration-500 hover:bg-red-600 hover:ring-4 hover:ring-red-500 hover:ring-opacity-30 outline-none focus:bg-red-600 active:scale-95 cursor-pointer;
 }
 
 .btn-disabled {
-    @apply py-2 px-4 bg-indigo-400 text-white font-medium rounded-md outline-none cursor-wait opacity-75;
+  @apply py-2 px-4 bg-indigo-400 text-white font-medium rounded-md outline-none cursor-wait opacity-75;
 }
 
 .btn-cancel-disabled {
-    @apply py-2 px-4 text-gray-500 bg-white border border-gray-300 font-medium rounded-md outline-none cursor-wait opacity-75;
+  @apply py-2 px-4 text-gray-500 bg-white border border-gray-300 font-medium rounded-md outline-none cursor-wait opacity-75;
 }
 
 .btn-alert-disabled {
-    @apply py-2 px-4 bg-red-500 text-white font-medium rounded-md outline-none cursor-wait opacity-75;
+  @apply py-2 px-4 bg-red-500 text-white font-medium rounded-md outline-none cursor-wait opacity-75;
 }
 
 .link {
-    @apply transition-all duration-500 ease-in-out hover:underline underline-offset-8 decoration-wavy cursor-pointer;
+  @apply transition-all duration-500 ease-in-out hover:underline underline-offset-8 decoration-wavy cursor-pointer;
 }
 
 .link-disabled {
-    @apply cursor-wait opacity-75;
+  @apply cursor-wait opacity-75;
 }
 
 .link-icon {
-    all: unset;
+  all: unset;
 
-    @apply p-2 flex items-center gap-2 rounded-md text-sm text-indigo-400 transition-all duration-200 hover:bg-indigo-100 hover:text-indigo-500 active:scale-90 active:text-indigo-500 cursor-pointer;
+  @apply p-2 flex items-center gap-2 rounded-md text-sm text-indigo-400 transition-all duration-200 hover:bg-indigo-100 hover:text-indigo-500 active:scale-90 active:text-indigo-500 cursor-pointer;
 }
 
 label {
-    @apply font-medium capitalize;
+  @apply font-medium capitalize;
 }
 
 input {
-    @apply outline-none;
+  @apply outline-none;
 }
 
 .ipt,
 textarea,
 select {
-    @apply p-2 border rounded-md border-indigo-300 transition duration-500 focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-400 focus:ring-opacity-30;
+  @apply p-2 border rounded-md border-indigo-300 transition duration-500 focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-400 focus:ring-opacity-30;
 }
 
 .error-msg {
-    @apply text-red-500 text-sm text-center;
+  @apply text-red-500 text-sm text-center;
 }
 
 .dashboard-body {
-    @apply w-full p-5 flex;
+  @apply w-full p-5 flex;
 }
 
 .bg-grid {
-    /* background-image: url("data:image/svg+xml,<svg id='patternId' width='100%' height='100%' xmlns='http://www.w3.org/2000/svg'><defs><pattern id='a' patternUnits='userSpaceOnUse' width='20' height='20' patternTransform='scale(2) rotate(0)'><rect x='0' y='0' width='100%' height='100%' fill='%23ffffffff'/><path d='M 10,-2.55e-7 V 20 Z M -1.1677362e-8,10 H 20 Z'  stroke-width='0.5' stroke='%23bbf7d0b2' fill='none'/></pattern></defs><rect width='800%' height='800%' transform='translate(0,0)' fill='url(%23a)'/></svg>") */
-    background-image: url("data:image/svg+xml,<svg id='patternId' width='100%' height='100%' xmlns='http://www.w3.org/2000/svg'><defs><pattern id='a' patternUnits='userSpaceOnUse' width='20' height='20' patternTransform='scale(2) rotate(0)'><rect x='0' y='0' width='100%' height='100%' fill='%23ffffffff'/><path d='M 10,-2.55e-7 V 20 Z M -1.1677362e-8,10 H 20 Z'  stroke-width='0.5' stroke='%23e0e8ffc5' fill='none'/></pattern></defs><rect width='800%' height='800%' transform='translate(-10,0)' fill='url(%23a)'/></svg>")
+  background-image: url("data:image/svg+xml,%3Csvg id='patternId' width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='a' patternUnits='userSpaceOnUse' width='20' height='20' patternTransform='scale(2) rotate(0)'%3E%3Crect x='0' y='0' width='100%25' height='100%25' fill='%23ffffff'/%3E%3Cpath d='M 10,-2.55e-7 V 20 Z M -1.1677362e-8,10 H 20 Z' stroke-width='0.5' stroke='%23e0e8ffc5' fill='none'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='800%25' height='800%25' transform='translate(-10,0)' fill='url(%23a)'/%3E%3C/svg%3E");
 }
 
 .notice {
-    @apply text-3xl capitalize font-['Anton'] whitespace-pre-line;
+  @apply text-3xl capitalize font-['Anton'] whitespace-pre-line;
 }
