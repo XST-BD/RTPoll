@@ -27,9 +27,19 @@ export default defineNuxtConfig({
 		}
 	},
 
+	ssr: true,
+
 	routeRules: {
+		'/': { ssr: true },
+		'/about': { ssr: true },
+		'/login': { ssr: true },
+		'/register': { ssr: true },
+
+		'/recover-pass': { ssr: false },
 		'/verify-mail': { ssr: false },
-		'/dashboard/**': { ssr: false }
+		'/update-mail': { ssr: false },
+		'/dashboard/**': { ssr: false },
+		'/poll/**': { ssr: false },
 	},
 
 	vite: {
@@ -42,6 +52,9 @@ export default defineNuxtConfig({
 	},
 
 	nitro: {
-		preset: 'cloudflare-pages'
+		preset: 'cloudflare-pages',
+		cloudflare: {
+            nodeCompat: true
+        }
 	}
 })
