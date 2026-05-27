@@ -1,142 +1,145 @@
 export const useAuth = () => {
-    const isLoggedIn = computed(() => !!accessToken.value)
+	const isLoggedIn = computed(() => !!accessToken.value);
 
-    const accessToken = useCookie('access_token')
+	// Access token stored in-memory (useState) to prevent XSS cookie extraction
+	const accessToken = useState("auth_access_token", () => null);
 
-    const config = useRuntimeConfig()
-    const apiBase = config.public.apiBase
+	const { api } = useApi();
 
-    function getTokenExpiresIn(token) {
-        try {
-            const base64 = token.split('.')[1]
-            const json = atob(base64.replace(/-/g, '+').replace(/_/g, '/'))
-            const payload = JSON.parse(json)
+	function getTokenExpiresIn(token) {
+		try {
+			const base64 = token.split(".")[1];
+			const json = atob(base64.replace(/-/g, "+").replace(/_/g, "/"));
+			const payload = JSON.parse(json);
 
-            if (!payload?.exp) return 0
+			if (!payload?.exp) return 0;
 
-            return payload.exp - Math.floor(Date.now() / 1000)
-        } catch {
-            return 0
-        }
-    }
+			return payload.exp - Math.floor(Date.now() / 1000);
+		} catch {
+			return 0;
+		}
+	}
 
-    let timer
+	// Store timer ID in Nuxt useState to avoid leaks across multiple composable references
+	const timerState = useState("auth_refresh_timer", () => null);
 
-    function scheduleRefresh() {
-        if (import.meta.server) return
+	function scheduleRefresh() {
+		if (import.meta.server) return;
 
-        stopTimer()
+		stopTimer();
 
-        if (!accessToken.value) return
+		if (!accessToken.value) return;
 
-        const expiresIn = getTokenExpiresIn(accessToken.value)
-        if (expiresIn <= 0) return
+		const expiresIn = getTokenExpiresIn(accessToken.value);
+		if (expiresIn <= 0) return;
 
-        const delay = Math.max((expiresIn - 30) * 1000, 5000)
+		// Set a max delay cap to prevent tampered token infinite timeouts
+		const delay = Math.max((expiresIn - 30) * 1000, 5000);
+		const MAX_DELAY = 15 * 60 * 1000; // 15 minutes max
+		const safeDelay = Math.min(delay, MAX_DELAY);
 
-        timer = setTimeout(async () => {
-            const ok = await refresh()
-            if (ok) scheduleRefresh()
-        }, delay)
-    }
+		timerState.value = setTimeout(async () => {
+			const ok = await refresh();
+			if (ok) scheduleRefresh();
+		}, safeDelay);
+	}
 
-    function stopTimer() {
-        if (timer) {
-            clearTimeout(timer)
-            timer = null
-        }
-    }
+	function stopTimer() {
+		if (timerState.value) {
+			clearTimeout(timerState.value);
+			timerState.value = null;
+		}
+	}
 
-    function clearAuth() {
-        stopTimer()
-        accessToken.value = null
-    }
+	function clearAuth() {
+		stopTimer();
+		accessToken.value = null;
+	}
 
-    async function login(email, password) {
-        const data = await $fetch(`${apiBase}/auth/login`, {
-            method: 'POST',
-            credentials: 'include',
-            body: { email, password }
-        })
+	async function login(email, password) {
+		const data = await api("/auth/login", {
+			method: "POST",
+			body: { email, password },
+		});
 
-        accessToken.value = data.access_token
-        scheduleRefresh()
-    }
+		accessToken.value = data.access_token;
+		scheduleRefresh();
+	}
 
-    async function refresh() {
-        try {
-            const data = await $fetch(`${apiBase}/auth/refresh`, {
-                method: 'POST',
-                credentials: 'include'
-            })
+	// Prevent concurrent refresh requests using a shared mutex promise
+	const refreshPromise = useState("auth_refresh_promise", () => null);
 
-            accessToken.value = data.access_token
-            scheduleRefresh()
+	async function refresh() {
+		if (refreshPromise.value) return refreshPromise.value;
 
-            return true
-        } catch {
-            clearAuth()
+		const promise = (async () => {
+			try {
+				const data = await api("/auth/refresh", {
+					method: "POST",
+				});
 
-            return false
-        }
-    }
+				accessToken.value = data.access_token;
+				scheduleRefresh();
 
-    async function logout() {
-        await $fetch(`${apiBase}/auth/logout`, {
-            method: 'POST',
-            credentials: 'include'
-        })
+				return true;
+			} catch {
+				clearAuth();
+				return false;
+			} finally {
+				refreshPromise.value = null;
+			}
+		})();
 
-        clearAuth()
-    }
+		refreshPromise.value = promise;
+		return promise;
+	}
 
-    async function authFetch(url, opts = {}) {
-        try {
-            return await $fetch(url, {
-                ...opts,
-                headers: {
-                    ...opts.headers,
-                    Authorization: `Bearer ${accessToken.value}`,
-                },
-                credentials: 'include',
-            })
-        } catch (err) {
-            if (err?.response?.status === 401) {
-                const ok = await refresh()
+	async function logout() {
+		try {
+			await api("/auth/logout", {
+				method: "POST",
+			});
+		} finally {
+			clearAuth();
+		}
+	}
 
-                if (ok) {
-                    return await $fetch(url, {
-                        ...opts,
-                        headers: {
-                            ...opts.headers,
-                            Authorization: `Bearer ${accessToken.value}`,
-                        },
-                        credentials: 'include',
-                    })
-                }
-            }
+	async function authFetch(url, opts = {}) {
+		try {
+			return await $fetch(url, {
+				...opts,
+				headers: {
+					...opts.headers,
+					Authorization: `Bearer ${accessToken.value}`,
+				},
+				credentials: "include",
+			});
+		} catch (err) {
+			if (err?.response?.status === 401) {
+				const ok = await refresh();
 
-            throw err
-        }
-    }
+				if (ok) {
+					return await $fetch(url, {
+						...opts,
+						headers: {
+							...opts.headers,
+							Authorization: `Bearer ${accessToken.value}`,
+						},
+						credentials: "include",
+					});
+				}
+			}
 
-    // watch(
-    //     accessToken,
-    //     (token) => {
-    //         if (!token) {
-    //             stopTimer()
-    //             navigateTo('/login')
-    //         }
-    //     },
-    //     { immediate: true }
-    // )
+			throw err;
+		}
+	}
 
-    return {
-        isLoggedIn,
-        accessToken,
-        login,
-        logout,
-        refresh,
-        authFetch,
-    }
-}
+	return {
+		isLoggedIn,
+		accessToken,
+		login,
+		logout,
+		refresh,
+		authFetch,
+	};
+};

@@ -50,7 +50,7 @@ export const usePollStore = defineStore('poll', () => {
         closeWS()
         const visitorId = await getVisitorId()
 
-        socket = new WebSocket(`${wsBase}/vote/${pollId}?f=${visitorId}`)
+        socket = new WebSocket(`${wsBase}/${pollId}?fp=${visitorId}`)
 
         socket.onopen = () => {
             socket.send(JSON.stringify({ type: 'get_vote' }))

@@ -7,9 +7,11 @@ useHead({
     title: 'Login'
 })
 
-const { public: { apiBase } } = useRuntimeConfig()
+const route = useRoute()
 const { login } = useAuth()
 const { showPopup, showError } = usePopup()
+const { requireEmail, requirePassword, validatePasswordLength } = useValidation()
+const { api } = useApi()
 
 const email = ref('')
 const password = ref('')
@@ -22,20 +24,7 @@ async function handleLogin() {
     loading.value = true
     resend_mail.value = false
 
-    if (!email.value.trim()) {
-        showPopup("Please enter your email first.", "error")
-        loading.value = false
-        return
-    }
-
-    if (!password.value) {
-        showPopup("Please enter your password first.", "error")
-        loading.value = false
-        return
-    }
-
-    if (password.value.length < 8) {
-        showPopup("Password must contain at least 8 characters.", "error")
+    if (!requireEmail(email.value) || !requirePassword(password.value) || !validatePasswordLength(password.value)) {
         loading.value = false
         return
     }
@@ -45,7 +34,8 @@ async function handleLogin() {
 
         showPopup("Logged in successfully.", "success")
 
-        await navigateTo('/dashboard')
+        const redirectUrl = route.query.redirect || '/dashboard'
+        await navigateTo(redirectUrl)
     } catch (err) {
         showError(err, "Failed to login. Please try again.")
 
@@ -61,7 +51,7 @@ async function resendVerificationEmail() {
     resend_loading.value = true
 
     try {
-        const data = await $fetch(`${apiBase}/auth/email/resend`, {
+        const data = await api('/auth/email/resend', {
             method: 'POST',
             body: {
                 type: 'registration',

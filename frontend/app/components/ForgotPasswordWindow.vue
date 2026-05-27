@@ -3,8 +3,9 @@ defineProps({
     open: Boolean
 })
 
-const { public: { apiBase } } = useRuntimeConfig()
 const { showPopup, showError } = usePopup()
+const { requireEmail } = useValidation()
+const { api } = useApi()
 
 const emit = defineEmits(["close"])
 
@@ -21,14 +22,13 @@ function handleClose() {
 async function handleForgotPassword() {
     loading.value = true
 
-    if (!email.value.trim()) {
-        showPopup('Please enter your email address first.', 'error')
+    if (!requireEmail(email.value)) {
         loading.value = false
         return
     }
 
     try {
-        const data = await $fetch(`${apiBase}/user`, {
+        const data = await api('/user', {
             method: 'PATCH',
             body: {
                 email: email.value.trim()
@@ -47,8 +47,10 @@ async function handleForgotPassword() {
 </script>
 
 <template>
-    <div v-if="open" @click.self="handleClose" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-10">
-        <div class="w-[400px] bg-white py-10 px-5 m-3 rounded-lg text-center flex flex-col justify-center items-center gap-4">
+    <div v-if="open" @click.self="handleClose"
+        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-10">
+        <div
+            class="w-[400px] bg-white py-10 px-5 m-3 rounded-lg text-center flex flex-col justify-center items-center gap-4">
             <h4>Forgot Password?</h4>
 
             <p class="text-sm text-gray-500">

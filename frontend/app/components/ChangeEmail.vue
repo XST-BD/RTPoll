@@ -3,9 +3,10 @@ const props = defineProps({
     email: String
 })
 
-const { public: { apiBase } } = useRuntimeConfig()
 const { authFetch } = useAuth()
 const { showPopup, showError } = usePopup()
+const { requireEmail, requirePassword, validatePasswordLength } = useValidation()
+const { apiBase } = useApi()
 
 const showConfirm = ref(false)
 const email = ref(props.email)
@@ -15,26 +16,13 @@ const loading = ref(false)
 async function handleChangeEmail() {
     loading.value = true
 
-    if (!email.value.trim()) {
-        showPopup('Please enter your new email first.', 'error')
-        loading.value = false
-        return
-    }
-
-    if (!password.value) {
-        showPopup('Please enter your password first.', 'error')
-        loading.value = false
-        return
-    }
-
-    if (password.value.length < 8) {
-        showPopup('Password must contain at least 8 characters.', 'error')
+    if (!requireEmail(email.value, 'new email') || !requirePassword(password.value) || !validatePasswordLength(password.value)) {
         loading.value = false
         return
     }
 
     try {
-        const data = await authFetch(`${apiBase}/user`, {
+        const data = await authFetch(`${apiBase}${apiBase.endsWith('/') ? '' : '/'}user`, {
             method: 'POST',
             body: {
                 recovery: true,
@@ -74,17 +62,21 @@ watch(
     </form>
 
     <div v-if="showConfirm" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-10">
-        <div class="w-[400px] bg-white py-10 px-5 m-3 rounded-lg text-center flex flex-col justify-center items-center gap-4">
+        <div
+            class="w-[400px] bg-white py-10 px-5 m-3 rounded-lg text-center flex flex-col justify-center items-center gap-4">
             <h4>Change Email?</h4>
 
             <p class="text-sm text-gray-500">
-                A confirmation email will be sent to your new email address. You need to confirm the change within 24 hours, otherwise the request will expire and you will have to try again.
+                A confirmation email will be sent to your new email address. You need to confirm the change within 24
+                hours, otherwise the request will expire and you will have to try again.
             </p>
 
-            <input type="password" placeholder="Enter your password to confirm" v-model="password" :disabled="loading" class="w-full ipt text-sm" />
+            <input type="password" placeholder="Enter your password to confirm" v-model="password" :disabled="loading"
+                class="w-full ipt text-sm" />
 
             <div class="flex justify-center items-center gap-3">
-                <button @click="showConfirm = false" :disabled="loading" :class="loading ? 'btn-cancel-disabled' : 'btn-cancel'">
+                <button @click="showConfirm = false" :disabled="loading"
+                    :class="loading ? 'btn-cancel-disabled' : 'btn-cancel'">
                     Cancel
                 </button>
 

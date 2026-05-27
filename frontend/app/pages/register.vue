@@ -7,8 +7,9 @@ definePageMeta({
     middleware: 'guest'
 })
 
-const { public: { apiBase } } = useRuntimeConfig()
 const { showPopup, showError } = usePopup()
+const { requireEmail, requirePassword, validatePasswordLength, validatePasswordMatch } = useValidation()
+const { api } = useApi()
 
 const email = ref('')
 const password = ref('')
@@ -18,40 +19,18 @@ const loading = ref(false)
 async function handleRegister() {
     loading.value = true
 
-    if (!email.value.trim()) {
-        showPopup("Please enter your email first.", "error")
-        loading.value = false
-        return
-    }
-
-    if (!password.value) {
-        showPopup("Please enter your password first.", "error")
-        loading.value = false
-        return
-    }
-
-    if (!confirm_password.value) {
-        showPopup("Please confirm your password first.", "error")
-        loading.value = false
-        return
-    }
-
-    if (password.value.length < 8 || confirm_password.value.length < 8) {
-        showPopup("Passwords must be at least 8 characters long.", "error")
-        loading.value = false
-        return
-    }
-
-    if (password.value !== confirm_password.value) {
-        showPopup("Passwords do not match.", "error")
+    if (!requireEmail(email.value) ||
+        !requirePassword(password.value) ||
+        !requirePassword(confirm_password.value, "confirm password") ||
+        !validatePasswordLength(password.value) ||
+        !validatePasswordMatch(password.value, confirm_password.value)) {
         loading.value = false
         return
     }
 
     try {
-        const data = await $fetch(`${apiBase}/auth/register`, {
+        const data = await api('/auth/register', {
             method: 'POST',
-            credentials: 'include',
             body: {
                 email: email.value.trim(),
                 password: password.value,
@@ -74,7 +53,8 @@ async function handleRegister() {
     <section class="w-full min-h-screen px-5 py-10 bg-grid flex flex-col justify-center items-center gap-12">
         <PopupMessage />
 
-        <div class="w-full max-w-2xl flex flex-col justify-center items-center gap-12 bg-white backdrop-blur-[100px] rounded-xl sm:px-10 px-5 py-10 shadow-md border border-indigo-300">
+        <div
+            class="w-full max-w-2xl flex flex-col justify-center items-center gap-12 bg-white backdrop-blur-[100px] rounded-xl sm:px-10 px-5 py-10 shadow-md border border-indigo-300">
             <h2 class="">Register an Account</h2>
 
             <form class="w-full flex flex-col gap-10" @submit.prevent="handleRegister">
@@ -86,12 +66,14 @@ async function handleRegister() {
 
                     <div class="flex flex-col gap-1">
                         <label for="password">Enter your password</label>
-                        <input id="password" type="password" v-model="password" :disabled="loading" class="ipt" required>
+                        <input id="password" type="password" v-model="password" :disabled="loading" class="ipt"
+                            required>
                     </div>
 
                     <div class="flex flex-col gap-1">
                         <label for="confirm_password">Confirm your password</label>
-                        <input id="confirm_password" type="password" v-model="confirm_password" :disabled="loading" class="ipt" required>
+                        <input id="confirm_password" type="password" v-model="confirm_password" :disabled="loading"
+                            class="ipt" required>
                     </div>
                 </div>
 
@@ -104,7 +86,8 @@ async function handleRegister() {
 
             <p class="text-md">
                 Already have an account?
-                <NuxtLink to="/login" class="link text-indigo-400 font-medium hover:text-indigo-500">Login here</NuxtLink>
+                <NuxtLink to="/login" class="link text-indigo-400 font-medium hover:text-indigo-500">Login here
+                </NuxtLink>
             </p>
         </div>
     </section>

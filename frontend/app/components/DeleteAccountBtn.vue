@@ -1,7 +1,8 @@
 <script setup>
-const { public: { apiBase } } = useRuntimeConfig()
 const { authFetch, logout } = useAuth()
 const { showPopup, showError } = usePopup()
+const { requirePassword, validatePasswordLength } = useValidation()
+const { apiBase } = useApi()
 
 const password = ref('')
 const showConfirm = ref(false)
@@ -10,20 +11,13 @@ const loading = ref(false)
 async function deleteAccount() {
     loading.value = true
 
-    if (!password.value) {
-        showPopup('Please enter your password first.', 'error')
-        loading.value = false
-        return
-    }
-
-    if (password.value.length < 8) {
-        showPopup('Password must contain at least 8 characters.', 'error')
+    if (!requirePassword(password.value) || !validatePasswordLength(password.value)) {
         loading.value = false
         return
     }
 
     try {
-        await authFetch(`${apiBase}/user`, {
+        await authFetch(`${apiBase}${apiBase.endsWith('/') ? '' : '/'}user`, {
             method: 'DELETE',
             body: {
                 password: password.value

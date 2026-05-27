@@ -18,7 +18,8 @@ const props = defineProps({
                     error.message }}
             </p>
 
-            <NuxtLink to="/" class="py-3 px-6 bg-indigo-400 text-white font-medium rounded-full transition-all duration-500 hover:bg-indigo-500 hover:ring-4 hover:ring-indigo-400 hover:ring-opacity-30 outline-none focus:bg-indigo-500 active:scale-95 cursor-pointer">
+            <NuxtLink to="/"
+                class="py-3 px-6 bg-indigo-400 text-white font-medium rounded-full transition-all duration-500 hover:bg-indigo-500 hover:ring-4 hover:ring-indigo-400 hover:ring-opacity-30 outline-none focus:bg-indigo-500 active:scale-95 cursor-pointer">
                 Return Home
             </NuxtLink>
         </div>

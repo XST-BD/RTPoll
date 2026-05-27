@@ -1,10 +1,12 @@
 <script setup>
 definePageMeta({
     layout: 'mail-redirect',
+    middleware: 'guest',
     ssr: false
 })
 
-const { public: { apiBase } } = useRuntimeConfig()
+const { api } = useApi()
+const { requirePassword, validatePasswordLength } = useValidation()
 const route = useRoute()
 const { showPopup, showError } = usePopup()
 
@@ -30,20 +32,13 @@ async function handlePasswordReset() {
         return
     }
 
-    if (!password.value) {
-        showPopup("Please enter your password first.", "error")
-        loading.value = false
-        return
-    }
-
-    if (password.value.length < 8) {
-        showPopup("Password must contain at least 8 characters.", "error")
+    if (!requirePassword(password.value) || !validatePasswordLength(password.value)) {
         loading.value = false
         return
     }
 
     try {
-        const data = await $fetch(`${apiBase}/auth/email/verify`, {
+        const data = await api("/auth/email/verify", {
             method: "POST",
             body: {
                 token: token.value,

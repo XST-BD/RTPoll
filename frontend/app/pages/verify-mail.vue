@@ -4,12 +4,12 @@ definePageMeta({
     ssr: false
 })
 
-const { public: { apiBase } } = useRuntimeConfig()
+const { api } = useApi()
 const route = useRoute()
 
 const loading = ref(true)
 const error = ref(null)
-const massage = ref(null)
+const message = ref(null)
 
 onMounted(async () => {
     const token = route.query.t
@@ -21,7 +21,7 @@ onMounted(async () => {
     }
 
     try {
-        const data = await $fetch(`${apiBase}/auth/email/verify`, {
+        const data = await api("/auth/email/verify", {
             method: "POST",
             body: {
                 token: token
@@ -29,7 +29,7 @@ onMounted(async () => {
         })
 
         loading.value = false
-        massage.value = data?.detail || "Email verification successful."
+        message.value = data?.detail || "Email verification successful."
 
         setTimeout(() => {
             navigateTo("/login")
@@ -62,7 +62,7 @@ onMounted(async () => {
 
         <div v-else>
             <p class="text-indigo-400 notice">
-                {{ massage }}
+                {{ message }}
             </p>
 
             <p class="text-gray-500 mt-4">Redirecting to login...</p>

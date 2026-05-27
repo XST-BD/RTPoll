@@ -11,6 +11,9 @@ useHead({
     title: 'Poll Details',
 })
 
+const { authFetch } = useAuth()
+const { public: { apiBase } } = useRuntimeConfig()
+
 const { public: { wsBase } } = useRuntimeConfig()
 const { accessToken, refresh } = useAuth()
 const { showPopup } = usePopup()
@@ -35,53 +38,13 @@ const url = computed(() => {
     return `${window.location.origin}/poll/${id}`
 })
 
-function closeWS() {
-    if (socket) {
-        socket.onclose = null
-        socket.close()
-        socket = null
-    }
-}
+async function fetchPollDetails() {
+    loading.value = true
+    error.value = null
 
-async function connectWS(pollId) {
-    closeWS()
-
-    if (!accessToken.value) {
-        const ok = await refresh()
-        if (!ok) {
-            error.value = 'Authentication failed. Please log in again and try again.'
-            poll.value = null
-            created_at.value = null
-            expires_at.value = null
-            loading.value = false
-            return
-        }
-    }
-
-    socket = new WebSocket(`${wsBase}/poll/${pollId}`)
-
-    socket.onopen = () => {
-        socket.send(JSON.stringify({
-            type: "poll_view",
-            token: accessToken.value
-        }))
-    }
-
-    socket.onmessage = (event) => {
-        const data = JSON.parse(event.data)
-
-        if (data.type === 'error') {
-            error.value = data?.message || 'Failed to load poll information. Please reload the page and try again.'
-            poll.value = null
-            created_at.value = null
-            expires_at.value = null
-            loading.value = false
-            return
-        }
-
-        error.value = null
+    try {
+        const data = await authFetch(`${apiBase}/poll/${id}`)
         poll.value = data
-
         created_at.value = new Date(poll.value.creation).toLocaleString('en-US', {
             year: 'numeric',
             month: 'long',
@@ -91,10 +54,10 @@ async function connectWS(pollId) {
             hour12: true
         })
 
-        if (poll.value.expiry === "Never") {
+        if (poll.value.expires_at === "Never") {
             expires_at.value = "Never"
-        } else if (poll.value.expiry) {
-            expires_at.value = new Date(poll.value.expiry).toLocaleString('en-US', {
+        } else if (poll.value.expires_at) {
+            expires_at.value = new Date(poll.value.expires_at).toLocaleString('en-US', {
                 year: 'numeric',
                 month: 'long',
                 day: '2-digit',
@@ -104,39 +67,120 @@ async function connectWS(pollId) {
             })
         }
 
-        loading.value = false
-    }
-
-    socket.onerror = () => {
+        console.log(poll.value)
+    } catch (err) {
         error.value = 'Failed to load poll information. Please reload the page and try again.'
-        poll.value = null
-        created_at.value = null
-        expires_at.value = null
-        loading.value = false
-    }
-
-    socket.onclose = () => {
-        error.value = 'Failed to load poll information. Please reload the page and try again.'
-        poll.value = null
-        created_at.value = null
-        expires_at.value = null
+    } finally {
         loading.value = false
     }
 }
 
 onMounted(() => {
-    connectWS(id)
+    fetchPollDetails()
 })
 
-onBeforeUnmount(() => {
-    closeWS()
-})
+// function closeWS() {
+//     if (socket) {
+//         socket.onclose = null
+//         socket.close()
+//         socket = null
+//     }
+// }
 
-watch(() => accessToken.value, (newToken) => {
-    if (newToken && socket) {
-        connectWS(id)
-    }
-})
+// async function connectWS(pollId) {
+//     closeWS()
+
+//     if (!accessToken.value) {
+//         const ok = await refresh()
+//         if (!ok) {
+//             error.value = 'Authentication failed. Please log in again and try again.'
+//             poll.value = null
+//             created_at.value = null
+//             expires_at.value = null
+//             loading.value = false
+//             return
+//         }
+//     }
+
+//     socket = new WebSocket(`${wsBase}/${pollId}`)
+
+//     socket.onopen = () => {
+//         socket.send(JSON.stringify({
+//             type: "poll_view",
+//             token: accessToken.value
+//         }))
+//     }
+
+//     socket.onmessage = (event) => {
+//         const data = JSON.parse(event.data)
+
+//         if (data.type === 'error') {
+//             error.value = data?.message || 'Failed to load poll information. Please reload the page and try again.'
+//             poll.value = null
+//             created_at.value = null
+//             expires_at.value = null
+//             loading.value = false
+//             return
+//         }
+
+//         error.value = null
+//         poll.value = data
+
+//         created_at.value = new Date(poll.value.creation).toLocaleString('en-US', {
+//             year: 'numeric',
+//             month: 'long',
+//             day: '2-digit',
+//             hour: 'numeric',
+//             minute: '2-digit',
+//             hour12: true
+//         })
+
+//         if (poll.value.expiry === "Never") {
+//             expires_at.value = "Never"
+//         } else if (poll.value.expiry) {
+//             expires_at.value = new Date(poll.value.expiry).toLocaleString('en-US', {
+//                 year: 'numeric',
+//                 month: 'long',
+//                 day: '2-digit',
+//                 hour: 'numeric',
+//                 minute: '2-digit',
+//                 hour12: true
+//             })
+//         }
+
+//         loading.value = false
+//     }
+
+//     socket.onerror = () => {
+//         error.value = 'Failed to load poll information. Please reload the page and try again.'
+//         poll.value = null
+//         created_at.value = null
+//         expires_at.value = null
+//         loading.value = false
+//     }
+
+//     socket.onclose = () => {
+//         error.value = 'Failed to load poll information. Please reload the page and try again.'
+//         poll.value = null
+//         created_at.value = null
+//         expires_at.value = null
+//         loading.value = false
+//     }
+// }
+
+// onMounted(() => {
+//     connectWS(id)
+// })
+
+// onBeforeUnmount(() => {
+//     closeWS()
+// })
+
+// watch(() => accessToken.value, (newToken) => {
+//     if (newToken && socket) {
+//         connectWS(id)
+//     }
+// })
 
 function sharePoll() {
     if (navigator.share) {
@@ -191,10 +235,10 @@ const getBackground = (percentage) => {
                 <ul class="border-2 border-indigo-400 rounded-b-xl overflow-hidden">
                     <li v-for="(option, index) in poll.options" :key="index"
                         class="flex justify-between gap-3 items-center border-t-2 border-indigo-400 p-4 text-xl"
-                        :style="getBackground(option.votes_perc)">
+                        :style="getBackground(option[2].votes_perc)">
                         <div class="text-indigo-400 flex items-start gap-3">
                             <span class="font-[Anton] text-md">{{ index + 1 }}.</span>
-                            <span>{{ option.text }}</span>
+                            <span>{{ option[1] }}</span>
                         </div>
 
                         <span class="shrink-0 font-[Anton] text-sm text-right">{{ option.votes_perc }}%</span>
@@ -251,7 +295,7 @@ const getBackground = (percentage) => {
 
                     <tr v-for="(option, index) in poll.options" :key="index">
                         <td class="shrink-0 border-2 border-indigo-400">{{ index + 1 }}</td>
-                        <td class="border-2 border-indigo-400">{{ option.votes.toLocaleString() }}</td>
+                        <td class="border-2 border-indigo-400">{{ option[2].toLocaleString() }}</td>
                     </tr>
                 </table>
             </div>
