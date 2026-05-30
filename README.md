@@ -13,17 +13,17 @@
 - [Features](#features)
 - [Usages](#usages)
 - [Tech Stack](#tech-stack)
-	- [Frontend](#frontend)
-	- [Backend](#backend)
+  - [Frontend](#frontend)
+  - [Backend](#backend)
 - [Project Setup \& Installation](#project-setup--installation)
-	- [Prerequisites](#prerequisites)
-	- [Setup](#setup)
-		- [Frontend Setup](#frontend-setup)
-		- [Backend Setup](#backend-setup)
-			- [Environment](#environment)
-			- [Reverse Proxy (Nginx)](#reverse-proxy-nginx)
-			- [Start server](#start-server)
-			- [Notes](#notes)
+  - [Prerequisites](#prerequisites)
+  - [Setup](#setup)
+    - [Frontend Setup](#frontend-setup)
+    - [Backend Setup](#backend-setup)
+      - [Environment](#environment)
+      - [Reverse Proxy (Nginx)](#reverse-proxy-nginx)
+      - [Start server](#start-server)
+      - [Notes](#notes)
 - [Project Documentation](#project-documentation)
 - [Authors](#authors)
 
@@ -67,22 +67,22 @@
 
 ### Frontend
 
-- **[Nuxt.js](https://nuxt.com/)** - Vue.js framework
-- **[Tailwind CSS](https://tailwindcss.com/)** - CSS framework
-- **[Pinia](https://pinia.vuejs.org/)** - State management
-- **[FingerprintJS](https://fingerprintjs.com/)** - Browser fingerprinting
-- **[ApexCharts](https://apexcharts.com/)** - Charts library
-- **[Iconify](https://iconify.design/)** - Icons library
-- **[Vue3-Flip-Countdown](https://github.com/coskuncay/vue3-flip-countdown)** - Countdown timer
+- **[Nuxt.js](https://nuxt.com/)**
+- **[Tailwind CSS](https://tailwindcss.com/)**
+- **[Pinia](https://pinia.vuejs.org/)**
+- **[FingerprintJS](https://fingerprintjs.com/)**
+- **[ApexCharts](https://apexcharts.com/)**
+- **[Iconify](https://iconify.design/)**
+- **[Vue3-Flip-Countdown](https://github.com/coskuncay/vue3-flip-countdown)**
 
 ### Backend
 
-- **[FastAPI](https://fastapi.tiangolo.com/)** - Python framework
-- **[PostgreSQL](https://www.postgresql.org/)** - Persistent data store
-- **[Redis](https://redis.io/)** - In-memory data store
-- **[RabbitMQ](https://www.rabbitmq.com/)** - Message broker
-- **[Celery](https://docs.celeryq.dev/en/stable/)** - Background processing
-- **[JWT](https://jwt.io/)** - Authentication
+- **[FastAPI](https://fastapi.tiangolo.com/)**
+- **[PostgreSQL](https://www.postgresql.org/)**
+- **[Redis](https://redis.io/)**
+- **[RabbitMQ](https://www.rabbitmq.com/)**
+- **[Celery](https://docs.celeryq.dev/en/stable/)**
+- **[JWT](https://jwt.io/)**
 
 ## Project Setup & Installation
 
