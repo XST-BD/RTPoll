@@ -67,22 +67,21 @@
 
 ### Frontend
 
-- **[Nuxt.js](https://nuxt.com/)**
-- **[Tailwind CSS](https://tailwindcss.com/)**
-- **[Pinia](https://pinia.vuejs.org/)**
-- **[FingerprintJS](https://fingerprintjs.com/)**
-- **[ApexCharts](https://apexcharts.com/)**
-- **[Iconify](https://iconify.design/)**
-- **[Vue3-Flip-Countdown](https://github.com/coskuncay/vue3-flip-countdown)**
+- Nuxt.js
+- Tailwind CSS
+- Pinia
+- FingerprintJS
+- ApexCharts
+- Iconify
 
 ### Backend
 
-- **[FastAPI](https://fastapi.tiangolo.com/)**
-- **[PostgreSQL](https://www.postgresql.org/)**
-- **[Redis](https://redis.io/)**
-- **[RabbitMQ](https://www.rabbitmq.com/)**
-- **[Celery](https://docs.celeryq.dev/en/stable/)**
-- **[JWT](https://jwt.io/)**
+- FastAPI
+- PostgreSQL
+- Redis
+- RabbitMQ
+- Celery
+- JWT
 
 ## Project Setup & Installation
 
