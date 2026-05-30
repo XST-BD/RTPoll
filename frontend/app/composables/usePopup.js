@@ -1,8 +1,3 @@
-/**
- * Description placeholder
- *
- * @returns {{ popups: any; showPopup: (message: any, type?: string) => void; removePopup: (id: any) => void; showError: (err: any, fallback: any) => void; }} 
- */
 export const usePopup = () => {
     const popups = useState("popups", () => []);
 

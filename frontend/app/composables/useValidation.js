@@ -1,8 +1,3 @@
-/**
- * Description placeholder
- *
- * @returns {{ requireEmail: (email: any, label?: string) => boolean; requirePassword: (password: any, label?: string) => boolean; validatePasswordLength: (password: any) => boolean; validatePasswordMatch: (password: any, confirmPassword: any) => boolean; }} 
- */
 export const useValidation = () => {
     const { showPopup } = usePopup();
 

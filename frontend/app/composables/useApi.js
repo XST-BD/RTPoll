@@ -1,8 +1,3 @@
-/**
- * Description placeholder
- *
- * @returns {{ api: (path: any, opts?: {}) => any; apiBase: any; }} 
- */
 export const useApi = () => {
 	const {
 		public: { apiBase },

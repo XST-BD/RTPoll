@@ -1,8 +1,3 @@
-/**
- * Description placeholder
- *
- * @returns {{ isLoggedIn: any; accessToken: any; login: (email: any, password: any) => any; logout: () => any; refresh: () => unknown; authFetch: (url: any, opts?: {}) => unknown; }} 
- */
 export const useAuth = () => {
 	const isLoggedIn = computed(() => !!accessToken.value);
 
