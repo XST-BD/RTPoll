@@ -13,8 +13,8 @@
 - [Features](#features)
 - [Usages](#usages)
 - [Tech Stack](#tech-stack)
-	- [Frontend:](#frontend)
-	- [Backend:](#backend)
+	- [Frontend](#frontend)
+	- [Backend](#backend)
 - [Project Setup \& Installation](#project-setup--installation)
 	- [Prerequisites](#prerequisites)
 	- [Setup](#setup)
@@ -29,8 +29,8 @@
 
 ## Features
 
-- **User Authentication System** - Login, logout, forgot password, email change, password reset, email verification and account deletion.
-- **Poll Creation** - Create a poll with a question, options, expiration date, and whether to make the result public or not.
+- **User Authentication System** - Registration, login, logout, forgot password, email change, password reset, email verification and account deletion.
+- **Poll Creation** - Create a poll with a question, options, expiration date and whether to make the result public or not.
 - **Poll Sharing** - Share a poll via a public link.
 - **Real-Time results** - View poll results in real-time.
 - **Poll Deletion** - Delete polls.
@@ -65,7 +65,7 @@
 
 ## Tech Stack
 
-### Frontend:
+### Frontend
 
 - **[Nuxt.js](https://nuxt.com/)** - Vue.js framework
 - **[Tailwind CSS](https://tailwindcss.com/)** - CSS framework
@@ -75,7 +75,7 @@
 - **[Iconify](https://iconify.design/)** - Icons library
 - **[Vue3-Flip-Countdown](https://github.com/coskuncay/vue3-flip-countdown)** - Countdown timer
 
-### Backend:
+### Backend
 
 - **[FastAPI](https://fastapi.tiangolo.com/)** - Python framework
 - **[PostgreSQL](https://www.postgresql.org/)** - Persistent data store
