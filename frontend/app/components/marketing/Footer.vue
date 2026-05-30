@@ -5,9 +5,11 @@
 
         <nav class="flex flex-col justify-center items-center gap-3">
             <NuxtLink to="/#features" class="link">Features</NuxtLink>
-            <NuxtLink to="/about" class="link">About Us</NuxtLink>
             <NuxtLink to="/login" class="link">Login</NuxtLink>
             <NuxtLink to="/register" class="link">Sign Up</NuxtLink>
+            <NuxtLink to="/privacy-policy" class="link">Privacy Policy</NuxtLink>
+            <NuxtLink to="/about" class="link">About Us</NuxtLink>
+            <NuxtLink to="/contact" class="link">Contact Us</NuxtLink>
         </nav>
     </footer>
 </template>

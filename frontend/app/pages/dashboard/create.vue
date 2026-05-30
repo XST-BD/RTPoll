@@ -84,7 +84,7 @@ async function createPoll() {
 
         showPopup(data?.detail || "Poll created successfully.", "success")
 
-        navigateTo(`/dashboard/poll/${data.id}`)
+        navigateTo(`/dashboard/poll/${data.poll_id}`)
     } catch (err) {
         showError(err, "Failed to create poll. Please try again.")
     } finally {

@@ -54,7 +54,7 @@ async function resendVerificationEmail() {
         const data = await api('/auth/email/resend', {
             method: 'POST',
             body: {
-                type: 'registration',
+                type: 'login',
                 email: email.value
             }
         })

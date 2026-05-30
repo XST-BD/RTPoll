@@ -1,6 +1,6 @@
 # Architecture
 
-![Architecture Diagram](./images/architecture.png)
+![Architecture Diagram](./diagrams/architecture.png)
 
 *Figure: High-level architecture of the polling system*
 

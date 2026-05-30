@@ -45,7 +45,7 @@ async function fetchPollDetails() {
     try {
         const data = await authFetch(`${apiBase}/poll/${id}`)
         poll.value = data
-        created_at.value = new Date(poll.value.creation).toLocaleString('en-US', {
+        created_at.value = new Date(poll.value.created_at).toLocaleString('en-US', {
             year: 'numeric',
             month: 'long',
             day: '2-digit',
@@ -235,13 +235,13 @@ const getBackground = (percentage) => {
                 <ul class="border-2 border-indigo-400 rounded-b-xl overflow-hidden">
                     <li v-for="(option, index) in poll.options" :key="index"
                         class="flex justify-between gap-3 items-center border-t-2 border-indigo-400 p-4 text-xl"
-                        :style="getBackground(option[2].votes_perc)">
+                        :style="getBackground(option[3])">
                         <div class="text-indigo-400 flex items-start gap-3">
                             <span class="font-[Anton] text-md">{{ index + 1 }}.</span>
                             <span>{{ option[1] }}</span>
                         </div>
 
-                        <span class="shrink-0 font-[Anton] text-sm text-right">{{ option.votes_perc }}%</span>
+                        <span class="shrink-0 font-[Anton] text-sm text-right">{{ option[3] }}%</span>
                     </li>
                 </ul>
             </div>
