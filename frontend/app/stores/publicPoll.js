@@ -1,6 +1,11 @@
 import { defineStore } from 'pinia'
 import FingerprintJS from '@fingerprintjs/fingerprintjs'
 
+/**
+ * Description placeholder
+ *
+ * @type {*}
+ */
 export const usePollStore = defineStore('poll', () => {
     const { public: { wsBase } } = useRuntimeConfig()
     const { showPopup } = usePopup()
