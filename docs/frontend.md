@@ -1,4 +1,4 @@
-# RTPoll - Frontend Documentation
+# RTPoll - Frontend Full Documentation
 
 This is the documentation for the frontend of RTPoll project.
 
@@ -89,3 +89,4 @@ RTPoll
 16 directories, 53 files
 ```
 
+## 

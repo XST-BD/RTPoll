@@ -1,8 +1,7 @@
 <script setup>
-const { authFetch } = useAuth()
+const { changePassword } = useAuth()
 const { showPopup, showError } = usePopup()
 const { requirePassword, validatePasswordLength, validatePasswordMatch } = useValidation()
-const { apiBase } = useApi()
 
 const old_password = ref('')
 const new_password = ref('')
@@ -24,13 +23,7 @@ async function handleChangePassword() {
     }
 
     try {
-        const data = await authFetch(`${apiBase}${apiBase.endsWith('/') ? '' : '/'}user`, {
-            method: 'PUT',
-            body: {
-                old_password: old_password.value,
-                new_password: new_password.value
-            }
-        })
+        const data = await changePassword(old_password.value, new_password.value)
 
         showPopup(data?.detail || 'Password updated successfully.', 'success')
     } catch (err) {

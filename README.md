@@ -17,13 +17,13 @@
   - [Backend](#backend)
 - [Project Setup \& Installation](#project-setup--installation)
   - [Prerequisites](#prerequisites)
-  - [Setup](#setup)
-    - [Frontend Setup](#frontend-setup)
-    - [Backend Setup](#backend-setup)
-      - [Environment](#environment)
-      - [Reverse Proxy (Nginx)](#reverse-proxy-nginx)
-      - [Start server](#start-server)
-      - [Notes](#notes)
+  - [Clone Repository](#clone-repository)
+  - [Frontend Setup](#frontend-setup)
+  - [Backend Setup](#backend-setup)
+    - [Environment](#environment)
+    - [Reverse Proxy (Nginx)](#reverse-proxy-nginx)
+    - [Start server](#start-server)
+    - [Notes](#notes)
 - [Project Documentation](#project-documentation)
 - [Authors](#authors)
 
@@ -94,18 +94,18 @@
 - [Docker](https://docs.docker.com/get-docker/)
 - [Docker Compose](https://docs.docker.com/compose/install/)
 
-### Setup
+### Clone Repository
 
 1. Clone the repository
    ```bash
-   git clone https://github.com/xst-bd/rtpoll.git
+   git clone https://github.com/XST-BD/RTPoll.git
    ```
 2. Navigate to the project directory
    ```bash
    cd RTPoll
    ```
 
-#### Frontend Setup
+### Frontend Setup
 
 1. Navigate to frontend directory:
    ```bash
@@ -116,7 +116,7 @@
    pnpm install
    pnpm approve-builds
    ```
-3. Set up the environment variables in .env file:
+3. Set up the environment variables in frontend/.env file:
    ```
    API_URL="http://localhost:8000/api/v0"
    WS_URL="ws://localhost:8000/api/v0/ws"
@@ -139,25 +139,25 @@
    ```
 3. Open http://localhost:3000 in your browser.
 
-#### Backend Setup
+### Backend Setup
 
-##### Environment
+#### Environment
 
 - Create backend/.env and use proper env variables.
 - See docs/deployment.md for details
 
-##### Reverse Proxy (Nginx)
+#### Reverse Proxy (Nginx)
 
 - Setup SSL certificates in nginx/certs/
   1. `cd nginx && mkdir -p certs`
   2. `openssl req -x509 -nodes -days 365  -newkey rsa:2048  -keyout privkey.pem -out fullchain.pem`
 
-##### Start server
+#### Start server
 
 1. Complete prerequisites
 2. `docker compose up -- build`
 
-##### Notes
+#### Notes
 
 This is a self-signed certificate, not for deployment
 For more details check docs/

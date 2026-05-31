@@ -66,6 +66,66 @@ export const useAuth = () => {
 		scheduleRefresh();
 	}
 
+	async function register(email, password, confirm_password) {
+		return await api("/auth/register", {
+			method: "POST",
+			body: { email, password, confirm_password },
+		});
+	}
+
+	async function verifyEmail(token, newPassword = null) {
+		const body = { token };
+		if (newPassword !== null) {
+			body.new_password = newPassword;
+		}
+		return await api("/auth/email/verify", {
+			method: "POST",
+			body,
+		});
+	}
+
+	async function resendVerification(email, type = "login") {
+		return await api("/auth/email/resend", {
+			method: "POST",
+			body: { email, type },
+		});
+	}
+
+	async function sendPasswordResetEmail(email) {
+		return await api("/user", {
+			method: "PATCH",
+			body: { email },
+		});
+	}
+
+	async function changePassword(oldPassword, newPassword) {
+		return await authFetch("/user", {
+			method: "PUT",
+			body: {
+				old_password: oldPassword,
+				new_password: newPassword,
+			},
+		});
+	}
+
+	async function changeEmail(newEmail, password) {
+		return await authFetch("/user", {
+			method: "POST",
+			body: {
+				recovery: true,
+				new_email: newEmail,
+				password,
+			},
+		});
+	}
+
+	async function deleteAccount(password) {
+		return await authFetch("/user", {
+			method: "DELETE",
+			body: { password },
+		});
+	}
+
 	// Prevent concurrent refresh requests using a shared mutex promise
 	const refreshPromise = useState("auth_refresh_promise", () => null);
 
@@ -105,27 +165,27 @@ export const useAuth = () => {
 	}
 
 	async function authFetch(url, opts = {}) {
+		const fetcher = url.startsWith('/') ? api : (path, options) => $fetch(path, { credentials: "include", ...options });
+
 		try {
-			return await $fetch(url, {
+			return await fetcher(url, {
 				...opts,
 				headers: {
 					...opts.headers,
 					Authorization: `Bearer ${accessToken.value}`,
 				},
-				credentials: "include",
 			});
 		} catch (err) {
 			if (err?.response?.status === 401) {
 				const ok = await refresh();
 
 				if (ok) {
-					return await $fetch(url, {
+					return await fetcher(url, {
 						...opts,
 						headers: {
 							...opts.headers,
 							Authorization: `Bearer ${accessToken.value}`,
 						},
-						credentials: "include",
 					});
 				}
 			}
@@ -138,8 +198,15 @@ export const useAuth = () => {
 		isLoggedIn,
 		accessToken,
 		login,
+		register,
 		logout,
 		refresh,
 		authFetch,
+		verifyEmail,
+		resendVerification,
+		sendPasswordResetEmail,
+		changePassword,
+		changeEmail,
+		deleteAccount,
 	};
 };

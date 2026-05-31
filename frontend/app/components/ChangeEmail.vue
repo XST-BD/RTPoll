@@ -3,10 +3,9 @@ const props = defineProps({
     email: String
 })
 
-const { authFetch } = useAuth()
+const { changeEmail } = useAuth()
 const { showPopup, showError } = usePopup()
 const { requireEmail, requirePassword, validatePasswordLength } = useValidation()
-const { apiBase } = useApi()
 
 const showConfirm = ref(false)
 const email = ref(props.email)
@@ -22,14 +21,7 @@ async function handleChangeEmail() {
     }
 
     try {
-        const data = await authFetch(`${apiBase}${apiBase.endsWith('/') ? '' : '/'}user`, {
-            method: 'POST',
-            body: {
-                recovery: true,
-                new_email: email.value.trim(),
-                password: password.value
-            }
-        })
+        const data = await changeEmail(email.value.trim(), password.value)
 
         showPopup(data?.detail || 'Email updated successfully.', 'success')
         showConfirm.value = false

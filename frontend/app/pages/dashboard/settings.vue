@@ -11,13 +11,12 @@ useHead({
 
 const { authFetch } = useAuth()
 const { showError } = usePopup()
-const { apiBase } = useApi()
 
 const user = ref(null)
 
 onMounted(async () => {
     try {
-        const data = await authFetch(`${apiBase}${apiBase.endsWith('/') ? '' : '/'}user`, {
+        const data = await authFetch('/user', {
             method: 'GET'
         })
 

@@ -9,7 +9,7 @@ definePageMeta({
 
 const { showPopup, showError } = usePopup()
 const { requireEmail, requirePassword, validatePasswordLength, validatePasswordMatch } = useValidation()
-const { api } = useApi()
+const { register } = useAuth()
 
 const email = ref('')
 const password = ref('')
@@ -29,14 +29,11 @@ async function handleRegister() {
     }
 
     try {
-        const data = await api('/auth/register', {
-            method: 'POST',
-            body: {
-                email: email.value.trim(),
-                password: password.value,
-                confirm_password: confirm_password.value
-            }
-        })
+        const data = await register(
+            email.value.trim(),
+            password.value,
+            confirm_password.value
+        )
 
         showPopup(data?.detail || "Registration successful. Please check your email to verify your account.", "success")
 

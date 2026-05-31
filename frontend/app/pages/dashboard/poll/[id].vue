@@ -12,7 +12,6 @@ useHead({
 })
 
 const { authFetch } = useAuth()
-const { public: { apiBase } } = useRuntimeConfig()
 
 const { public: { wsBase } } = useRuntimeConfig()
 const { accessToken, refresh } = useAuth()
@@ -43,7 +42,7 @@ async function fetchPollDetails() {
     error.value = null
 
     try {
-        const data = await authFetch(`${apiBase}/poll/${id}`)
+        const data = await authFetch(`/poll/${id}`)
         poll.value = data
         created_at.value = new Date(poll.value.created_at).toLocaleString('en-US', {
             year: 'numeric',

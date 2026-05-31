@@ -1,6 +1,5 @@
 <script setup>
 const { authFetch } = useAuth()
-const { public: { apiBase } } = useRuntimeConfig()
 
 const running_polls = ref([])
 const running_error = ref(null)
@@ -13,7 +12,7 @@ async function fetchRunningPolls() {
     running_error.value = null
 
     try {
-        const data = await authFetch(`${apiBase}/poll`, {
+        const data = await authFetch('/poll', {
             method: 'GET',
             query: {
                 expired: false,

@@ -4,7 +4,7 @@ definePageMeta({
     ssr: false
 })
 
-const { api } = useApi()
+const { verifyEmail } = useAuth()
 const route = useRoute()
 
 const loading = ref(true)
@@ -21,12 +21,7 @@ onMounted(async () => {
     }
 
     try {
-        const data = await api("/auth/email/verify", {
-            method: "POST",
-            body: {
-                token: token
-            }
-        })
+        const data = await verifyEmail(token)
 
         loading.value = false
         message.value = data?.detail || "Email verification successful."

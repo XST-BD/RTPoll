@@ -5,10 +5,10 @@ definePageMeta({
     ssr: false
 })
 
-const { api } = useApi()
 const { requirePassword, validatePasswordLength } = useValidation()
 const route = useRoute()
 const { showPopup, showError } = usePopup()
+const { verifyEmail } = useAuth()
 
 const password = ref('')
 const loading = ref(false)
@@ -38,13 +38,7 @@ async function handlePasswordReset() {
     }
 
     try {
-        const data = await api("/auth/email/verify", {
-            method: "POST",
-            body: {
-                token: token.value,
-                new_password: password.value
-            }
-        })
+        const data = await verifyEmail(token.value, password.value)
 
         loading.value = false
         showPopup(data?.detail || "Password updated successfully.", "success")

@@ -1,5 +1,4 @@
 <script setup>
-const { public: { apiBase } } = useRuntimeConfig()
 const { authFetch } = useAuth()
 const { showPopup, showError } = usePopup()
 
@@ -10,7 +9,7 @@ async function deleteAllPolls() {
     loading.value = true
 
     try {
-        const data = await authFetch(`${apiBase}/poll`, {
+        const data = await authFetch('/poll', {
             method: 'DELETE'
         })
 

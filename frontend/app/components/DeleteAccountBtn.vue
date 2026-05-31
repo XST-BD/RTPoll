@@ -1,14 +1,13 @@
 <script setup>
-const { authFetch, logout } = useAuth()
+const { deleteAccount, logout } = useAuth()
 const { showPopup, showError } = usePopup()
 const { requirePassword, validatePasswordLength } = useValidation()
-const { apiBase } = useApi()
 
 const password = ref('')
 const showConfirm = ref(false)
 const loading = ref(false)
 
-async function deleteAccount() {
+async function handleDeleteAccount() {
     loading.value = true
 
     if (!requirePassword(password.value) || !validatePasswordLength(password.value)) {
@@ -17,12 +16,7 @@ async function deleteAccount() {
     }
 
     try {
-        await authFetch(`${apiBase}${apiBase.endsWith('/') ? '' : '/'}user`, {
-            method: 'DELETE',
-            body: {
-                password: password.value
-            }
-        })
+        await deleteAccount(password.value)
 
         showPopup('Account deleted successfully.', 'success')
 
@@ -64,7 +58,7 @@ async function deleteAccount() {
                         Cancel
                     </button>
 
-                    <button @click="deleteAccount" :disabled="loading"
+                    <button @click="handleDeleteAccount" :disabled="loading"
                         :class="loading ? 'btn-alert-disabled' : 'btn-alert'">
                         Confirm
                     </button>

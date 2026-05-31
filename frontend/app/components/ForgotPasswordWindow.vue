@@ -5,7 +5,7 @@ defineProps({
 
 const { showPopup, showError } = usePopup()
 const { requireEmail } = useValidation()
-const { api } = useApi()
+const { sendPasswordResetEmail } = useAuth()
 
 const emit = defineEmits(["close"])
 
@@ -28,12 +28,7 @@ async function handleForgotPassword() {
     }
 
     try {
-        const data = await api('/user', {
-            method: 'PATCH',
-            body: {
-                email: email.value.trim()
-            }
-        })
+        const data = await sendPasswordResetEmail(email.value.trim())
 
         showPopup(data?.detail || "Password reset email sent successfully. Please check your inbox.", "success")
 

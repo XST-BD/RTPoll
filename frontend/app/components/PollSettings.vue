@@ -1,7 +1,6 @@
 <script setup>
 import { Icon } from '@iconify/vue'
 
-const { public: { apiBase } } = useRuntimeConfig()
 const { authFetch } = useAuth()
 const { showPopup, showError } = usePopup()
 
@@ -28,7 +27,7 @@ async function deletePoll() {
     loading.value = true
 
     try {
-        const data = await authFetch(`${apiBase}/poll/${props.pollId}`, {
+        const data = await authFetch(`/poll/${props.pollId}`, {
             method: 'DELETE'
         })
 

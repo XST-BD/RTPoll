@@ -8,10 +8,9 @@ useHead({
 })
 
 const route = useRoute()
-const { login } = useAuth()
+const { login, resendVerification } = useAuth()
 const { showPopup, showError } = usePopup()
 const { requireEmail, requirePassword, validatePasswordLength } = useValidation()
-const { api } = useApi()
 
 const email = ref('')
 const password = ref('')
@@ -51,13 +50,7 @@ async function resendVerificationEmail() {
     resend_loading.value = true
 
     try {
-        const data = await api('/auth/email/resend', {
-            method: 'POST',
-            body: {
-                type: 'login',
-                email: email.value
-            }
-        })
+        const data = await resendVerification(email.value, 'login')
 
         showPopup(data?.detail || "Verification email sent successfully.", "success")
     } catch (err) {

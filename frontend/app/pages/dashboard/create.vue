@@ -9,7 +9,6 @@ useHead({
     title: 'Create Poll',
 })
 
-const { public: { apiBase } } = useRuntimeConfig()
 const { authFetch } = useAuth()
 const { showPopup, showError } = usePopup()
 
@@ -72,7 +71,7 @@ async function createPoll() {
     try {
         loading.value = true
 
-        const data = await authFetch(`${apiBase}/poll`, {
+        const data = await authFetch('/poll', {
             method: 'POST',
             body: {
                 question: question.value.trim(),
