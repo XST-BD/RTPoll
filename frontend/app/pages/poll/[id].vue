@@ -11,11 +11,12 @@ useHead({
 })
 
 const { api } = useApi()
+const { ensureToken, token } = usePollToken('visitor')
+
+await ensureToken()
 
 const { public: { wsBase } } = useRuntimeConfig()
 const { showPopup } = usePopup()
-
-let socket = null
 
 const route = useRoute()
 const id = route.params.id
@@ -29,6 +30,62 @@ const notice = ref(null)
 const error = ref(null)
 const loading = ref(true)
 const selectedOption = ref(null)
+const fingerprint = ref(null)
+
+async function getVisitorId() {
+    const fp = await FingerprintJS.load()
+    const result = await fp.get()
+    return result.visitorId
+}
+
+function handleWSMessage(data) {
+    if (data.type === 'results' && poll.value) {
+        poll.value.total_votes = data.total_votes
+
+        const option = poll.value.options.find(opt => opt[0] === data.option_id)
+        if (option) {
+            option[3] = data.option_perc
+        }
+        return
+    }
+
+    if (data.type === 'error') {
+        showPopup(data.message || 'An error occurred.', 'error')
+        return
+    }
+
+    if (data.type === 'notice') {
+        showPopup(data.message, 'info')
+        return
+    }
+}
+
+const { status: wsStatus, connect: connectWS, send: wsSend } = useWebSocket(() => {
+    if (!token.value || !fingerprint.value) {
+        return null
+    }
+    else {
+        return `${wsBase}/${id}?t=${token.value}&fp=${fingerprint.value}`
+    }
+}, {
+    onMessage: handleWSMessage
+})
+
+function vote(optionId) {
+    selectedOption.value = optionId
+
+    const sent = wsSend({
+        type: "update",
+        option_id: optionId
+    })
+
+    if (sent) {
+        showPopup('Vote submitted successfully.', 'success')
+    }
+    else {
+        showPopup('Connection lost. Please wait...', 'error')
+    }
+}
 
 async function fetchPollDetails() {
     loading.value = true
@@ -38,7 +95,8 @@ async function fetchPollDetails() {
         const data = await api(`/voter/${id}`)
         poll.value = data
 
-        console.log(poll.value)
+        fingerprint.value = await getVisitorId()
+        connectWS()
     } catch (err) {
         error.value = 'Failed to load poll information. Please reload the page and try again.'
     } finally {
@@ -49,94 +107,6 @@ async function fetchPollDetails() {
 onMounted(() => {
     fetchPollDetails()
 })
-
-// function closeWS() {
-//     if (socket) {
-//         socket.onclose = null
-//         socket.close()
-//         socket = null
-//     }
-// }
-
-async function getVisitorId() {
-    const fp = await FingerprintJS.load()
-    const result = await fp.get()
-
-    return result.visitorId
-}
-
-// async function vote(id) {
-//     selectedOption.value = id
-
-//     if (socket && socket.readyState === WebSocket.OPEN) {
-//         socket.send(JSON.stringify({
-//             type: "send_vote",
-//             option_id: id
-//         }))
-
-//         showPopup('Vote submitted successfully.', 'success')
-//     }
-// }
-
-// async function connectWS(pollId) {
-//     closeWS()
-
-//     const visitorId = await getVisitorId()
-//     socket = new WebSocket(`${wsBase}/${pollId}?fp=${visitorId}`)
-
-//     socket.onopen = () => {
-//         socket.send(JSON.stringify({
-//             type: "get_vote"
-//         }))
-//     }
-
-//     socket.onmessage = (event) => {
-//         const data = JSON.parse(event.data)
-
-//         if (data.type === 'error') {
-//             error.value = data?.message || 'Failed to load poll. Please reload the page and try again.'
-//             notice.value = null
-//             poll.value = null
-//             loading.value = false
-//             return
-//         }
-
-//         if (data.type === 'notice') {
-//             error.value = null
-//             notice.value = data?.message
-//             poll.value = null
-//             loading.value = false
-//             return
-//         }
-
-//         error.value = null
-//         notice.value = null
-//         poll.value = data
-//         loading.value = false
-//     }
-
-//     socket.onerror = () => {
-//         error.value = 'Failed to load poll. Please reload the page and try again.'
-//         notice.value = null
-//         poll.value = null
-//         loading.value = false
-//     }
-
-//     socket.onclose = () => {
-//         error.value = 'Failed to load poll. Please reload the page and try again.'
-//         notice.value = null
-//         poll.value = null
-//         loading.value = false
-//     }
-// }
-
-// onMounted(() => {
-//     connectWS(id)
-// })
-
-// onBeforeUnmount(() => {
-//     closeWS()
-// })
 </script>
 
 <template>
@@ -158,8 +128,8 @@ async function getVisitorId() {
 
             <div v-else class="w-full flex flex-col items-center gap-3">
                 <ClientOnly>
-                    <vue3-flip-countdown v-if="poll.expires_at !== 'Never'" :deadlineISO="poll.expires_at" mainColor="#ffffffff"
-                        secondFlipColor="#ffffffff" mainFlipBackgroundColor="#6366F1"
+                    <vue3-flip-countdown v-if="poll.expires_at !== 'Never'" :deadlineISO="poll.expires_at"
+                        mainColor="#ffffffff" secondFlipColor="#ffffffff" mainFlipBackgroundColor="#6366F1"
                         secondFlipBackgroundColor="#818CF8" labelColor="#818CF8" countdownSize="clamp(0px, 10vw, 3.5em)"
                         labelSize="clamp(0px, 5vw, 1.5em)" />
                 </ClientOnly>

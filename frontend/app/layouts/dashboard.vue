@@ -1,18 +1,3 @@
-<script setup>
-const { refresh } = useAuth()
-const isLoading = ref(true)
-
-onMounted(async () => {
-    try {
-        await refresh()
-    } catch (err) {
-        await navigateTo('/login', { replace: true })
-    } finally {
-        isLoading.value = false
-    }
-})
-</script>
-
 <template>
     <div class="min-h-screen flex flex-col">
         <header
@@ -23,7 +8,9 @@ onMounted(async () => {
 
                     <svg width="130" height="28">
                         <text x="50%" y="27" text-anchor="middle" font-family="Anton" fill="none" stroke="currentColor"
-                            stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400">Dashboard</text>
+                            stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400">
+                            Dashboard
+                        </text>
                     </svg>
                 </NuxtLink>
             </h1>

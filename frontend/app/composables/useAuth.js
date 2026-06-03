@@ -1,3 +1,7 @@
+let channel = null;
+const LOCK_KEY = "auth_refresh_lock";
+let refreshPromise = null;
+
 export const useAuth = () => {
 	const isLoggedIn = computed(() => !!accessToken.value);
 
@@ -5,6 +9,68 @@ export const useAuth = () => {
 	const accessToken = useState("auth_access_token", () => null);
 
 	const { api } = useApi();
+
+	const TAB_ID = import.meta.client ? (crypto.randomUUID?.() || String(Math.random())) : "";
+
+	const acquireLock = () => {
+		if (import.meta.server) return true;
+		const existing = localStorage.getItem(LOCK_KEY);
+		const lockTime = Number(localStorage.getItem("auth_refresh_lock_time") || 0);
+
+		if (existing && existing !== TAB_ID) {
+			// If lock is older than 10 seconds, treat it as stale
+			if (Date.now() - lockTime > 10000) {
+				localStorage.setItem(LOCK_KEY, TAB_ID);
+				localStorage.setItem("auth_refresh_lock_time", String(Date.now()));
+				// Check-after-write to reduce race window
+				if (localStorage.getItem(LOCK_KEY) !== TAB_ID) return false;
+				return true;
+			}
+			return false;
+		}
+
+		localStorage.setItem(LOCK_KEY, TAB_ID);
+		localStorage.setItem("auth_refresh_lock_time", String(Date.now()));
+		// Check-after-write to reduce race window
+		if (localStorage.getItem(LOCK_KEY) !== TAB_ID) return false;
+		return true;
+	};
+
+	const releaseLock = () => {
+		if (import.meta.server) return;
+		const existing = localStorage.getItem(LOCK_KEY);
+		if (existing === TAB_ID) {
+			localStorage.removeItem(LOCK_KEY);
+			localStorage.removeItem("auth_refresh_lock_time");
+		}
+	};
+
+	if (import.meta.client && !channel) {
+		channel = new BroadcastChannel("auth_channel");
+		channel.onmessage = (event) => {
+			const { type, accessToken: newAccessToken } = event.data;
+			if (type === "LOGIN" || type === "REFRESH_SUCCESS") {
+				accessToken.value = newAccessToken;
+				scheduleRefresh();
+				if (refreshPromise && typeof refreshPromise._resolve === "function") {
+					refreshPromise._resolve(true);
+				}
+			} else if (type === "LOGOUT") {
+				clearAuth();
+				if (refreshPromise && typeof refreshPromise._resolve === "function") {
+					refreshPromise._resolve(false);
+				}
+			}
+		};
+
+		// Clean up on HMR to prevent channel leaks during development
+		if (import.meta.hot) {
+			import.meta.hot.dispose(() => {
+				channel?.close();
+				channel = null;
+			});
+		}
+	}
 
 	function getTokenExpiresIn(token) {
 		try {
@@ -64,6 +130,10 @@ export const useAuth = () => {
 
 		accessToken.value = data.access_token;
 		scheduleRefresh();
+
+		if (channel) {
+			channel.postMessage({ type: "LOGIN", accessToken: data.access_token });
+		}
 	}
 
 	async function register(email, password, confirm_password) {
@@ -126,11 +196,28 @@ export const useAuth = () => {
 		});
 	}
 
-	// Prevent concurrent refresh requests using a shared mutex promise
-	const refreshPromise = useState("auth_refresh_promise", () => null);
-
 	async function refresh() {
-		if (refreshPromise.value) return refreshPromise.value;
+		if (refreshPromise) return refreshPromise;
+
+		const gotLock = acquireLock();
+
+		if (!gotLock) {
+			// Another tab is currently refreshing. Wait for its broadcast.
+			let resolveFn;
+			const promise = new Promise((resolve) => {
+				resolveFn = resolve;
+				// Fallback timeout of 5 seconds in case the lock owner tab crashes
+				setTimeout(() => {
+					if (refreshPromise === promise) {
+						refreshPromise = null;
+						resolve(refresh());
+					}
+				}, 5000);
+			});
+			promise._resolve = resolveFn;
+			refreshPromise = promise;
+			return promise;
+		}
 
 		const promise = (async () => {
 			try {
@@ -141,16 +228,24 @@ export const useAuth = () => {
 				accessToken.value = data.access_token;
 				scheduleRefresh();
 
+				if (channel) {
+					channel.postMessage({ type: "REFRESH_SUCCESS", accessToken: data.access_token });
+				}
+
 				return true;
 			} catch {
 				clearAuth();
+				if (channel) {
+					channel.postMessage({ type: "LOGOUT" });
+				}
 				return false;
 			} finally {
-				refreshPromise.value = null;
+				releaseLock();
+				refreshPromise = null;
 			}
 		})();
 
-		refreshPromise.value = promise;
+		refreshPromise = promise;
 		return promise;
 	}
 
@@ -161,6 +256,9 @@ export const useAuth = () => {
 			});
 		} finally {
 			clearAuth();
+			if (channel) {
+				channel.postMessage({ type: "LOGOUT" });
+			}
 		}
 	}
 
