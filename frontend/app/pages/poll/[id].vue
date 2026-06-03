@@ -40,6 +40,7 @@ async function getVisitorId() {
 
 function handleWSMessage(data) {
     if (data.type === 'results' && poll.value) {
+        console.log('[WS] Received results:', data)
         poll.value.total_votes = data.total_votes
 
         const option = poll.value.options.find(opt => opt[0] === data.option_id)
@@ -50,11 +51,13 @@ function handleWSMessage(data) {
     }
 
     if (data.type === 'error') {
+        console.log('[WS] Received error:', data)
         showPopup(data.message || 'An error occurred.', 'error')
         return
     }
 
     if (data.type === 'notice') {
+        console.log('[WS] Received notice:', data)
         showPopup(data.message, 'info')
         return
     }
@@ -74,10 +77,13 @@ const { status: wsStatus, connect: connectWS, send: wsSend } = useWebSocket(() =
 function vote(optionId) {
     selectedOption.value = optionId
 
-    const sent = wsSend({
+    const payload = {
         type: "update",
         option_id: optionId
-    })
+    }
+    console.log('[WS] Sending update:', payload)
+
+    const sent = wsSend(payload)
 
     if (sent) {
         showPopup('Vote submitted successfully.', 'success')

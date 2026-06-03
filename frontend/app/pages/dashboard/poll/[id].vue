@@ -39,6 +39,7 @@ const url = computed(() => {
 
 function handleWSMessage(data) {
     if (data.type === 'results' && poll.value) {
+        console.log('[WS] Received results:', data)
         poll.value.total_votes = data.total_votes
 
         const option = poll.value.options.find(opt => opt[0] === data.option_id)
@@ -50,6 +51,7 @@ function handleWSMessage(data) {
     }
 
     if (data.type === 'error') {
+        console.log('[WS] Received error:', data)
         showPopup(data.message || 'An error occurred on the live feed.', 'error')
         return
     }

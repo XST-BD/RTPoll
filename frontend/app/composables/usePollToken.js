@@ -3,6 +3,7 @@ const pollRefreshPromises = new Map();
 
 export const usePollToken = (type = 'visitor') => {
 	const { api } = useApi();
+	const { authFetch } = useAuth();
 
 	const cookiePrefix = `${type}_poll`;
 	const statePrefix = `${type}PollToken`;
@@ -27,7 +28,7 @@ export const usePollToken = (type = 'visitor') => {
 		? crypto.randomUUID?.() || String(Math.random())
 		: "";
 
-	const TOKEN_ENDPOINT = `/${type}/token`;
+	const TOKEN_ENDPOINT = `/poll/${type}/token`;
 
 	// Store timer ID in useState to prevent duplicate timers across multiple composable calls
 	const timerState = useState(`${statePrefix}RefreshTimer`, () => null);
@@ -104,7 +105,8 @@ export const usePollToken = (type = 'visitor') => {
 	}
 
 	const generateToken = async () => {
-		const data = await api(TOKEN_ENDPOINT, {
+		const fetcher = type === 'creator' ? authFetch : api;
+		const data = await fetcher(TOKEN_ENDPOINT, {
 			method: "POST",
 		});
 
