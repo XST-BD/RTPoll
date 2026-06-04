@@ -10,6 +10,8 @@ load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL2', 'DATABASE_URL2')
 dbengine =  create_engine(
     url=DATABASE_URL,
+    pool_pre_ping=True,
+    pool_recycle=3600,
     # connect_args={"check_same_thread": False}   # sqlite only
 )
 
