@@ -32,7 +32,9 @@ celery_app.conf.update(
 DB_SYNC_INTERVAL = 30
 
 # Create a global pool (all tasks in this worker share it)
-redis_pool = redis.ConnectionPool(host='redis', port=6379, db=0, decode_responses=True)
+redis_pool = redis.ConnectionPool.from_url(
+    REDIS_URL, decode_responses=True
+)
 
 def get_redis_client():
     """Return a Redis client from the global pool."""

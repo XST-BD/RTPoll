@@ -1,13 +1,16 @@
+from dotenv import load_dotenv
 import os
+
 
 from fastapi.middleware.cors import CORSMiddleware
 # from starlette.middleware.sessions import SessionMiddleware
 
 from .vars import app, SECRET_KEY
 
+load_dotenv()
 FRONTEND_URL_LOCAL = os.getenv("FRONTEND_URL_LOCAL")
-FRONTEND_URL_NETWORK1 = os.getenv("FRONTEND_URL_NETWORK1")
-FRONTEND_URL_NETWORK2 = os.getenv("FRONTEND_URL_NETWORK2")
+FRONTEND_URL_NETWORK1 = os.getenv("FRONTEND_URL_NETWORK")
+FRONTEND_URL_NETWORK2 = os.getenv("FRONTEND_URL_NETWORK")
 
 def cors_permit():
 
