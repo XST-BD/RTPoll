@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from app.db.model.user import UserModel
-from app.db.model.poll import PollModel, PollHistoryEntry, PollOption
+from app.db.model.poll import PollModel, PollOption
 from app.deps import get_db
 from app.services.auth import get_current_user
 from app.setup.paginator import CustomParams
@@ -58,19 +58,16 @@ async def poll_create(
     if poll.expires_at: 
         bgtasks.add_task(poll_timer, poll.id, poll.expires_at) # type: ignore
 
-    return {
-        "message": "Poll created",
-        "id": poll.id,
-        "is_indefinite": poll.is_indefinite,
-        "expires_at": poll.expires_at if not is_indefinite else "never",
-    }
+    return {"poll_id": poll.id, "message": "Poll created successfully"}
 
 class PollResponseModel(BaseModel):
+    creator_id: str
+    created_at: datetime | str
     question: str
     expires_at: datetime | str
     is_indefinite: bool
     total_votes: int
-    options: list[tuple[str, str, int]]
+    options: list[tuple[str, str, int, float]]
 
     class Config:
         from_attributes = True
@@ -90,17 +87,19 @@ async def poll_view(
     # Redis live votes
     key = f'poll:{poll.id}:votes'
     redis_votes = await redis_client.hgetall(key)  # type: ignore
-    redis_votes = {int(k): int(v) for k, v in redis_votes.items()}
+    redis_votes = {str(k): int(v) for k, v in redis_votes.items()}
     
     poll_expires_at = "Never" if poll.expires_at is None else poll.expires_at.replace(tzinfo=timezone.utc)
     total_votes = sum(redis_votes.values())
 
     poll_options = [
-        (row.id, row.text, row.votes)
+        (row.id, row.text, row.votes,(row.votes / total_votes) * 100.00 if total_votes else 0.00)
         for row in db.query(PollOption.id, PollOption.text, PollOption.votes).filter_by(poll_id=poll.id)
     ]
 
     respnose_data = PollResponseModel(
+        creator_id=poll.creator_id,
+        created_at=poll.created_at,
         question=poll.question,
         expires_at=poll_expires_at,
         is_indefinite=poll.is_indefinite,
