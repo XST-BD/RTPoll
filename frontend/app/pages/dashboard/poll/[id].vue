@@ -20,7 +20,7 @@ await ensureToken()
 const { public: { wsBase } } = useRuntimeConfig()
 
 const route = useRoute()
-const id = route.params.id
+const poll_id = route.params.id
 
 const Vue3FlipCountdown = defineAsyncComponent(() =>
     import('vue3-flip-countdown').then(m => m.Countdown)
@@ -34,32 +34,36 @@ const loading = ref(true)
 
 const url = computed(() => {
     if (import.meta.server) return ''
-    return `${window.location.origin}/poll/${id}`
+    return `${window.location.origin}/poll/${poll_id}`
 })
 
 function handleWSMessage(data) {
     if (data.type === 'results' && poll.value) {
-        console.log('[WS] Received results:', data)
+        console.log('[WS] Received creator result:', data)
         poll.value.total_votes = data.total_votes
 
-        const option = poll.value.options.find(opt => opt[0] === data.option_id)
-        if (option) {
-            option[2] = data.option_votes
-            option[3] = data.option_perc
+        const len = poll.value.options.length
+
+        for(let i = 0; i < len; i++) {
+            poll.value.options[i][3] = data.option_perc[i]
         }
+
+        for(let i = 0; i < len; i++) {
+            poll.value.options[i][2] = data.option_vote[i]
+        }
+
         return
     }
 
     if (data.type === 'error') {
-        console.log('[WS] Received error:', data)
-        showPopup(data.message || 'An error occurred on the live feed.', 'error')
+        showPopup(data.message || 'An error occurred while fetching real time updates.', 'error')
         return
     }
 }
 
 const { connect: connectWS } = useWebSocket(() => {
     if (!token.value) return null
-    return `${wsBase}/${id}?t=${token.value}`
+    return `${wsBase}/${poll_id}?t=${token.value}`
 }, {
     onMessage: handleWSMessage
 })
@@ -69,7 +73,7 @@ async function fetchPollDetails() {
     error.value = null
 
     try {
-        const data = await authFetch(`/poll/${id}`)
+        const data = await authFetch(`/poll/${poll_id}`)
         poll.value = data
         created_at.value = new Date(poll.value.created_at).toLocaleString('en-US', {
             year: 'numeric',
@@ -95,7 +99,7 @@ async function fetchPollDetails() {
 
         connectWS()
     } catch (err) {
-        error.value = 'Failed to load poll information. Please reload the page and try again.'
+        error.value = err.message || 'Failed to load poll information. Please reload the page and try again.'
     } finally {
         loading.value = false
     }
@@ -138,13 +142,13 @@ const getBackground = (percentage) => {
                     <input class="flex-1 px-3 py-1 flex font-mono border-2 border-r-0 border-indigo-400 rounded-l-full"
                         :value="url" readonly @click="$event.target.select()">
 
-                    <button @click="sharePoll(id)"
+                    <button @click="sharePoll(poll_id)"
                         class="bg-indigo-400 rounded-r-full py-1 px-4 hover:bg-indigo-500 transition-all duration-500 ease-in-out">
                         <Icon icon="fluent:share-16-regular" class="text-white text-2xl shrink-0" />
                     </button>
                 </div>
 
-                <PollSettings :pollId="Number(id)" class="cursor-pointer" />
+                <PollSettings :poll_id="poll_id" class="cursor-pointer" />
             </div>
 
             <div class="w-full">
@@ -220,7 +224,7 @@ const getBackground = (percentage) => {
                 </table>
             </div>
 
-            <GraphView :pollId="id" class="w-full" />
+            <GraphView :poll_id="poll_id" class="w-full" />
         </div>
     </div>
 </template>

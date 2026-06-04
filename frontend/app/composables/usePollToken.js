@@ -225,10 +225,8 @@ export const usePollToken = (type = 'visitor') => {
 	const ensureToken = async () => {
 		if (!token.value || isExpired()) {
 			await refreshTokenLocked();
-			console.log(`${type} poll token refreshTokenLocked:`, token.value);
 		} else {
 			scheduleAutoRefresh();
-			console.log(`${type} poll token scheduleAutoRefresh:`, token.value);
 		}
 
 		return token.value;

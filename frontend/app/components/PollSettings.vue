@@ -5,7 +5,7 @@ const { authFetch } = useAuth()
 const { showPopup, showError } = usePopup()
 
 const props = defineProps({
-    pollId: Number
+    poll_id: String
 })
 
 const showButton = ref(false)
@@ -27,7 +27,7 @@ async function deletePoll() {
     loading.value = true
 
     try {
-        const data = await authFetch(`/poll/${props.pollId}`, {
+        const data = await authFetch(`/poll/${props.poll_id}`, {
             method: 'DELETE'
         })
 

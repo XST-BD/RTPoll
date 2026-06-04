@@ -19,7 +19,7 @@ const { public: { wsBase } } = useRuntimeConfig()
 const { showPopup } = usePopup()
 
 const route = useRoute()
-const id = route.params.id
+const poll_id = route.params.id
 
 const Vue3FlipCountdown = defineAsyncComponent(() =>
     import('vue3-flip-countdown').then(m => m.Countdown)
@@ -40,25 +40,25 @@ async function getVisitorId() {
 
 function handleWSMessage(data) {
     if (data.type === 'results' && poll.value) {
-        console.log('[WS] Received results:', data)
+        console.log('[WS] Received voter result:', data)
         poll.value.total_votes = data.total_votes
 
-        const option = poll.value.options.find(opt => opt[0] === data.option_id)
-        if (option) {
-            option[3] = data.option_perc
+        const len = poll.value.options.length
+
+        for (let i = 0; i < len; i++) {
+            poll.value.options[i][3] = data.option_perc[i]
         }
+
         return
     }
 
     if (data.type === 'error') {
-        console.log('[WS] Received error:', data)
-        showPopup(data.message || 'An error occurred.', 'error')
+        error.value = data.message || 'An error occurred.'
         return
     }
 
     if (data.type === 'notice') {
-        console.log('[WS] Received notice:', data)
-        showPopup(data.message, 'info')
+        notice.value = data.message || 'Poll not found or has expired.'
         return
     }
 }
@@ -68,7 +68,7 @@ const { status: wsStatus, connect: connectWS, send: wsSend } = useWebSocket(() =
         return null
     }
     else {
-        return `${wsBase}/${id}?t=${token.value}&fp=${fingerprint.value}`
+        return `${wsBase}/${poll_id}?t=${token.value}&fp=${fingerprint.value}`
     }
 }, {
     onMessage: handleWSMessage
@@ -81,7 +81,6 @@ function vote(optionId) {
         type: "update",
         option_id: optionId
     }
-    console.log('[WS] Sending update:', payload)
 
     const sent = wsSend(payload)
 
@@ -98,13 +97,13 @@ async function fetchPollDetails() {
     error.value = null
 
     try {
-        const data = await api(`/voter/${id}`)
+        const data = await api(`/voter/${poll_id}`)
         poll.value = data
 
         fingerprint.value = await getVisitorId()
         connectWS()
     } catch (err) {
-        error.value = 'Failed to load poll information. Please reload the page and try again.'
+        error.value = err.message || 'Failed to load poll information. Please reload the page and try again.'
     } finally {
         loading.value = false
     }
@@ -123,12 +122,12 @@ onMounted(() => {
             <Loading v-if="loading" />
 
             <p v-else-if="error"
-                class="notice text-red-500 text-center border-4 border-double border-red-500 px-4 py-2">
+                class="notice text-red-500 text-center border-4 border-double border-red-500 px-4 py-6">
                 {{ error }}
             </p>
 
             <p v-else-if="notice"
-                class="notice text-indigo-400 text-center border-4 border-double border-indigo-400 px-4 py-2">
+                class="notice text-indigo-400 text-center border-4 border-double border-indigo-400 px-4 py-6">
                 {{ notice }}
             </p>
 
