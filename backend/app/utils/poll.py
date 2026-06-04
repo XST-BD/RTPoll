@@ -38,3 +38,26 @@ def fetch_poll(poll_id: str):
         return poll
     finally:
         db.close()
+
+
+class WSConnectionManager:
+    def __init__(self):
+        self.creators: dict[str, WebSocket] = {}
+
+    async def connect_creator(self, poll_id: str, ws: WebSocket):
+        self.creators[poll_id] = ws
+
+    async def send_to_creator(self, poll_id: str, data: dict):
+        ws = self.creators.get(poll_id)
+        if ws is None:
+            return
+
+        try:
+            await ws.send_json(data)
+        except Exception:
+            self.creators.pop(poll_id, None)
+
+    def disconnect_creator(self, poll_id: str):
+        self.creators.pop(poll_id, None)
+
+wsconnmanager = WSConnectionManager()
