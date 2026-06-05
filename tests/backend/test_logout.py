@@ -1,6 +1,6 @@
 import pytest
 
-@pytest.mark.run(order=11)
+@pytest.mark.run(order=12)
 def test_user_logout(api_base_url, session):
     url = f'{api_base_url}/api/v0/auth/logout'
 

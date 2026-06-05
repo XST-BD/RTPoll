@@ -27,7 +27,7 @@ def test_create_poll(api_base_url, session, shared_data):
     assert data['message'] == 'Poll created'
 
 
-@pytest.mark.run(order=7)
+@pytest.mark.run(order=8)
 def test_get_poll_success(api_base_url, session, shared_data):
     
     poll_id = shared_data['poll_id']
@@ -42,7 +42,7 @@ def test_get_poll_success(api_base_url, session, shared_data):
     data = res.json()
 
 
-@pytest.mark.run(order=8)
+@pytest.mark.run(order=7)
 def test_get_poll_failure(api_base_url, session, shared_data):
 
     poll_id = '0'
@@ -58,7 +58,7 @@ def test_get_poll_failure(api_base_url, session, shared_data):
     assert data['detail'] == 'Poll not found'
 
 
-@pytest.mark.run(order=9)
+@pytest.mark.run(order=10)
 def test_delete_poll_success(api_base_url, session, shared_data):
     
     poll_id = shared_data['poll_id']
@@ -74,7 +74,7 @@ def test_delete_poll_success(api_base_url, session, shared_data):
     assert data['message'] == f"Poll: {poll_id} deleted successfully"
 
 
-@pytest.mark.run(order=10)
+@pytest.mark.run(order=11)
 def test_delete_poll_failure(api_base_url, session, shared_data):
     
     poll_id = 0

@@ -18,7 +18,9 @@ def shared_data():
     return {
         "access_token": None,
         "poll_id": None,
-        "user_id": None
+        "user_id": None,
+        "token": None,
+        "fingerprint": None,
     }
 
 @pytest.fixture(scope='session')
