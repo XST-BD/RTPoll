@@ -2,10 +2,6 @@
 import { Icon } from "@iconify/vue"
 import FingerprintJS from '@fingerprintjs/fingerprintjs'
 
-definePageMeta({
-    ssr: false
-})
-
 useHead({
     title: 'Vote in Poll',
 })
@@ -53,12 +49,12 @@ function handleWSMessage(data) {
     }
 
     if (data.type === 'error') {
-        error.value = data.message || 'An error occurred.'
+        showPopup(data.detail || 'An error occurred while fetching real time updates.', 'error')
         return
     }
 
     if (data.type === 'notice') {
-        notice.value = data.message || 'Poll not found or has expired.'
+        notice.value = data.detail || 'Poll not found or has expired.'
         return
     }
 }
@@ -84,10 +80,7 @@ function vote(optionId) {
 
     const sent = wsSend(payload)
 
-    if (sent) {
-        showPopup('Vote submitted successfully.', 'success')
-    }
-    else {
+    if (!sent) {
         showPopup('Connection lost. Please wait...', 'error')
     }
 }
@@ -103,7 +96,9 @@ async function fetchPollDetails() {
         fingerprint.value = await getVisitorId()
         connectWS()
     } catch (err) {
-        error.value = err.message || 'Failed to load poll information. Please reload the page and try again.'
+        error.value = Array.isArray(err?.data?.detail)
+            ? err.data.detail.map((e) => e.msg).join(", ")
+            : err?.data?.detail || 'Failed to load poll information. Please reload the page and try again.'
     } finally {
         loading.value = false
     }

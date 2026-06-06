@@ -53,7 +53,7 @@ async function handleForgotPassword() {
             </p>
 
             <form class="w-full flex flex-col gap-4" @submit.prevent="handleForgotPassword">
-                <input type="email" v-model="email" :disabled="loading" class="w-full ipt text-sm" required>
+                <input type="email" v-model="email" placeholder="Enter your email address" :disabled="loading" class="w-full ipt text-sm" required>
 
                 <button type="submit" :disabled="loading" class="w-full" :class="loading ? 'btn-disabled' : 'btn'">
                     {{ loading ? 'Sending...' : 'Send' }}

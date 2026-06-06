@@ -4,7 +4,6 @@ import { Icon } from "@iconify/vue"
 definePageMeta({
     middleware: 'auth',
     layout: 'dashboard',
-    ssr: false
 })
 
 useHead({
@@ -44,19 +43,19 @@ function handleWSMessage(data) {
 
         const len = poll.value.options.length
 
-        for(let i = 0; i < len; i++) {
+        for (let i = 0; i < len; i++) {
             poll.value.options[i][3] = data.option_perc[i]
         }
 
-        for(let i = 0; i < len; i++) {
-            poll.value.options[i][2] = data.option_vote[i]
+        for (let i = 0; i < len; i++) {
+            poll.value.options[i][2] = data.option_votes[i]
         }
 
         return
     }
 
     if (data.type === 'error') {
-        showPopup(data.message || 'An error occurred while fetching real time updates.', 'error')
+        // showPopup(data.detail || 'An error occurred while fetching real time updates.', 'error')
         return
     }
 }
@@ -99,7 +98,9 @@ async function fetchPollDetails() {
 
         connectWS()
     } catch (err) {
-        error.value = err.message || 'Failed to load poll information. Please reload the page and try again.'
+        error.value = Array.isArray(err?.data?.detail)
+            ? err.data.detail.map((e) => e.msg).join(", ")
+            : err?.data?.detail || 'Failed to load poll information. Please reload the page and try again.'
     } finally {
         loading.value = false
     }
@@ -195,7 +196,7 @@ const getBackground = (percentage) => {
 
                 <div class="flex flex-col justify-center items-center gap-1 bg-indigo-400 p-4 rounded-lg">
                     <span class="font-[Anton] text-lg">Total Votes</span>
-                    <span>{{ poll.total_votes }}</span>
+                    <span>{{ poll.total_votes.toLocaleString() }}</span>
                 </div>
 
                 <div class="flex flex-col justify-center items-center gap-1 bg-indigo-400 p-4 rounded-lg">

@@ -1,7 +1,7 @@
 <div align="center">
   <h1>RTPoll</h1>
 
-  <p>A real-time polling system that allows users to create polls, share them via public links and view real-time results</p>
+  <p>A real-time polling platform that allows users to create and share polls via public links, and and track live results through an interactive interface and insightful visual graph.</p>
 
   <a href="https://rtpoll.pages.dev/">
     <img src="https://img.shields.io/badge/Visit_Live_Site_%E2%9E%A4-818CF8?style=for-the-badge"/>

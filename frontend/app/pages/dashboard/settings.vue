@@ -2,7 +2,6 @@
 definePageMeta({
     middleware: 'auth',
     layout: 'dashboard',
-    ssr: false
 })
 
 useHead({
@@ -22,7 +21,7 @@ onMounted(async () => {
 
         user.value = data
     } catch (err) {
-        showError(err, "Failed to load user data.")
+        showError(err, "Failed to load user data. Please reload the page and try again.")
     }
 })
 </script>
@@ -75,7 +74,7 @@ onMounted(async () => {
             <ChangePassword />
         </div>
 
-        <h3 class="w-full text-center text-red-500 pt-3 pb-3">
+        <h3 class="w-full text-center text-red-500 pt-3 pb-3 md:border-0 border-t border-b border-red-500">
             Danger Zone
         </h3>
 

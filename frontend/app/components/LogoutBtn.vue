@@ -12,8 +12,6 @@ async function handleLogout() {
     try {
         await logout()
 
-        showPopup("Logged out successfully.", "success")
-
         await navigateTo('/login')
     } catch (err) {
         showError(err, "Failed to logout. Please try again.")

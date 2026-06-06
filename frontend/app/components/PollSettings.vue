@@ -35,7 +35,7 @@ async function deletePoll() {
 
         navigateTo('/dashboard')
     } catch (err) {
-        showError(err, 'Failed to delete poll.')
+        showError(err, 'Failed to delete poll. Please try again.')
     } finally {
         loading.value = false
     }

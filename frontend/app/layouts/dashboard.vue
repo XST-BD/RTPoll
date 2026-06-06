@@ -18,7 +18,7 @@
             <LogoutBtn />
         </header>
 
-        <main class="flex-1 flex flex-row pb-20">
+        <main class="flex-1 flex flex-row pb-24">
             <PopupMessage />
 
             <FloatingNavPanel />

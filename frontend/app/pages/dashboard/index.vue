@@ -2,7 +2,6 @@
 definePageMeta({
     middleware: 'auth',
     layout: 'dashboard',
-    ssr: false
 })
 
 useHead({

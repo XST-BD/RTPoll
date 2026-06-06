@@ -4,7 +4,7 @@ definePageMeta({
 })
 
 useHead({
-    title: 'Home'
+    title: ''
 })
 </script>
 

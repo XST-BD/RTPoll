@@ -31,8 +31,6 @@ async function handleLogin() {
     try {
         await login(email.value.trim(), password.value)
 
-        showPopup("Logged in successfully.", "success")
-
         const redirectUrl = route.query.redirect || '/dashboard'
         await navigateTo(redirectUrl)
     } catch (err) {
