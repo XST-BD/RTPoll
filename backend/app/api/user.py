@@ -71,9 +71,12 @@ def change_email(
 
     if not verify_password(payload.password, user.password): 
         raise HTTPException(400, "Wrong password")
+    
+    if user.email == payload.new_email:
+        raise HTTPException(400, "Email is same as older mail")
 
     link = prepare_verification_link(db=db, email=payload.new_email, token_type="email_change", extra=user.email)
-    send_mail_verification(payload.new_email, link)
+    send_mail_verification(purpose="CHN", reciever_mail_addr=payload.new_email, link=link)
     
     return JSONResponse(status_code=202, content={"detail": "Verification email sent. Please check your inbox."})
 
@@ -120,7 +123,7 @@ def recover_password(
         raise HTTPException(403, "Your email address is not verified yet. Please verify your email first.")
     
     link = prepare_verification_link(db, payload.email, token_type="forgot_pass")
-    send_mail_verification(payload.email, link)
+    send_mail_verification(purpose="REC", reciever_mail_addr=payload.email, link=link)
     return JSONResponse(status_code=202, content={"detail": "Password reset email sent successfully. Please check your inbox."})
 
 

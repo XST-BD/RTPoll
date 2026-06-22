@@ -64,16 +64,18 @@ def prepare_verification_link(db: Session, email: str, token_type: str, extra: s
 
 
 def send_mail_verification(
-    reciever_mail_addr: str, link: str,
+    purpose: str, reciever_mail_addr: str, link: str,
 ):
     # mail setup
-    
     receiver_email = reciever_mail_addr
     
     # Email content
-    subject = "Account verification email from RTPoll"
+    subject_new_acc = "Account verification email from RTPoll"
+    subject_rec_acc = "Password recovery email from RTPoll"
+    subject_exc_acc = "Account exchange email from RTPoll"
+
     # HTML body with clickable link
-    body = f"""
+    body_new_acc = f"""
     Thank you for registering an account in RTPoll Website.
     <br>
     <br>
@@ -87,6 +89,43 @@ def send_mail_verification(
     <br>
     <a href="https://github.com/XST-BD">XST-BD Org.</a>
     """
+
+    body_rec_acc = f"""
+    Here's your password recovery link. Please click the following URL to restore your password:
+    <br>
+    <a href="{link}">{link}</a>
+    <br>
+    <br>
+    If you did not request for password recovery, you can ignore this mail.
+    <br>
+    <br>
+    <a href="https://github.com/XST-BD">XST-BD Org.</a>
+    """
+
+    body_exc_acc = f"""
+    Here's your accout exchange link. Please click the following URL to exchange your RTPoll account:
+    <br>
+    <a href="{link}">{link}</a>
+    <br>
+    <br>
+    If you did not request for password recovery, you can ignore this mail.
+    <br>
+    <br>
+    <a href="https://github.com/XST-BD">XST-BD Org.</a>
+    """
+
+    subject = ''
+    body = ''
+    
+    if purpose == "NEW":
+        subject = subject_new_acc
+        body = body_new_acc
+    elif purpose == "REC":
+        subject = subject_rec_acc
+        body = body_rec_acc
+    elif purpose == "CHN":
+        subject = subject_exc_acc
+        body = body_exc_acc
 
     # --- Create the email message ---
     msg = MIMEMultipart()

@@ -31,7 +31,10 @@ async def poll_view(
     poll = db.query(PollModel).filter(PollModel.id==poll_id).first()
 
     if poll is None: 
-        raise HTTPException(404, "Poll not found")
+        return JSONResponse(content={"message": "Poll not found"}, status_code=404)
+
+    if poll.expires_at and poll.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc): 
+        return JSONResponse(content={"message": "This poll has expired"}, status_code=204)
     
     # Redis live votes
     key = f'poll:{poll.id}:votes'

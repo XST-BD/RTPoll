@@ -1,6 +1,7 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks, WebSocket
+from fastapi import APIRouter, Depends, Request, BackgroundTasks, WebSocket
+from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse
 
 from fastapi_pagination import paginate, Page
@@ -11,7 +12,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from app.db.model.user import UserModel
-from app.db.model.poll import PollModel, PollOption
+from app.db.model.poll import PollModel, PollOption, PollHistoryEntry
 from app.deps import get_db
 from app.services.auth import get_current_user
 from app.setup.paginator import CustomParams
@@ -82,7 +83,7 @@ async def poll_view(
     poll = db.query(PollModel).filter(PollModel.id==poll_id).first()
 
     if poll is None: 
-        raise HTTPException(404, "Poll not found")
+        raise HTTPException(status_code=404, detail="Poll not found")
     
     # Redis live votes
     key = f'poll:{poll.id}:votes'
@@ -119,7 +120,7 @@ async def poll_delete(
     poll = db.query(PollModel).filter(PollModel.id==poll_id).first()
 
     if poll is None: 
-        raise HTTPException(404, "Poll not found")
+        raise HTTPException(status_code=404, detail="Poll not found")
     
     db.delete(poll)
     # Clean Redis cache of the poll
@@ -155,13 +156,13 @@ async def poll_view_all(
 ):
     
     if user is None: 
-        raise HTTPException(404, "User not found")
+        raise HTTPException(status_code=404, detail="User not found")
 
     now = datetime.now(timezone.utc)
     polls_query = db.query(PollModel).filter(PollModel.creator_id==user.user_id)
 
     if polls_query is None:
-        raise HTTPException(404, "Poll not found")
+        raise HTTPException(status_code=404, detail="Poll not found")
 
     if expired: 
         polls_query = polls_query.filter(
@@ -253,3 +254,66 @@ async def poll_delete_all(
     db.commit()
 
     return {"message": "All polls deleted"}
+
+
+class PollGraphPoint(BaseModel):
+    x: str
+    y: int
+class PollGraphResponseModel(BaseModel):
+    poll_history_record: list[PollGraphPoint]
+
+@router.get(
+    "/{poll_id}/history",
+    response_model=PollGraphResponseModel,
+    description="Endpoint to get poll history graph data",
+)
+@limiter.limit("12/minute")
+async def poll_get_history(
+    request: Request,
+    poll_id: str,
+    user: UserModel = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    poll_history = (
+        db.query(PollHistoryEntry)
+        .filter(PollHistoryEntry.poll_id == poll_id)
+        .order_by(PollHistoryEntry.timestamp)
+        .all()
+    )
+
+    if not poll_history:
+        raise HTTPException(
+            status_code=404,
+            detail="Poll history not found",
+        )
+
+    first_record = poll_history[0]
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    poll_age = now - first_record.timestamp
+
+    # Poll age <= 1 day -> single point
+    if poll_age <= timedelta(days=1):
+        latest = poll_history[-1]
+
+        return PollGraphResponseModel(
+            poll_history_record=[
+                PollGraphPoint(
+                    x=latest.timestamp.strftime("%Y-%m-%d"),
+                    y=latest.value,
+                )
+            ]
+        )
+
+    # Poll age > 1 day -> latest value for each day
+    daily_points: dict[str, int] = {}
+
+    for history in poll_history:
+        day = history.timestamp.strftime("%Y-%m-%d")
+        daily_points[day] = history.value
+
+    return PollGraphResponseModel(
+        poll_history_record=[
+            PollGraphPoint(x=day, y=value)
+            for day, value in daily_points.items()
+        ]
+    )

@@ -86,7 +86,8 @@ def verify_mail(
                 raise HTTPException(status_code=406, detail="Please enter a valid email address.")
             
             # Hard deletion if new mail was previously used
-            delete_hard("users", "email=?", (verification.email,))
+            # sqlite uses ? as placeholder while psql uses %s
+            delete_hard("users", "email=%s", (verification.email,))
 
             user.email = verification.email
             verification.used = True
@@ -135,6 +136,6 @@ def resend_mail(
         raise HTTPException(status_code=409, detail="This email is already verified.")
 
     link = prepare_verification_link(db=db, email=payload.email, token_type="registration")
-    send_mail_verification(payload.email, link)
+    send_mail_verification(purpose="NEW", reciever_mail_addr=payload.email, link=link)
     return JSONResponse(status_code=200, content= {"detail": "Verification email sent. Please check your inbox."})
 

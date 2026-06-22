@@ -35,7 +35,7 @@ async def refresh_token(
         user = db.query(UserModel).filter(UserModel.email==email).first()
 
         if user is None:
-            raise HTTPException(status_code=401, detail="Invalid refresh token")
+            raise HTTPException(status_code=401, detail="Invalid refresh token")    
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
@@ -74,7 +74,7 @@ def register_user(
         db.commit()
 
         link = prepare_verification_link(db=db, email=email, token_type="registration")
-        send_mail_verification(email, link)
+        send_mail_verification(purpose="NEW", reciever_mail_addr=email, link=link)
         
         return JSONResponse(status_code=201, content={"detail": "Verification email sent. Please check your inbox."})
     
@@ -92,7 +92,7 @@ def register_user(
         db.expunge_all()  # remove all objects from session cache
 
     link = prepare_verification_link(db=db, email=email, token_type="registration")
-    send_mail_verification(email, link)
+    send_mail_verification(purpose="NEW", reciever_mail_addr=email, link=link)
     return JSONResponse(status_code=200, content={"detail": "Verification email sent. Please check your inbox."})
 
 

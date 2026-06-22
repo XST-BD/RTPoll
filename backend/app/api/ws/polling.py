@@ -57,7 +57,7 @@ async def poll_status(
             poll = db.query(PollModel).filter(PollModel.id==poll_id).first()
 
             if poll is None: 
-                await ws.send_json({"type": "error", "message": "Poll not found or has expired"})
+                await ws.send_json({"type": "notice", "message": "Poll not found."})
                 return
 
             while True: 
@@ -71,11 +71,11 @@ async def poll_status(
                         opt_id = str(data.get("poll_id"))
 
                         if poll_vote is None: 
-                            await ws.send_json({"type": "error", "message": "Poll not found or has expired"})
+                            await ws.send_json({"type": "notice", "message": "Poll not found."})
                             continue
 
                         if poll_vote.expires_at and poll_vote.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc): 
-                            await ws.send_json({"type": "notice", "message": "This poll has ended"})
+                            await ws.send_json({"type": "notice", "message": "This poll has expired."})
                             continue    
                         
                         votes_key = f"poll:{poll_id}:votes"
@@ -105,11 +105,11 @@ async def poll_status(
                     poll_vote = await run_in_threadpool(db.get, PollModel, poll_id)
 
                     if not poll_vote: 
-                        await ws.send_json({"type": "error", "message": "Poll not found or has expired"})
+                        await ws.send_json({"type": "notice", "message": "Poll not found."})
                         continue
                 
                     if poll_vote.expires_at and poll_vote.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc): 
-                        await ws.send_json({"type": "notice", "message": "This poll has ended"})
+                        await ws.send_json({"type": "notice", "message": "This poll has expired."})
                         continue
 
                     try:
@@ -169,8 +169,12 @@ async def poll_status(
                             if total_votes > 0 else 0.0
                             for option in poll.options
                         ]
+                        opt_votes = [(votes.get(str(option.id), 0)) for option in poll.options]
 
-                        await wsconnmanager.send_to_creator(poll_id, {"type": "results", "total_votes": total_votes, "option_perc": opt_perc})
+                        await wsconnmanager.send_to_creator(
+                            poll_id, 
+                            {"type": "results", "total_votes": total_votes, "option_perc": opt_perc, "option_votes": opt_votes}
+                        )
                         if poll.is_public:
                             await ws.send_json({"type": "results", "total_votes": total_votes, "option_perc": opt_perc})
                         else: 

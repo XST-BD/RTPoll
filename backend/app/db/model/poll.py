@@ -62,14 +62,12 @@ class PollHistoryEntry(Base):
     __tablename__ = "polls_history_record"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    poll_id: Mapped[int] = mapped_column(ForeignKey("polls.id", ondelete="CASCADE"))
+    poll_id: Mapped[str] = mapped_column(ForeignKey("polls.id", ondelete="CASCADE"))
 
     timestamp: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     value: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    related_poll: Mapped["PollModel"] = relationship(
-        back_populates="polls_history"
-    )
+    related_poll: Mapped["PollModel"] = relationship(back_populates="polls_history")
 
     __table_args__ = (
         UniqueConstraint("poll_id", "timestamp", name="uix_poll_timestamp"),
