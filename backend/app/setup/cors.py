@@ -11,12 +11,13 @@ load_dotenv()
 FRONTEND_URL_LOCAL = os.getenv("FRONTEND_URL_LOCAL")
 FRONTEND_URL_NETWORK1 = os.getenv("FRONTEND_URL_NETWORK")
 FRONTEND_URL_NETWORK2 = os.getenv("FRONTEND_URL_NETWORK")
+FRONTEND_URL_DEP = os.getenv("FRONTEND_URL_DEP")
 
 def cors_permit():
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[str(FRONTEND_URL_LOCAL), str(FRONTEND_URL_NETWORK1), str(FRONTEND_URL_NETWORK2)],
+        allow_origins=[str(FRONTEND_URL_LOCAL), str(FRONTEND_URL_NETWORK1), str(FRONTEND_URL_NETWORK2), str(FRONTEND_URL_DEP)],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

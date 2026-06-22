@@ -18,7 +18,7 @@ from app.db.model.poll import PollModel, PollHistoryEntry, PollOption
 load_dotenv()
 config = context.config
 
-DATABASE_URL = os.getenv("DATABASE_URL1", "DATABASE_URL1")
+DATABASE_URL = os.getenv("DATABASE_URL_NEON", "DATABASE_URL1")
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
 # Interpret the config file for Python logging.
