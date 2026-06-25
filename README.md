@@ -69,7 +69,6 @@
 
 - Nuxt.js
 - Tailwind CSS
-- Pinia
 - FingerprintJS
 - ApexCharts
 - Iconify
@@ -117,9 +116,8 @@
    pnpm approve-builds
    ```
 3. Set up the environment variables in frontend/.env file:
-   ```
-   API_URL="http://localhost:8000/api/v0"
-   WS_URL="ws://localhost:8000/api/v0/ws"
+   ```bash
+   cp .env.example .env
    ```
 4. Start the development server:
    ```bash
@@ -137,7 +135,7 @@
    ```bash
    pnpm preview
    ```
-3. Open http://localhost:3000 in your browser.
+3. Open [http://http://127.0.0.1:3000](http://127.0.0.1:3000/) in your browser.
 
 ### Backend Setup
 

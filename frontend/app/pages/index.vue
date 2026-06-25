@@ -137,7 +137,7 @@ useHead({
                     </h3>
 
                     <p class="max-w-3xl text-shadow-2xs">
-                        Unlock powerful insights in your creator dashboard. Track each poll with a 30-day vote trend graph.
+                        Unlock powerful insights in your creator dashboard. Track each poll with a last 30-day vote trend graph.
                     </p>
                 </div>
             </article>
