@@ -201,7 +201,7 @@ frontend/
 │   │   └── guest.js                  # Blocks authenticated users (redirects to dashboard)
 │   │
 │   ├── pages/
-│   │   ├── index.vue                 # Landing / marketing home page
+│   │   ├── index.vue                 # Landing page
 │   │   ├── about.vue                 # About Us with team profiles
 │   │   ├── login.vue                 # Login form
 │   │   ├── register.vue              # Registration form
@@ -240,7 +240,7 @@ frontend/
 
 **File:** `.env.example`
 
-| Variable | Description | Example |
+| Variable | Description | Value |
 |---|---|---|
 | `API_URL` | Base URL for the REST API | `http://localhost:8000/api/v0` |
 | `WS_URL` | Base URL for the WebSocket API | `ws://localhost:8000/api/v0/ws` |
@@ -484,8 +484,11 @@ Request to protected route
     ├─ isLoggedIn === true? → Allow access
     │
     └─ isLoggedIn === false
+        |
         └─ Try refresh()
+            |
             ├─ Success → Allow access
+            |
             └─ Failure → Redirect to /login?redirect=<originalPath>
 ```
 
@@ -506,8 +509,11 @@ Request to guest-only route
     ├─ isLoggedIn === true? → Redirect to /dashboard
     │
     └─ isLoggedIn === false
+        |
         └─ Try refresh() in background
+            |
             ├─ Success → Redirect to /dashboard
+            |
             └─ Failure → Allow access (stay on page)
 ```
 
@@ -1368,7 +1374,9 @@ Token obtained
            └─ Acquire localStorage lock
                |
                ├─ Got lock? → Call POST /auth/refresh
+               |                │
                │                ├─ Success → Update token, broadcast, reschedule
+               |                │
                │                └─ Failure → Clear auth, broadcast LOGOUT
                |
                └─ No lock? → Wait for BroadcastChannel message (5s timeout fallback)
