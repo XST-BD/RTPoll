@@ -41,7 +41,7 @@ useHead({
             </div>
         </section>
 
-        <div class="w-full max-w-4xl h-px bg-gradient-to-r from-transparent via-indigo-200 to-transparent my-4"></div>
+        <div class="w-full max-w-4xl h-[1.5px] bg-gradient-to-r from-transparent via-indigo-200 to-transparent my-4"></div>
 
         <section class="w-full px-6 py-16 flex flex-col items-center gap-12">
             <h2 class="text-4xl sm:text-5xl font-[Anton] text-indigo-400">Meet the Team</h2>

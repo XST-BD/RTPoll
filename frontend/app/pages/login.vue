@@ -103,7 +103,7 @@ async function resendVerificationEmail() {
                 </button>
             </p>
 
-            <hr class="w-[85%] border-t border-indigo-300">
+            <div class="w-full max-w-4xl h-[1.5px] bg-gradient-to-r from-transparent via-indigo-200 to-transparent my-4"></div>
 
             <p class="text-md">
                 Don't have an account?
