@@ -133,7 +133,6 @@ Key capabilities of the frontend:
 | Technology | Purpose |
 |---|---|
 | [Nuxt.js](https://nuxt.com/) | Vue.js meta-framework (SSR, routing, auto-imports) |
-| [Vue.js](https://vuejs.org/) | Reactive UI framework |
 | [Tailwind CSS](https://tailwindcss.com/) | Utility-first CSS framework |
 | [ApexCharts](https://apexcharts.com/)  | Interactive charting library |
 | [FingerprintJS](https://fingerprintjs.com/) | Browser fingerprinting library |
