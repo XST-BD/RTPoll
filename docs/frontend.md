@@ -145,7 +145,7 @@ Key capabilities of the frontend:
 
 ```
 frontend/
-├── .env.example                      # Example environment variables to copy to .env (API & WebSocket URLs)
+├── .env.example                      # Example environment variables (API & WebSocket URLs)
 ├── .gitignore                        # Git ignore rules
 ├── nuxt.config.ts                    # Nuxt framework configuration
 ├── package.json                      # Dependencies and scripts
