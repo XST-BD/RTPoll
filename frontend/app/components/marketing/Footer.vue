@@ -10,8 +10,8 @@ const ACCOUNT_LINKS = [
 ]
 
 const LEGAL_SUPPORT_LINKS = [
-    { label: 'Contact Us', to: '/contact' },
-    { label: 'Privacy Policy', to: '/privacy-policy' }
+    { label: 'Contact Us', to: '#' },
+    { label: 'Privacy Policy', to: '#' }
 ]
 </script>
 

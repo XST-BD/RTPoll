@@ -31,8 +31,8 @@ export default defineNuxtConfig({
 	routeRules: {
 		'/': { ssr: true },
 		'/about': { ssr: true },
-		'/login': { ssr: true },
-		'/register': { ssr: true },
+		'/login': { ssr: false },
+		'/register': { ssr: false },
 
 		'/recover-pass': { ssr: false },
 		'/verify-mail': { ssr: false },
