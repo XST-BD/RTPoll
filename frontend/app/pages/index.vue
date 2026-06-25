@@ -55,9 +55,10 @@ useHead({
                 Features
             </h2>
 
-            <article class="flex flex-row flex-wrap gap-6 justify-center items-center">
+            <article
+                class="grid grid-cols-1 md:grid-cols-2 gap-6 justify-center justify-items-center items-stretch max-w-6xl w-full">
                 <div
-                    class="group max-w-sm bg-white px-6 py-12 rounded-2xl flex flex-col flex-wrap justify-center items-center gap-5 transition-all duration-500 ease-out shadow-lg hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-2 cursor-default">
+                    class="group w-full h-full bg-white px-6 py-12 rounded-2xl flex flex-col flex-wrap justify-center items-center gap-5 transition-all duration-500 ease-out shadow-lg hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-2 cursor-default">
                     <div
                         class="rounded-xl p-2 bg-indigo-100 shadow-sm transition-colors duration-500 group-hover:bg-indigo-400">
                         <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 20 20"
@@ -72,12 +73,12 @@ useHead({
                     </h3>
 
                     <p class="max-w-3xl text-shadow-2xs">
-                        Create polls with multiple options and vote for them.
+                        Create professional multi-option polls in seconds with fully customizable settings and functionalities to fit your needs.
                     </p>
                 </div>
 
                 <div
-                    class="group max-w-sm bg-white px-6 py-12 rounded-2xl flex flex-col flex-wrap justify-center items-center gap-5 transition-all duration-500 ease-out shadow-lg hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-2 cursor-default">
+                    class="group w-full h-full bg-white px-6 py-12 rounded-2xl flex flex-col flex-wrap justify-center items-center gap-5 transition-all duration-500 ease-out shadow-lg hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-2 cursor-default">
                     <div
                         class="rounded-xl p-2 bg-indigo-100 shadow-sm transition-colors duration-500 group-hover:bg-indigo-400">
                         <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
@@ -96,12 +97,31 @@ useHead({
                     </h3>
 
                     <p class="max-w-3xl text-shadow-2xs">
-                        Share polls by public links and see the results in real-time.
+                        Share your polls instantly via public links. Voters can participate anonymously — no account required.
                     </p>
                 </div>
 
                 <div
-                    class="group max-w-sm bg-white px-6 py-12 rounded-2xl flex flex-col flex-wrap justify-center items-center gap-5 transition-all duration-500 ease-out shadow-lg hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-2 cursor-default">
+                    class="group w-full h-full bg-white px-6 py-12 rounded-2xl flex flex-col flex-wrap justify-center items-center gap-5 transition-all duration-500 ease-out shadow-lg hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-2 cursor-default">
+                    <div
+                        class="rounded-xl p-2 bg-indigo-100 shadow-sm transition-colors duration-500 group-hover:bg-indigo-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"
+                            class="fill-indigo-400 transition-colors duration-500 group-hover:fill-white">
+                            <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+
+                    <h3>
+                        Real-time Results
+                    </h3>
+
+                    <p class="max-w-3xl text-shadow-2xs">
+                        Experience the thrill of live results updating in real time as votes roll in.
+                    </p>
+                </div>
+
+                <div
+                    class="group w-full h-full bg-white px-6 py-12 rounded-2xl flex flex-col flex-wrap justify-center items-center gap-5 transition-all duration-500 ease-out shadow-lg hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-2 cursor-default">
                     <div
                         class="rounded-xl p-3 bg-indigo-100 shadow-sm transition-colors duration-500 group-hover:bg-indigo-400">
                         <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 14 14"
@@ -113,11 +133,11 @@ useHead({
                     </div>
 
                     <h3>
-                        Analyze Results
+                        Visual Analysis
                     </h3>
 
                     <p class="max-w-3xl text-shadow-2xs">
-                        Analyze results visually and see the most popular options.
+                        Unlock powerful insights in your creator dashboard. Track each poll with a 30-day vote trend graph.
                     </p>
                 </div>
             </article>
