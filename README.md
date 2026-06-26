@@ -11,6 +11,7 @@
 <h2>Table of Contents</h2>
 
 - [Features](#features)
+- [Demo Account](#demo-account)
 - [Usages](#usages)
 - [Tech Stack](#tech-stack)
   - [Frontend](#frontend)
@@ -33,7 +34,18 @@
 - **Poll Creation** - Create a poll with a question, options, expiration date and whether to make the result public or not.
 - **Poll Sharing** - Share a poll via a public link.
 - **Real-Time results** - View poll results in real-time.
+- **Graph Analysis** - View last 30-day vote graphs.
 - **Poll Deletion** - Delete polls.
+
+## Demo Credentials
+
+- Test the application with the following demo credentials:
+
+  **Email:** `tester@rt.poll`
+
+  **Password:** `rtpoll1234`
+
+- Test the demo public poll: [https://rtpoll.pages.dev/poll/EP1GlKiI2Mvx](https://rtpoll.pages.dev/poll/EP1GlKiI2Mvx)
 
 ## Usages
 
@@ -51,7 +63,8 @@
   - People can access the poll by clicking on the link and can vote.
 
 - **View poll results:**
-  - Poll results are displayed in real-time.
+  - Analyze poll results in real-time.
+  - View last 30-day vote graphs.
 
 - **Delete a poll:**
   - Click on the delete icon on the poll page to delete the poll.
@@ -69,7 +82,6 @@
 
 - Nuxt.js
 - Tailwind CSS
-- Pinia
 - FingerprintJS
 - ApexCharts
 - Iconify
@@ -117,9 +129,8 @@
    pnpm approve-builds
    ```
 3. Set up the environment variables in frontend/.env file:
-   ```
-   API_URL="http://localhost:8000/api/v0"
-   WS_URL="ws://localhost:8000/api/v0/ws"
+   ```bash
+   cp .env.example .env
    ```
 4. Start the development server:
    ```bash
@@ -137,7 +148,7 @@
    ```bash
    pnpm preview
    ```
-3. Open http://localhost:3000 in your browser.
+3. Open [http://http://127.0.0.1:3000](http://127.0.0.1:3000/) in your browser.
 
 ### Backend Setup
 

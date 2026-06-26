@@ -1,11 +1,15 @@
-export default defineNuxtRouteMiddleware(async () => {
-    const { isLoggedIn, refresh } = useAuth()
+export default defineNuxtRouteMiddleware(() => {
+    if (import.meta.server) return
 
-    if (!isLoggedIn.value) {
-        await refresh()
-    }
+    const { isLoggedIn, refresh } = useAuth()
 
     if (isLoggedIn.value) {
         return navigateTo('/dashboard', { replace: true })
     }
+
+    refresh().then((ok) => {
+        if (ok) {
+            navigateTo('/dashboard', { replace: true })
+        }
+    })
 })
