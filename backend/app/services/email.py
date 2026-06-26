@@ -1,21 +1,14 @@
-from datetime import datetime, timedelta, timezone
-import smtplib
-import ssl 
+import resend
 import secrets
 import hashlib
 
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import func
 
 from app.db.model.user import EmailVerification
 
 
 from app.setup.vars import (
-    SENDER_MAIL, APP_PASSWORD, SMTP_SERVER, SMTP_PORT_TLS, FRONTEND_URL
+    SENDER_MAIL, RESEND_API_KEY,  FRONTEND_URL
 )
 
 VERIFICATION_TOKEN_LIFETIME = 300
@@ -127,25 +120,35 @@ def send_mail_verification(
         subject = subject_exc_acc
         body = body_exc_acc
 
-    # --- Create the email message ---
-    msg = MIMEMultipart()
-    msg['From'] = SENDER_MAIL
-    msg['To'] = receiver_email 
-    msg['Subject'] = subject
-    msg.attach(MIMEText(body, 'html'))
+    # msg = MIMEMultipart()
+    # msg['From'] = SENDER_MAIL
+    # msg['To'] = receiver_email 
+    # msg['Subject'] = subject
+    # msg.attach(MIMEText(body, 'html'))
 
-    # Create a secure SSL context
-    context = ssl.create_default_context()
+    # # Create a secure SSL context
+    # context = ssl.create_default_context()
 
-    try:
-        # Connect to the server and send the email
-        with smtplib.SMTP(str(SMTP_SERVER), int(SMTP_PORT_TLS)) as server:
-            server.starttls(context=context) # Secure the connection with TLS
-            server.login(str(SENDER_MAIL), str(APP_PASSWORD))
-            server.send_message(msg)
-            print("Email sent successfully!")
+    # try:
+    #     # Connect to the server and send the email
+    #     with smtplib.SMTP(str(SMTP_SERVER), int(SMTP_PORT_TLS)) as server:
+    #         server.starttls(context=context) # Secure the connection with TLS
+    #         server.login(str(SENDER_MAIL), str(APP_PASSWORD))
+    #         server.send_message(msg)
+    #         print("Email sent successfully!")
 
-    except smtplib.SMTPException as e:
-        print(f"Error: Unable to send email. {e}")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+    # except smtplib.SMTPException as e:
+    #     print(f"Error: Unable to send email. {e}")
+    # except Exception as e:
+    #     print(f"An unexpected error occurred: {e}")
+
+ 
+    # --- Send the email message ---
+    resend.api_key = RESEND_API_KEY
+
+    r = resend.Emails.send({
+      "from": SENDER_MAIL,
+      "to": receiver_email,
+      "subject": subject,
+      "html": body,
+    })

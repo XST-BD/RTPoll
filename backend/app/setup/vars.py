@@ -22,6 +22,7 @@ APP_PASSWORD = os.getenv('MAIL_PASSWORD')
 SECRET_KEY = os.getenv('SECRET_KEY')
 SMTP_SERVER = os.getenv('MAIL_SERVER')
 SMTP_PORT_TLS = os.getenv('MAIL_PORT_TLS', 587)
+RESEND_API_KEY = os.getenv('RESEND_API_KEY', 'RESEND_API_KEY')
 
 SESSION_TTL = timedelta(days=7)
 
