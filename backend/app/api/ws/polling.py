@@ -165,7 +165,7 @@ async def poll_status(
                         total_votes = sum(votes.values())
 
                         opt_perc = [
-                            (votes.get(str(option.id), 0) / total_votes * 100)
+                            round((votes.get(str(option.id), 0) / total_votes * 100), 1)
                             if total_votes > 0 else 0.0
                             for option in poll.options
                         ]
