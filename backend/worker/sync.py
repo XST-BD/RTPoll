@@ -10,8 +10,9 @@ from app.db.model.poll import PollModel
 
 load_dotenv()
 REDIS_URL = os.getenv('REDIS_URL', 'REDIS_URL')
-
 DB_SYNC_INTERVAL = 30
+
+logging.basicConfig(level=logging.INFO)
 
 # Create a global pool (all tasks in this worker share it)
 redis_pool = redis.ConnectionPool.from_url(
