@@ -94,7 +94,12 @@ async def poll_view(
     total_votes = sum(redis_votes.values())
 
     poll_options = [
-        (row.id, row.text, row.votes,(row.votes / total_votes) * 100.00 if total_votes else 0.00)
+        (
+            row.id, 
+            row.text, 
+            row.votes,
+            round((row.votes / total_votes) * 100.00, 1) if total_votes else 0.00
+        )
         for row in db.query(PollOption.id, PollOption.text, PollOption.votes).filter_by(poll_id=poll.id)
     ]
 
