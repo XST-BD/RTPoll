@@ -10,6 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Render Backend
-    run: |
+        run: |
           curl -s -o /dev/null -w "%{http_code}" https://rtpoll.onrender.com/
 
