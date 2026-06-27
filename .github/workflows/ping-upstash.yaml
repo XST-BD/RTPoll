@@ -1,0 +1,16 @@
+name: Upstash Redis Heartbeat
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # Runs at minute 0 of every 6th hour
+  workflow_dispatch:
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Heartbeat to Upstash
+        run: |
+          TIMESTAMP=$(date +%s)
+          curl -X POST "${{ secrets.UPSTASH_REDIS_REST_URL }}/set/backend_heartbeat/$TIMESTAMP" \
+            -H "Authorization: Bearer ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}"
