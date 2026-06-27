@@ -21,10 +21,6 @@
   - [Clone Repository](#clone-repository)
   - [Frontend Setup](#frontend-setup)
   - [Backend Setup](#backend-setup)
-    - [Environment](#environment)
-    - [Reverse Proxy (Nginx)](#reverse-proxy-nginx)
-    - [Start server](#start-server)
-    - [Notes](#notes)
 - [Project Documentation](#project-documentation)
 - [Authors](#authors)
 
@@ -91,8 +87,6 @@
 - FastAPI
 - PostgreSQL
 - Redis
-- RabbitMQ
-- Celery
 - JWT
 
 ## Project Setup & Installation
@@ -152,26 +146,20 @@
 
 ### Backend Setup
 
-#### Environment
+1. Navigate to backend directory
+    ```bash
+    cd backend
+    ```
 
-- Create backend/.env and use proper env variables.
-- See docs/deployment.md for details
+2. Setup environment variables
+    ```bash
+    cp .env.example .env
+    ```
 
-#### Reverse Proxy (Nginx)
-
-- Setup SSL certificates in nginx/certs/
-  1. `cd nginx && mkdir -p certs`
-  2. `openssl req -x509 -nodes -days 365  -newkey rsa:2048  -keyout privkey.pem -out fullchain.pem`
-
-#### Start server
-
-1. Complete prerequisites
-2. `docker compose up -- build`
-
-#### Notes
-
-This is a self-signed certificate, not for deployment
-For more details check docs/
+3. Start backend server
+    ```bash
+    docker compose up
+    ```
 
 ## [Project Documentation](https://github.com/XST-BD/RTPoll/tree/main/docs)
 
