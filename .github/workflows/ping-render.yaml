@@ -1,7 +1,7 @@
 name: Render keep-alive
 
 on: 
-  schudule: 
+  schedule: 
     - cron: '*/10 * * * *' # Runs every 10 minutes
   workflow_dispatch: # manual trigger for testing
 
