@@ -60,7 +60,7 @@ def sync_votes_db():
     logging.info("Running database sync cycle")
 
 
-def worker():
+def vote_sync_worker():
     logging.info("Vote sync worker started")
 
     while True:
@@ -72,4 +72,4 @@ def worker():
 
 
 if __name__ == "__main__":
-    worker()
+    vote_sync_worker()

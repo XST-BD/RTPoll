@@ -2,18 +2,14 @@ import asyncio
 from contextlib import asynccontextmanager
 from datetime import timezone, datetime
 
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI
 
 from app.db.model.poll import PollModel
 from app.deps import SessionLocal
-from app.services.history import sync_poll_history
 from app.utils.poll import poll_timer
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
-    # Startup
-    history_sync_task = asyncio.create_task(sync_poll_history())
 
     # Start poll timers for unexpired polls
     db = SessionLocal()
@@ -36,8 +32,4 @@ async def lifespan(app: FastAPI):
     yield  # FastAPI app is now running
 
     # Shutdown
-    history_sync_task.cancel()
-    await asyncio.gather(
-        history_sync_task,
-        return_exceptions=True
-    )
+    await asyncio.gather(return_exceptions=True)

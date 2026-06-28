@@ -282,43 +282,20 @@ async def poll_get_history(
     poll_history = (
         db.query(PollHistoryEntry)
         .filter(PollHistoryEntry.poll_id == poll_id)
-        .order_by(PollHistoryEntry.timestamp)
+        .order_by(PollHistoryEntry.snapshot_date)
         .all()
     )
 
     if not poll_history:
-        raise HTTPException(
-            status_code=404,
-            detail="Poll history not found",
-        )
-
-    first_record = poll_history[0]
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
-    poll_age = now - first_record.timestamp
-
-    # Poll age <= 1 day -> single point
-    if poll_age <= timedelta(days=1):
-        latest = poll_history[-1]
-
-        return PollGraphResponseModel(
-            poll_history_record=[
-                PollGraphPoint(
-                    x=latest.timestamp.strftime("%Y-%m-%d"),
-                    y=latest.value,
-                )
-            ]
-        )
-
-    # Poll age > 1 day -> latest value for each day
-    daily_points: dict[str, int] = {}
-
-    for history in poll_history:
-        day = history.timestamp.strftime("%Y-%m-%d")
-        daily_points[day] = history.value
+        raise HTTPException(404, "Poll history not found")
 
     return PollGraphResponseModel(
         poll_history_record=[
-            PollGraphPoint(x=day, y=value)
-            for day, value in daily_points.items()
+            PollGraphPoint(
+                x=record.snapshot_date.isoformat(),
+                y=record.total_votes,
+            )
+            for record in poll_history
         ]
     )
+   
