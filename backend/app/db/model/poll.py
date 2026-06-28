@@ -54,7 +54,7 @@ class PollModel(Base):
     polls_history: Mapped[list["PollHistoryEntry"]] = relationship(
         back_populates='related_poll',
         cascade="all, delete-orphan",
-        order_by="PollHistoryEntry.timestamp",
+        order_by="PollHistoryEntry.snapshot",
     )
 
 
