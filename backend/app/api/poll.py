@@ -67,6 +67,7 @@ class PollResponseModel(BaseModel):
     question: str
     expires_at: datetime | str
     is_indefinite: bool
+    is_public: bool
     total_votes: int
     options: list[tuple[str, str, int, float]]
 
@@ -109,6 +110,7 @@ async def poll_view(
         question=poll.question,
         expires_at=poll_expires_at,
         is_indefinite=poll.is_indefinite,
+        is_public=poll.is_public,
         total_votes=total_votes,
         options=poll_options,
     )

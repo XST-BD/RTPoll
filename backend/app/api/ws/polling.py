@@ -173,7 +173,13 @@ async def poll_status(
 
                         await wsconnmanager.send_to_creator(
                             poll_id, 
-                            {"type": "results", "total_votes": total_votes, "option_perc": opt_perc, "option_votes": opt_votes}
+                            {
+                                "type": "results",
+                                "total_votes": total_votes, 
+                                "option_perc": opt_perc, 
+                                "option_votes": opt_votes,
+                                "is_public": poll.is_public,
+                            }
                         )
                         if poll.is_public:
                             await ws.send_json({"type": "results", "total_votes": total_votes, "option_perc": opt_perc})
